@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,8 +19,10 @@ import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.exceptions.RedisBloomException;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.BaseComparisonHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.ComparisonMapping;
+import com.github.thestyleofme.data.comparison.infra.utils.CommonUtil;
 import com.github.thestyleofme.data.comparison.infra.utils.JsonUtil;
 import com.github.thestyleofme.data.comparison.infra.utils.Md5Util;
+import com.github.thestyleofme.data.comparison.infra.utils.ThreadPoolUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -40,6 +44,7 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
 
     private final JobHandlerContext jobHandlerContext;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ExecutorService executorService = ThreadPoolUtil.getExecutorService();
 
     public RedisBloomFilterJobHandler(JobHandlerContext jobHandlerContext,
                                       RedisTemplate<String, String> redisTemplate) {
@@ -65,7 +70,7 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
         genRedisBloomFilter(comparisonJob, comparisonMapping, bloom, seed, redisKey);
         HandlerResult handlerResult = handleComparison(comparisonJob, comparisonMapping, bloom, seed, redisKey);
         LocalDateTime endTime = LocalDateTime.now();
-        log.debug("just test, time cost : {}", Duration.between(endTime, startTime));
+        log.debug("job time cost : {}", Duration.between(endTime, startTime));
         return handlerResult;
     }
 
@@ -76,21 +81,44 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
                                            String redisKey) {
         HandlerResult handlerResult = new HandlerResult();
         List<LinkedHashMap<String, Object>> sourceDataList = comparisonMapping.getSourceDataList();
-        for (LinkedHashMap<String, Object> map : sourceDataList) {
-            String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
-            List<Integer> hashList = bloom.doHash(md5Str, seed);
-            // 只要有一个hash后在redis中找不到 即肯定不存在
-            boolean exists = hashList.stream()
-                    .map(hash -> redisTemplate.opsForValue().getBit(redisKey, hash))
-                    .anyMatch(Boolean.FALSE::equals);
-            if (Boolean.TRUE.equals(exists)) {
-                // 肯定不存在 需判断主键或唯一索引是否一样
-                handlerNotExits(handlerResult, comparisonJob, map, comparisonMapping);
-            } else {
-                // 只能说可能存在 不能百分百保证 尽可能降低误判率
-                handlerResult.getSameDataList().add(map);
-            }
+        // 分批加多线程
+        int batchSize = CommonUtil.calculateBatchSize(sourceDataList.size());
+        List<List<LinkedHashMap<String, Object>>> splitList = CommonUtil.splitList(sourceDataList, batchSize);
+        CountDownLatch countDownLatch = new CountDownLatch(splitList.size());
+        for (List<LinkedHashMap<String, Object>> oneList : splitList) {
+            executorService.execute(() -> {
+                try {
+                    LocalDateTime start = LocalDateTime.now();
+                    for (LinkedHashMap<String, Object> map : oneList) {
+                        String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
+                        List<Integer> hashList = bloom.doHash(md5Str, seed);
+                        // 只要有一个hash后在redis中找不到 即肯定不存在
+                        boolean exists = hashList.stream()
+                                .map(hash -> redisTemplate.opsForValue().getBit(redisKey, hash))
+                                .anyMatch(Boolean.FALSE::equals);
+                        if (Boolean.TRUE.equals(exists)) {
+                            // 肯定不存在 需判断主键或唯一索引是否一样
+                            handlerNotExits(handlerResult, comparisonJob, map, comparisonMapping);
+                        } else {
+                            // 只能说可能存在 不能百分百保证 尽可能降低误判率
+                            handlerResult.getSameDataList().add(map);
+                        }
+                    }
+                    LocalDateTime end = LocalDateTime.now();
+                    log.debug("{} completed data comparison, time cost {}",
+                            Thread.currentThread().getName(), Duration.between(start, end));
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
         }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("handleComparison InterruptedException", e);
+        }
+        log.debug("handle comparison finish");
         return handlerResult;
     }
 
@@ -153,14 +181,33 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (LinkedHashMap<String, Object> map : list) {
-            String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
-            List<Integer> hashList = bloom.doHash(md5Str, seed);
-            // 设置对应位置为1
-            hashList.forEach(hash -> redisTemplate.opsForValue().setBit(redisKey, hash, true));
-            // redis 存储目标表的pk或索引
-            handlerPkOrIndex(comparisonJob, redisKey, map);
+        // 分批加多线程
+        int batchSize = CommonUtil.calculateBatchSize(list.size());
+        List<List<LinkedHashMap<String, Object>>> splitList = CommonUtil.splitList(list, batchSize);
+        CountDownLatch countDownLatch = new CountDownLatch(splitList.size());
+        for (List<LinkedHashMap<String, Object>> oneList : splitList) {
+            executorService.execute(() -> {
+                try {
+                    for (LinkedHashMap<String, Object> map : oneList) {
+                        String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
+                        List<Integer> hashList = bloom.doHash(md5Str, seed);
+                        // 设置对应位置为1
+                        hashList.forEach(hash -> redisTemplate.opsForValue().setBit(redisKey, hash, true));
+                        // redis 存储目标表的pk或索引
+                        handlerPkOrIndex(comparisonJob, redisKey, map);
+                    }
+                } finally {
+                    countDownLatch.countDown();
+                }
+            });
         }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("genRedisBloomFilter InterruptedException", e);
+        }
+        log.debug("redis bloom filter generated");
     }
 
     private void handlerPkOrIndex(ComparisonJob comparisonJob,
@@ -193,16 +240,18 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
         }
     }
 
-
     private Bloom createBloom(ComparisonMapping comparisonMapping) {
         if (Objects.isNull(comparisonMapping)) {
             return null;
         }
-        List<LinkedHashMap<String, Object>> list = comparisonMapping.getTargetDataList();
-        if (CollectionUtils.isEmpty(list)) {
+        List<LinkedHashMap<String, Object>> targetDataList = comparisonMapping.getTargetDataList();
+        if (CollectionUtils.isEmpty(targetDataList)) {
             return null;
         }
-        int bound = Math.toIntExact(list.size());
+        // bloom filter位数取值 源表目标表数据量大的
+        List<LinkedHashMap<String, Object>> sourceDataList = comparisonMapping.getSourceDataList();
+        int bound = Math.toIntExact(Math.max(targetDataList.size(),
+                CollectionUtils.isEmpty(sourceDataList) ? 0 : sourceDataList.size()));
         return new Bloom(bound);
     }
 

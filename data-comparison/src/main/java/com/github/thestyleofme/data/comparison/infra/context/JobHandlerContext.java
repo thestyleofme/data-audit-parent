@@ -39,7 +39,7 @@ public class JobHandlerContext {
         BaseJobHandler proxyJobHandler = CommonUtil.createProxy(
                 baseJobHandler.getClass().getClassLoader(),
                 BaseJobHandler.class,
-                deleteRedisKeyInvocationHandler(baseJobHandler)
+                jobHandleInvocationHandler(baseJobHandler)
         );
         JOB_HANDLER_MAP.put(engineType, proxyJobHandler);
     }
@@ -60,7 +60,7 @@ public class JobHandlerContext {
         BaseOutputHandler proxyOutputHandler = CommonUtil.createProxy(
                 baseOutputHandler.getClass().getClassLoader(),
                 BaseOutputHandler.class,
-                deleteRedisKeyInvocationHandler(baseOutputHandler)
+                jobFinallyInvocationHandler(baseOutputHandler)
         );
         OUTPUT_HANDLER_MAP.put(outputType, proxyOutputHandler);
     }
@@ -89,7 +89,7 @@ public class JobHandlerContext {
         return baseOutputHandler;
     }
 
-    private InvocationHandler deleteRedisKeyInvocationHandler(Object obj) {
+    private InvocationHandler jobHandleInvocationHandler(Object obj) {
         return (proxy, method, args) -> {
             try {
                 return method.invoke(obj, args);
@@ -97,12 +97,32 @@ public class JobHandlerContext {
                 throw e;
             } catch (Exception e) {
                 // 抛其他异常需删除redis相关的key
-                ComparisonJob comparisonJob = (ComparisonJob) args[0];
-                log.error("delete comparison job[{}_{}] redis key", comparisonJob.getId(), comparisonJob.getJobName());
-                HandlerUtil.deleteRedisKey(comparisonJob);
+                deleteRedisKey(args);
                 throw e;
             }
         };
+    }
+
+    private InvocationHandler jobFinallyInvocationHandler(Object obj) {
+        return (proxy, method, args) -> {
+            try {
+                return method.invoke(obj, args);
+            } catch (Exception e) {
+                // 抛异常需要将文件删除
+                ComparisonJob comparisonJob = (ComparisonJob) args[0];
+                CommonUtil.deleteFile(comparisonJob);
+                throw e;
+            } finally {
+                // 任务执行后需要删除redis
+                deleteRedisKey(args);
+            }
+        };
+    }
+
+    private void deleteRedisKey(Object[] args) {
+        ComparisonJob comparisonJob = (ComparisonJob) args[0];
+        HandlerUtil.deleteRedisKey(comparisonJob);
+        log.debug("delete comparison job[{}_{}] redis key", comparisonJob.getId(), comparisonJob.getJobName());
     }
 
 }

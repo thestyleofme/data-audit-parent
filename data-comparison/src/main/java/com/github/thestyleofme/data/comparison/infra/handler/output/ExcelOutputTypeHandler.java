@@ -1,8 +1,12 @@
 package com.github.thestyleofme.data.comparison.infra.handler.output;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.alibaba.excel.EasyExcelFactory;
@@ -38,9 +42,10 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
         if (StringUtils.isEmpty(fileOutputPath)) {
             throw new HandlerException("when outputType=EXCEL, fileOutputPath cannot be null");
         }
+        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobName());
+        checkExcelFile(excelName);
         List<ColMapping> colMappingList = JsonUtil.toObj(comparisonJob.getColMapping(), new TypeReference<List<ColMapping>>() {
         });
-        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobName());
         log.debug("output to excel[{}] start", excelName);
         ExcelWriter excelWriter = null;
         try {
@@ -49,13 +54,27 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
             doTargetUnique(excelWriter, colMappingList, handlerResult);
             doPkOrIndexSame(excelWriter, colMappingList, handlerResult);
             doSame(excelWriter, colMappingList, handlerResult);
-            log.debug("output to excel[{}] end", excelName);
         } finally {
             if (excelWriter != null) {
                 excelWriter.finish();
             }
         }
+        log.debug("output to excel[{}] end", excelName);
     }
+
+    private void checkExcelFile(String excelName) {
+        File file = new File(excelName);
+        if (file.exists()) {
+            log.warn("the excel[{}] is exist, delete it first", excelName);
+            try {
+                Files.delete(file.toPath());
+                log.debug("the excel[{}] successfully deleted", excelName);
+            } catch (IOException e) {
+                throw new HandlerException("excel[{}] delete error", excelName);
+            }
+        }
+    }
+
 
     private void doSame(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
         // 生成excel头 List<List<String>>
@@ -66,6 +85,7 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
         List<List<Object>> sameList = handlerResult.getSameDataList().stream()
+                .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
         // 开始写 多sheet页
@@ -84,6 +104,7 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
         List<List<Object>> pkOrIndexList = handlerResult.getPkOrIndexSameDataList().stream()
+                .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
         // 开始写 多sheet页
@@ -100,6 +121,7 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
         List<List<Object>> targetDataList = handlerResult.getTargetUniqueDataList().stream()
+                .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
         // 开始写 多sheet页
@@ -116,6 +138,7 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
         List<List<Object>> sourceDataList = handlerResult.getSourceUniqueDataList().stream()
+                .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
         // 开始写 多sheet页

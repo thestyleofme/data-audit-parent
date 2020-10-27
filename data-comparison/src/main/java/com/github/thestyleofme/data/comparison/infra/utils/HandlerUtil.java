@@ -1,12 +1,14 @@
 package com.github.thestyleofme.data.comparison.infra.utils;
 
 import java.util.Optional;
+import java.util.Set;
 
 import com.github.thestyleofme.data.comparison.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.infra.constants.CommonConstant;
 import org.apache.ibatis.plugin.PluginException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.util.CollectionUtils;
 
 /**
  * <p>
@@ -32,18 +34,9 @@ public class HandlerUtil {
 
     public static void deleteRedisKey(ComparisonJob comparisonJob) {
         String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobName());
-        if (Boolean.TRUE.equals(REDIS_TEMPLATE.hasKey(redisKey))) {
-            REDIS_TEMPLATE.delete(redisKey);
-        }
-        String pkRedisKey = String.format(CommonConstant.RedisKey.TARGET_PK,
-                comparisonJob.getTenantId(), comparisonJob.getJobName());
-        if (Boolean.TRUE.equals(REDIS_TEMPLATE.hasKey(pkRedisKey))) {
-            REDIS_TEMPLATE.delete(pkRedisKey);
-        }
-        String indexRedisKey = String.format(CommonConstant.RedisKey.TARGET_INDEX,
-                comparisonJob.getTenantId(), comparisonJob.getJobName());
-        if (Boolean.TRUE.equals(REDIS_TEMPLATE.hasKey(indexRedisKey))) {
-            REDIS_TEMPLATE.delete(indexRedisKey);
+        Set<String> keys = REDIS_TEMPLATE.keys(redisKey + "*");
+        if (!CollectionUtils.isEmpty(keys)) {
+            REDIS_TEMPLATE.delete(keys);
         }
     }
 
