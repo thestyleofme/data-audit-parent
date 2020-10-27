@@ -14,7 +14,7 @@ import com.github.thestyleofme.data.comparison.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.infra.annotation.EngineType;
 import com.github.thestyleofme.data.comparison.infra.constants.CommonConstant;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
-import com.github.thestyleofme.data.comparison.infra.exceptions.HandlerException;
+import com.github.thestyleofme.data.comparison.infra.exceptions.RedisBloomException;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.BaseComparisonHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.ComparisonMapping;
 import com.github.thestyleofme.data.comparison.infra.utils.JsonUtil;
@@ -60,7 +60,7 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
         int seed = ThreadLocalRandom.current().nextInt(bloom.getBitSize());
         String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobName());
         if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
-            throw new HandlerException("redis key[%s] already exists", redisKey);
+            throw new RedisBloomException("redis key[%s] already exists, maybe this job is currently running, please try again later", redisKey);
         }
         genRedisBloomFilter(comparisonJob, comparisonMapping, bloom, seed, redisKey);
         HandlerResult handlerResult = handleComparison(comparisonJob, comparisonMapping, bloom, seed, redisKey);

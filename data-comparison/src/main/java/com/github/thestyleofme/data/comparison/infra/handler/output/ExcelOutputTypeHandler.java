@@ -12,10 +12,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.thestyleofme.data.comparison.domain.entity.ColMapping;
 import com.github.thestyleofme.data.comparison.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.infra.annotation.OutputType;
+import com.github.thestyleofme.data.comparison.infra.exceptions.HandlerException;
 import com.github.thestyleofme.data.comparison.infra.handler.HandlerResult;
 import com.github.thestyleofme.data.comparison.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -32,9 +34,13 @@ public class ExcelOutputTypeHandler implements BaseOutputHandler {
 
     @Override
     public void handle(ComparisonJob comparisonJob, HandlerResult handlerResult) {
+        String fileOutputPath = comparisonJob.getFileOutputPath();
+        if (StringUtils.isEmpty(fileOutputPath)) {
+            throw new HandlerException("when outputType=EXCEL, fileOutputPath cannot be null");
+        }
         List<ColMapping> colMappingList = JsonUtil.toObj(comparisonJob.getColMapping(), new TypeReference<List<ColMapping>>() {
         });
-        String excelName = String.format("%d_%s.xlsx", comparisonJob.getTenantId(), comparisonJob.getJobName());
+        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobName());
         log.debug("output to excel[{}] start", excelName);
         ExcelWriter excelWriter = null;
         try {

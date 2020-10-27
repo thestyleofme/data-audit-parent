@@ -1,7 +1,6 @@
 package com.github.thestyleofme.data.comparison.domain.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import javax.validation.constraints.NotBlank;
 
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -40,6 +39,8 @@ public class ComparisonJob {
     private String engineType;
     @ApiModelProperty(value = "输出结果方式，excel/redis/hbase等")
     private String outputType;
+    @ApiModelProperty(value = "若是导出excel/csv，需给路径")
+    private String fileOutputPath;
     private String sourceDatasourceCode;
     private String targetDatasourceCode;
     private String sourceSchema;

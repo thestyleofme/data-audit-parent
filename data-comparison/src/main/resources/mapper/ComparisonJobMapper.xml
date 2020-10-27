@@ -8,6 +8,7 @@
         <result column="comparison_type" property="comparisonType" jdbcType="VARCHAR"/>
         <result column="engine_type" property="engineType" jdbcType="VARCHAR"/>
         <result column="output_type" property="outputType" jdbcType="VARCHAR"/>
+        <result column="file_output_path" property="fileOutputPath" jdbcType="VARCHAR"/>
         <result column="source_datasource_code" property="sourceDatasourceCode" jdbcType="VARCHAR"/>
         <result column="target_datasource_code" property="targetDatasourceCode" jdbcType="VARCHAR"/>
         <result column="source_schema" property="sourceSchema" jdbcType="VARCHAR"/>

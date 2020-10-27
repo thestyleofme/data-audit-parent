@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.github.thestyleofme.data.comparison.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.infra.exceptions.HandlerException;
+import com.github.thestyleofme.data.comparison.infra.exceptions.RedisBloomException;
 import com.github.thestyleofme.data.comparison.infra.handler.BaseJobHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.BaseComparisonHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.output.BaseOutputHandler;
@@ -91,12 +92,11 @@ public class JobHandlerContext {
     private InvocationHandler deleteRedisKeyInvocationHandler(Object obj) {
         return (proxy, method, args) -> {
             try {
-                // 保证执行任务前redis相关key必须delete掉
-                ComparisonJob comparisonJob = (ComparisonJob) args[0];
-                HandlerUtil.deleteRedisKey(comparisonJob);
                 return method.invoke(obj, args);
+            } catch (RedisBloomException e) {
+                throw e;
             } catch (Exception e) {
-                // 抛异常需删除redis相关的key
+                // 抛其他异常需删除redis相关的key
                 ComparisonJob comparisonJob = (ComparisonJob) args[0];
                 log.error("delete comparison job[{}_{}] redis key", comparisonJob.getId(), comparisonJob.getJobName());
                 HandlerUtil.deleteRedisKey(comparisonJob);
