@@ -34,6 +34,8 @@ public class ComparisonJobDTO {
     private String comparisonType;
     @ApiModelProperty(value = "引擎，redis_bloom_filter/presto")
     private String engineType;
+    @ApiModelProperty(value = "输出结果方式，excel/redis/hbase等")
+    private String outputType;
     private String sourceDatasourceCode;
     private String targetDatasourceCode;
     private String sourceSchema;

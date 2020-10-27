@@ -2,9 +2,11 @@ package com.github.thestyleofme.data.comparison.infra.autoconfigure;
 
 import com.github.thestyleofme.data.comparison.infra.annotation.ComparisonType;
 import com.github.thestyleofme.data.comparison.infra.annotation.EngineType;
+import com.github.thestyleofme.data.comparison.infra.annotation.OutputType;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.handler.BaseJobHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.comparison.BaseComparisonHandler;
+import com.github.thestyleofme.data.comparison.infra.handler.output.BaseOutputHandler;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -41,6 +43,13 @@ public class JobHandlerProcessor implements BeanPostProcessor {
             String value = comparisonType.value();
             if (bean instanceof BaseComparisonHandler) {
                 jobHandlerContext.register(value.toUpperCase(), (BaseComparisonHandler) bean);
+            }
+        }
+        OutputType outputType = clazz.getAnnotation(OutputType.class);
+        if (outputType != null) {
+            String value = outputType.value();
+            if (bean instanceof BaseOutputHandler) {
+                jobHandlerContext.register(value.toUpperCase(), (BaseOutputHandler) bean);
             }
         }
         return bean;

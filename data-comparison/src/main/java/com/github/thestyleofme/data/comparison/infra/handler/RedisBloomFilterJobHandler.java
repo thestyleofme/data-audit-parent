@@ -85,7 +85,7 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
                     .anyMatch(Boolean.FALSE::equals);
             if (Boolean.TRUE.equals(exists)) {
                 // 肯定不存在 需判断主键或唯一索引是否一样
-                handlerNotExits(handlerResult,comparisonJob, map);
+                handlerNotExits(handlerResult, comparisonJob, map, comparisonMapping);
             } else {
                 // 只能说可能存在 不能百分百保证 尽可能降低误判率
                 handlerResult.getSameDataList().add(map);
@@ -96,7 +96,8 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
 
     private void handlerNotExits(HandlerResult handlerResult,
                                  ComparisonJob comparisonJob,
-                                 LinkedHashMap<String, Object> map) {
+                                 LinkedHashMap<String, Object> map,
+                                 ComparisonMapping comparisonMapping) {
         String sourcePk = comparisonJob.getSourcePk();
         String pkRedisKey = String.format(CommonConstant.RedisKey.TARGET_PK,
                 comparisonJob.getTenantId(), comparisonJob.getJobName());
@@ -120,8 +121,11 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
                 String value = Stream.of(split).map(s -> (String) map.get(s)).collect(Collectors.joining(","));
                 Boolean exists = redisTemplate.opsForSet().isMember(indexRedisKey, value);
                 if (Boolean.TRUE.equals(exists)) {
-                    // 唯一index存在，其他字段不一样
-                    handlerResult.getPkOrIndexSameDataList().add(map);
+                    // 唯一index存在，其他字段不一样 存target的数据
+                    comparisonMapping.getTargetDataList().stream()
+                            .filter(targetMap -> Stream.of(split).allMatch(v -> map.get(v).equals(targetMap.get(v))))
+                            .findFirst()
+                            .ifPresent(result -> handlerResult.getPkOrIndexSameDataList().add(result));
                 } else {
                     // source的数据在target中不存在
                     handlerResult.getSourceUniqueDataList().add(map);
@@ -131,8 +135,11 @@ public class RedisBloomFilterJobHandler implements BaseJobHandler {
                 handlerResult.getSourceUniqueDataList().add(map);
             }
         } else {
-            // 主键存在 其他字段不一样
-            handlerResult.getPkOrIndexSameDataList().add(map);
+            // 主键存在 其他字段不一样 存target的数据
+            comparisonMapping.getTargetDataList().stream()
+                    .filter(targetMap -> targetMap.get(comparisonJob.getTargetPk()).equals(pkValue))
+                    .findFirst()
+                    .ifPresent(result -> handlerResult.getPkOrIndexSameDataList().add(result));
         }
     }
 

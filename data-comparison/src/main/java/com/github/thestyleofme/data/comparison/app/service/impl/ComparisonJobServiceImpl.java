@@ -13,6 +13,7 @@ import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
 import com.github.thestyleofme.data.comparison.infra.handler.BaseJobHandler;
 import com.github.thestyleofme.data.comparison.infra.handler.HandlerResult;
+import com.github.thestyleofme.data.comparison.infra.handler.output.BaseOutputHandler;
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -54,6 +55,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         ComparisonJob comparisonJob = this.getOne(new QueryWrapper<>(ComparisonJob.builder().tenantId(tenantId).id(id).build()));
         BaseJobHandler jobHandler = jobHandlerContext.getJobHandler(comparisonJob.getEngineType());
         HandlerResult handlerResult = jobHandler.handle(comparisonJob);
-        log.debug("result: {}", handlerResult);
+        BaseOutputHandler baseOutputHandler = jobHandlerContext.getOutputHandler(comparisonJob.getOutputType());
+        baseOutputHandler.handle(comparisonJob, handlerResult);
     }
 }
