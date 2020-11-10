@@ -33,4 +33,11 @@ public interface ComparisonJobService extends IService<ComparisonJob> {
      */
     void execute(Long tenantId, Long id);
 
+    /**
+     * 保存数据稽核job
+     *
+     * @param comparisonJobDTO ComparisonJobDTO
+     * @return ComparisonJobDTO
+     */
+    ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO);
 }

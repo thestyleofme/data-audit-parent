@@ -3,6 +3,8 @@ package com.github.thestyleofme.data.comparison.domain.entity;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.Version;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,6 +32,7 @@ public class ComparisonJob {
 
     public static final String FIELD_ID = "id";
 
+    @TableId(type = IdType.AUTO)
     private Long id;
     @NotBlank
     private String jobName;

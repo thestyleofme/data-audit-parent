@@ -10,10 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -49,6 +46,22 @@ public class ComparisonJobController {
     public ResponseEntity<Void> execute(@PathVariable(name = "organizationId") Long tenantId,
                                         @PathVariable(name = "id") Long id) {
         comparisonJobService.execute(tenantId, id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @ApiOperation(value = "保存数据稽核任务")
+    @PostMapping
+    public ResponseEntity<ComparisonJobDTO> save(@PathVariable(name = "organizationId") Long tenantId,
+                                                 ComparisonJobDTO comparisonJobDTO) {
+        comparisonJobDTO.setTenantId(tenantId);
+        return ResponseEntity.ok(comparisonJobService.save(comparisonJobDTO));
+    }
+
+    @ApiOperation(value = "删除数据稽核任务")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable(name = "organizationId") Long tenantId,
+                                       @PathVariable Long id) {
+        comparisonJobService.removeById(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -13,7 +13,7 @@ management:
 
 spring:
   application:
-    name: ${SPRING_APPLICATION_NAME:plugin-driver}
+    name: ${SPRING_APPLICATION_NAME:data-comparison}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/data_audit?useUnicode=true&characterEncoding=utf-8&useSSL=false}
     username: ${SPRING_DATASOURCE_USERNAME:root}

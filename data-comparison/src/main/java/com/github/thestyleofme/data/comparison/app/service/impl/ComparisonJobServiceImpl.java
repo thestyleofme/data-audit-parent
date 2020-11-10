@@ -58,4 +58,11 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         BaseOutputHandler baseOutputHandler = jobHandlerContext.getOutputHandler(comparisonJob.getOutputType());
         baseOutputHandler.handle(comparisonJob, handlerResult);
     }
+
+    @Override
+    public ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO) {
+        ComparisonJob comparisonJob = BaseComparisonJobConvert.INSTANCE.dtoToEntity(comparisonJobDTO);
+        this.saveOrUpdate(comparisonJob);
+        return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
+    }
 }

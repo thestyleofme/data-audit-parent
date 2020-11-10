@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @author isaac 2020/10/19 11:25
  * @since 1.0.0
  */
-@Configuration
+@Configuration("dataComparisonRedisConfiguration")
 public class RedisConfiguration {
 
     @Bean
