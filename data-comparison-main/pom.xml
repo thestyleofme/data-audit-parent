@@ -9,7 +9,7 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>presto-catalog</artifactId>
+    <artifactId>data-comparison-main</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
@@ -22,10 +22,39 @@
     </properties>
 
     <dependencies>
+        <!--source-->
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>table</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!--transform-->
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>redis-bloom-filter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!--sink-->
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>excel</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <!--presto-->
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>presto-catalog</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.github.thestyleofme</groupId>
             <artifactId>data-comparison-common</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.48</version>
         </dependency>
     </dependencies>
 
@@ -34,7 +63,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -61,6 +89,5 @@
             </plugin>
         </plugins>
     </build>
-
 
 </project>
