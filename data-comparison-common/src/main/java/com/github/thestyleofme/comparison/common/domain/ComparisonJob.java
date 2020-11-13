@@ -27,7 +27,7 @@ import lombok.*;
 @ApiModel("数据稽核任务")
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@TableName(value = "data_comparison_job")
+@TableName(value = "xadt_comparison_job")
 public class ComparisonJob {
 
     public static final String FIELD_ID = "id";

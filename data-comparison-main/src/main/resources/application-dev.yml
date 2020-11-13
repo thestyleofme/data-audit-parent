@@ -15,9 +15,9 @@ spring:
   application:
     name: ${SPRING_APPLICATION_NAME:data-comparison}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/data_audit?useUnicode=true&characterEncoding=utf-8&useSSL=false}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:tse@9527}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://172.23.16.63:23306/hdsp_factory?useUnicode=true&characterEncoding=utf-8&useSSL=false}
+    username: ${SPRING_DATASOURCE_USERNAME:hdsp_dev}
+    password: ${SPRING_DATASOURCE_PASSWORD:hdsp_dev123$%^}
     driver-class-name: com.mysql.jdbc.Driver
     hikari:
       # 连接池最小空闲连接数
