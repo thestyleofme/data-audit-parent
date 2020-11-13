@@ -51,7 +51,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();
         List<ColMapping> colMappingList = colMapping.stream()
                 .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
-                .sorted(Comparator.comparing(ColMapping::getIndex))
+                .sorted(Comparator.comparingInt(ColMapping::getIndex))
                 .collect(Collectors.toList());
         log.debug("output to excel[{}] start", excelName);
         ExcelWriter excelWriter = null;

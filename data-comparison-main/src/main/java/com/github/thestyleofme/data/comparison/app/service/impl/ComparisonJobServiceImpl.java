@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.thestyleofme.comparison.common.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
@@ -18,9 +17,10 @@ import com.github.thestyleofme.comparison.common.app.service.transform.Transform
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.TransformInfo;
-import com.github.thestyleofme.comparison.common.infra.converter.BaseComparisonJobConvert;
+import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
+import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
@@ -63,7 +63,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         ComparisonJob comparisonJob = this.getOne(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(tenantId).id(id).build()));
         AppConf appConf = JsonUtil.toObj(comparisonJob.getApplicationConf(), AppConf.class);
-        // sink
+        // env
         Map<String, Object> env = appConf.getEnv();
         // source
         SourceDataMapping sourceDataMapping = null;

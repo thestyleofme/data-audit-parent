@@ -3,8 +3,8 @@ package com.github.thestyleofme.data.comparison.app.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.github.thestyleofme.comparison.common.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 
 /**
  * <p>

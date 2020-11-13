@@ -8,8 +8,10 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -85,6 +87,13 @@ public class CommonUtil {
             listArray.add(list.subList(i, i + toIndex));
         }
         return listArray;
+    }
+
+    public static void deleteFile(ComparisonJob comparisonJob, String path) {
+        if (!StringUtils.isEmpty(path)) {
+            String excelName = String.format("%s/%d_%s.xlsx", path, comparisonJob.getTenantId(), comparisonJob.getJobName());
+            deleteFile(excelName);
+        }
     }
 
     public static void deleteFile(String path) {
