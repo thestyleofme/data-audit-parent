@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.api.dto;
+package com.github.thestyleofme.data.comparison.api.dto;
 
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;

@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
+import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.sink.pojo.ExcelInfo;
@@ -37,7 +38,8 @@ public class ExcelSinkHandlerProxy implements SinkHandlerProxy {
                         // 抛异常需要将文件删除
                         Map<String, Object> sinkMap = (Map<String, Object>) args[2];
                         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
-                        CommonUtil.deleteFile(excelInfo.getOutputPath());
+                        ComparisonJob comparisonJob = (ComparisonJob) args[0];
+                        CommonUtil.deleteFile(comparisonJob, excelInfo.getOutputPath());
                         throw e;
                     }
                 }
