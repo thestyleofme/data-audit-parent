@@ -38,6 +38,7 @@ public class RedisBloomTransformHandlerProxy implements TransformHandlerProxy {
                         HandlerUtil.deleteRedisKey(args);
                         return invoke;
                     } catch (RedisBloomException | InvocationTargetException e) {
+                        // todo 起一个定时线程 10分钟后删除redis key
                         throw new HandlerException(ExceptionUtils.getRootCauseMessage(e));
                     } catch (Exception e) {
                         // 抛其他异常需删除redis相关的key

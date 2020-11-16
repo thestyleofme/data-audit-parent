@@ -236,7 +236,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
             if (Objects.isNull(pkValue)) {
                 return;
             }
-            redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_PK_SUFFIX, (String) pkValue);
+            redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_PK_SUFFIX, String.valueOf(pkValue));
         }
     }
 
