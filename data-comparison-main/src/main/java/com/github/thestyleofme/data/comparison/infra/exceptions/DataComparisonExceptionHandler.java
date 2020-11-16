@@ -27,12 +27,6 @@ public class DataComparisonExceptionHandler {
         return Err.of(getMessage(e));
     }
 
-    // @ExceptionHandler(RedisBloomException.class)
-    // public Err handleRedisBloomException(RedisBloomException e) {
-    //     log.error("RedisBloomException", e);
-    //     return Err.of(getMessage(e));
-    // }
-
     @ExceptionHandler(Exception.class)
     public Err handleException(Exception e) {
         log.error("Exception", e);

@@ -95,16 +95,13 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                     for (LinkedHashMap<String, Object> map : oneList) {
                         String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
                         List<Integer> hashList = bloom.doHash(md5Str, seed);
-                        // 只要有一个hash后在redis中找不到 即肯定不存在
+                        // 只要有一个hash在redis中找不到 即肯定不存在
                         boolean exists = hashList.stream()
                                 .map(hash -> redisTemplate.opsForValue().getBit(redisKey, hash))
                                 .anyMatch(Boolean.FALSE::equals);
                         if (Boolean.TRUE.equals(exists)) {
                             // 肯定不存在 需判断主键或唯一索引是否一样
                             handlerNotExits(handlerResult, jobEnv, comparisonJob, map, sourceDataMapping);
-                        } else {
-                            // 只能说可能存在 不能百分百保证 尽可能降低误判率
-                            handlerResult.getSameDataList().add(map);
                         }
                     }
                     LocalDateTime end = LocalDateTime.now();
@@ -130,10 +127,9 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                                  ComparisonJob comparisonJob,
                                  LinkedHashMap<String, Object> map,
                                  SourceDataMapping sourceDataMapping) {
-        String sourcePk = jobEnv.getSourcePk();
         String pkRedisKey = String.format(CommonConstant.RedisKey.TARGET_PK,
                 comparisonJob.getTenantId(), comparisonJob.getJobName());
-        Object pkValue = map.get(sourcePk);
+        Object pkValue = map.get(jobEnv.getSourcePk());
         Boolean isMember = redisTemplate.opsForSet().isMember(pkRedisKey, String.valueOf(pkValue));
         if (Boolean.FALSE.equals(isMember)) {
             // 主键不存在 还需判断唯一索引
@@ -240,7 +236,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
             if (Objects.isNull(pkValue)) {
                 return;
             }
-            redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_PK_SUFFIX, String.valueOf(pkValue));
+            redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_PK_SUFFIX, (String) pkValue);
         }
     }
 

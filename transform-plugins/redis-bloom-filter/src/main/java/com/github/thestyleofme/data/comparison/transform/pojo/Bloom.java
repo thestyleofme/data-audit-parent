@@ -78,7 +78,8 @@ public class Bloom {
     public List<Integer> doHash(String value, int seed) {
         ArrayList<Integer> list = new ArrayList<>(numHashFunctions);
         for (int i = 0; i < numHashFunctions; i++) {
-            int hash = hash(value, seed++);
+            seed *= (i + 1);
+            int hash = hash(value, seed);
             list.add(hash);
         }
         return list;
@@ -92,10 +93,7 @@ public class Bloom {
      * @return int
      */
     private int hash(String value, int seed) {
-        int result = 0;
-        for (char c : value.toCharArray()) {
-            result = result * seed + value.indexOf(c);
-        }
+        int result = (int) (Math.log(3) * seed) + value.hashCode();
         return Math.abs(result) % bitSize;
     }
 

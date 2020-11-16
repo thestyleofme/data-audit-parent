@@ -1,12 +1,16 @@
 package com.github.thestyleofme.data.comparison.transform.handler;
 
+import java.lang.reflect.InvocationTargetException;
+
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
+import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.data.comparison.transform.exceptions.RedisBloomException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,8 +37,8 @@ public class RedisBloomTransformHandlerProxy implements TransformHandlerProxy {
                         // 正常执行完删除redis相关的key
                         HandlerUtil.deleteRedisKey(args);
                         return invoke;
-                    } catch (RedisBloomException e) {
-                        throw e;
+                    } catch (RedisBloomException | InvocationTargetException e) {
+                        throw new HandlerException(ExceptionUtils.getRootCauseMessage(e));
                     } catch (Exception e) {
                         // 抛其他异常需删除redis相关的key
                         HandlerUtil.deleteRedisKey(args);

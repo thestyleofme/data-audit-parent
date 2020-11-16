@@ -32,8 +32,8 @@ public class ThreadPoolUtil {
          *   7.RejectedExecutionHandler 线程拒绝策略
          */
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder().setNameFormat("jobExecutor-%d").build();
-        executorService = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors() * 2 + 1,
-                Runtime.getRuntime().availableProcessors() * 4 + 1,
+        executorService = new ThreadPoolExecutor(32,
+                64,
                 100,
                 TimeUnit.MICROSECONDS,
                 new LinkedBlockingQueue<>(64),

@@ -95,7 +95,8 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
                         clusterCode)));
         // 删表
         this.remove(new QueryWrapper<>(Catalog.builder()
-                .clusterCode(catalogName)
+                .clusterCode(clusterCode)
+                .catalogName(catalogName)
                 .tenantId(tenantId).build()));
         // presto删除catalog
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>(1);
