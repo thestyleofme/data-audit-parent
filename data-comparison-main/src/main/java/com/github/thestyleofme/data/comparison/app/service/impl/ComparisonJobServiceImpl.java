@@ -89,13 +89,33 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         // env
         Map<String, Object> env = appConf.getEnv();
-        // source
-        SourceDataMapping sourceDataMapping = null;
-        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSource().entrySet()) {
-            BaseSourceHandler sourceHandler = jobHandlerContext.getSourceHandler(entry.getKey().toUpperCase());
-            sourceDataMapping = sourceHandler.handle(comparisonJob, env, entry.getValue());
-        }
+        SourceDataMapping sourceDataMapping = doSource(appConf, env, comparisonJob);
         // transform
+        HandlerResult handlerResult = doTransform(appConf, env, sourceDataMapping, comparisonJob);
+        // sink
+        doSink(appConf, env, comparisonJob, handlerResult);
+    }
+
+    private void doSink(AppConf appConf,
+                        Map<String, Object> env,
+                        ComparisonJob comparisonJob,
+                        HandlerResult handlerResult) {
+        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSink().entrySet()) {
+            String key = entry.getKey().toUpperCase();
+            BaseSinkHandler baseSinkHandler = jobHandlerContext.getSinkHandler(key);
+            // 可对BaseSinkHandler创建代理
+            SinkHandlerProxy sinkHandlerProxy = jobHandlerContext.getSinkHandlerProxy(key);
+            if (sinkHandlerProxy != null) {
+                baseSinkHandler = sinkHandlerProxy.proxy(baseSinkHandler);
+            }
+            baseSinkHandler.handle(comparisonJob, env, entry.getValue(), handlerResult);
+        }
+    }
+
+    private HandlerResult doTransform(AppConf appConf,
+                                      Map<String, Object> env,
+                                      SourceDataMapping sourceDataMapping,
+                                      ComparisonJob comparisonJob) {
         HandlerResult handlerResult = null;
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
             String key;
@@ -115,17 +135,18 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             }
             handlerResult = transformHandler.handle(comparisonJob, env, sourceDataMapping);
         }
-        // sink
-        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSink().entrySet()) {
-            String key = entry.getKey().toUpperCase();
-            BaseSinkHandler baseSinkHandler = jobHandlerContext.getSinkHandler(key);
-            // 可对BaseSinkHandler创建代理
-            SinkHandlerProxy sinkHandlerProxy = jobHandlerContext.getSinkHandlerProxy(key);
-            if (sinkHandlerProxy != null) {
-                baseSinkHandler = sinkHandlerProxy.proxy(baseSinkHandler);
-            }
-            baseSinkHandler.handle(comparisonJob, env, entry.getValue(), handlerResult);
+        return handlerResult;
+    }
+
+    private SourceDataMapping doSource(AppConf appConf,
+                                       Map<String, Object> env,
+                                       ComparisonJob comparisonJob) {
+        SourceDataMapping sourceDataMapping = null;
+        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSource().entrySet()) {
+            BaseSourceHandler sourceHandler = jobHandlerContext.getSourceHandler(entry.getKey().toUpperCase());
+            sourceDataMapping = sourceHandler.handle(comparisonJob, env, entry.getValue());
         }
+        return sourceDataMapping;
     }
 
     private void doGroupJob(Long tenantId, String groupCode) {

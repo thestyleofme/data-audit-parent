@@ -183,8 +183,7 @@ public class PrestoJobHandler implements BaseTransformHandler {
         }
         // 优先使用transform中数据，其次从env中获取
         PrestoInfo prestoInfo = BeanUtils.map2Bean(transformMap, PrestoInfo.class);
-        JobEnv jobEnv = BeanUtils.map2Bean(Optional.ofNullable(appConf.getEnv())
-                .orElse(new HashMap<>(8)), JobEnv.class);
+        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
         prestoInfo.setSourceDatasourceCode(CommonUtil.requireNonNullElse(prestoInfo.getSourceDatasourceCode(), jobEnv.getSourceDatasourceCode()));
         prestoInfo.setSourceSchema(CommonUtil.requireNonNullElse(prestoInfo.getSourceSchema(), jobEnv.getSourceSchema()));
         prestoInfo.setSourceTable(CommonUtil.requireNonNullElse(prestoInfo.getSourceTable(), jobEnv.getSourceTable()));
