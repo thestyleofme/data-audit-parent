@@ -1,6 +1,6 @@
 package com.github.thestyleofme.data.comparison.infra.converter;
 
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;

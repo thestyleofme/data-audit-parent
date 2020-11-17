@@ -1,0 +1,65 @@
+{
+  "env": {
+    "sourcePk": "id",
+    "targetPk": "id",
+    "sourceIndex": "",
+    "targetIndex": "",
+    "sourceDatasourceCode": "hdsp_mysql5",
+    "targetDatasourceCode": "hdsp_mysql5",
+    "sourceSchema": "hdsp_test",
+    "sourceTable": "resume",
+    "targetSchema": "hdsp_test",
+    "targetTable": "resume_bak",
+    "colMapping": [
+      {
+        "sourceCol": "id",
+        "targetCol": "id",
+        "index": 0
+      },
+      {
+        "sourceCol": "name",
+        "targetCol": "name",
+        "index": 2
+      },
+      {
+        "sourceCol": "sex",
+        "targetCol": "sex",
+        "index": 1
+      },
+      {
+        "sourceCol": "phone",
+        "targetCol": "call",
+        "index": 3
+      },
+      {
+        "sourceCol": "address",
+        "targetCol": "address",
+        "index": 4
+      },
+      {
+        "sourceCol": "education",
+        "targetCol": "education",
+        "index": 5
+      },
+      {
+        "sourceCol": "state",
+        "targetCol": "state",
+        "index": 6
+      }
+    ]
+  },
+  "source": {
+
+  },
+  "transform": {
+    "presto": {
+      "coordinatorUrl": "http://172.23.16.78:29527",
+      "username": "presto"
+    }
+  },
+  "sink": {
+    "excel": {
+      "outputPath": "C:/Users/isaac/Desktop"
+    }
+  }
+}

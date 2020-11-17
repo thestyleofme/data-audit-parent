@@ -3,7 +3,7 @@ package com.github.thestyleofme.data.comparison.api.controller.v1;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 1.0.0
  */
 @RestController("comparisonJobController.v1")
-@RequestMapping("/v1/{organizationId}/comparison")
+@RequestMapping("/v1/{organizationId}/comparison-job")
 @Slf4j
 public class ComparisonJobController {
 
@@ -42,10 +42,11 @@ public class ComparisonJobController {
     }
 
     @ApiOperation(value = "执行数据稽核任务")
-    @GetMapping("/execute/{id}")
+    @GetMapping("/execute")
     public ResponseEntity<Void> execute(@PathVariable(name = "organizationId") Long tenantId,
-                                        @PathVariable(name = "id") Long id) {
-        comparisonJobService.execute(tenantId, id);
+                                        @RequestParam(value = "jobCode", required = false) String jobCode,
+                                        @RequestParam(value = "groupCode", required = false) String groupCode) {
+        comparisonJobService.execute(tenantId, jobCode, groupCode);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -58,10 +59,10 @@ public class ComparisonJobController {
     }
 
     @ApiOperation(value = "删除数据稽核任务")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{jobId}")
     public ResponseEntity<Void> delete(@PathVariable(name = "organizationId") Long tenantId,
-                                       @PathVariable Long id) {
-        comparisonJobService.removeById(id);
+                                       @PathVariable Long jobId) {
+        comparisonJobService.removeById(jobId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

@@ -25,17 +25,18 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComparisonJobDTO {
 
-    private Long id;
+    private Long jobId;
+    private String groupCode;
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务名称，英文下划线")
-    private String jobName;
+    private String jobCode;
     private String jobDesc;
     @NotBlank
     @ApiModelProperty(value = "任务模式(OPTION:页面向导/IMPORT:脚本配置即自行编写配置文件或自行上传配置文件)")
     private String jobMode;
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务json配置文件")
-    private String applicationConf;
+    private String appConf;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

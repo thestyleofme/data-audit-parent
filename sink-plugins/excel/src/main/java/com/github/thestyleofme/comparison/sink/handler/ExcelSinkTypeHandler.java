@@ -12,8 +12,8 @@ import com.alibaba.excel.write.metadata.WriteSheet;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.sink.pojo.ExcelInfo;
@@ -46,7 +46,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         if (StringUtils.isEmpty(fileOutputPath)) {
             throw new HandlerException("when sinkType=EXCEL, fileOutputPath cannot be null");
         }
-        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobName());
+        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);
         JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();

@@ -1,5 +1,6 @@
 package com.github.thestyleofme.data.comparison.app.service.impl;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,9 +16,13 @@ import com.github.thestyleofme.comparison.common.app.service.transform.BaseTrans
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.TransformInfo;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
+import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
+import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
@@ -26,6 +31,7 @@ import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -40,9 +46,12 @@ import org.springframework.stereotype.Service;
 public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, ComparisonJob> implements ComparisonJobService {
 
     private final JobHandlerContext jobHandlerContext;
+    private final ComparisonJobGroupService comparisonJobGroupService;
 
-    public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext) {
+    public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
+                                    ComparisonJobGroupService comparisonJobGroupService) {
         this.jobHandlerContext = jobHandlerContext;
+        this.comparisonJobGroupService = comparisonJobGroupService;
     }
 
     @Override
@@ -59,10 +68,23 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     @Override
-    public void execute(Long tenantId, Long id) {
+    public void execute(Long tenantId, String jobCode, String groupCode) {
+        // 要么执行组下的任务，要么执行某一个job 两者取其一
+        if (!StringUtils.isEmpty(groupCode)) {
+            doGroupJob(tenantId, groupCode);
+            return;
+        }
+        if (StringUtils.isEmpty(jobCode)) {
+            // 都没传 直接抛异常
+            throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
+        }
         ComparisonJob comparisonJob = this.getOne(new QueryWrapper<>(ComparisonJob.builder()
-                .tenantId(tenantId).id(id).build()));
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getApplicationConf(), AppConf.class);
+                .tenantId(tenantId).jobCode(jobCode).build()));
+        doJob(comparisonJob);
+    }
+
+    private void doJob(ComparisonJob comparisonJob) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         // env
         Map<String, Object> env = appConf.getEnv();
         // source
@@ -97,9 +119,28 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         }
     }
 
+    private void doGroupJob(Long tenantId, String groupCode) {
+        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(new QueryWrapper<>(ComparisonJobGroup.builder()
+                .tenantId(tenantId).groupCode(groupCode).build()));
+        if (jobGroup == null) {
+            throw new HandlerException("hdsp.xadt.error.comparison.job.group[%s].not_exist", groupCode);
+        }
+        List<ComparisonJob> jobList = this.list(new QueryWrapper<>(ComparisonJob.builder()
+                .tenantId(tenantId).groupCode(groupCode).build()));
+        for (ComparisonJob comparisonJob : jobList) {
+            // 将group中的信息写到job的全局参数env中 后续job执行或许用的上
+            AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+            JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+            // 拷贝group信息到env
+            org.springframework.beans.BeanUtils.copyProperties(jobGroup, jobEnv);
+            appConf.setEnv(BeanUtils.bean2Map(jobEnv));
+            comparisonJob.setAppConf(JsonUtil.toJson(appConf));
+            doJob(comparisonJob);
+        }
+    }
+
     @Override
     public ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO) {
-        // todo 校验
         ComparisonJob comparisonJob = BaseComparisonJobConvert.INSTANCE.dtoToEntity(comparisonJobDTO);
         this.saveOrUpdate(comparisonJob);
         return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);

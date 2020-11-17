@@ -25,7 +25,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@TableName(value = "presto_cluster")
+@TableName(value = "xadt_presto_cluster")
 public class Cluster {
 
     public static final String FIELD_ID = "id";

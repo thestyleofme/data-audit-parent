@@ -1,13 +1,13 @@
-package com.github.thestyleofme.presto.domain.entity;
+package com.github.thestyleofme.data.comparison.api.dto;
 
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.Version;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.*;
 
@@ -16,30 +16,38 @@ import lombok.*;
  * description
  * </p>
  *
- * @author isaac 2020/11/09 14:42
+ * @author isaac 2020/7/22 11:14
  * @since 1.0.0
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
+@ApiModel("数据稽核任务组")
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@TableName(value = "xadt_presto_catalog")
-public class Catalog {
+public class ComparisonJobGroupDTO {
 
-    public static final String FIELD_ID = "id";
+    public static final String FIELD_ID = "group_id";
 
     @TableId(type = IdType.AUTO)
-    private Long id;
+    private Long groupId;
     @NotBlank
-    private String clusterCode;
+    @ApiModelProperty(value = "数据稽核任务组名称，英文下划线")
+    private String groupCode;
+    private String groupDesc;
     @NotBlank
-    private String catalogName;
+    @ApiModelProperty(value = "源数据源")
+    private String sourceDatasourceCode;
     @NotBlank
-    private String connectorName;
+    @ApiModelProperty(value = "目标数据源")
+    private String targetDatasourceCode;
     @NotBlank
-    private String properties;
+    @ApiModelProperty(value = "源库")
+    private String sourceSchema;
+    @NotBlank
+    @ApiModelProperty(value = "目标库")
+    private String targetSchema;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

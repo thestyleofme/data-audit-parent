@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.domain;
+package com.github.thestyleofme.comparison.common.domain.entity;
 
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;
@@ -24,26 +24,32 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@ApiModel("数据稽核任务")
+@ApiModel("数据稽核任务组")
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@TableName(value = "data_comparison_job")
-public class ComparisonJob {
+@TableName(value = "xadt_comparison_job_group")
+public class ComparisonJobGroup {
 
-    public static final String FIELD_ID = "id";
+    public static final String FIELD_ID = "group_id";
 
     @TableId(type = IdType.AUTO)
-    private Long id;
+    private Long groupId;
     @NotBlank
-    @ApiModelProperty(value = "数据稽核任务名称，英文下划线")
-    private String jobName;
-    private String jobDesc;
+    @ApiModelProperty(value = "数据稽核任务组名称，英文下划线")
+    private String groupCode;
+    private String groupDesc;
     @NotBlank
-    @ApiModelProperty(value = "任务模式(OPTION:页面向导/IMPORT:脚本配置即自行编写配置文件或自行上传配置文件)")
-    private String jobMode;
+    @ApiModelProperty(value = "源数据源")
+    private String sourceDatasourceCode;
     @NotBlank
-    @ApiModelProperty(value = "数据稽核任务json配置文件")
-    private String applicationConf;
+    @ApiModelProperty(value = "目标数据源")
+    private String targetDatasourceCode;
+    @NotBlank
+    @ApiModelProperty(value = "源库")
+    private String sourceSchema;
+    @NotBlank
+    @ApiModelProperty(value = "目标库")
+    private String targetSchema;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

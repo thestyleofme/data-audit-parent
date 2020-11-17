@@ -2,12 +2,12 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper">
     <!-- 可根据自己的需求，是否要使用 -->
-    <resultMap id="BaseResultMap" type="com.github.thestyleofme.comparison.common.domain.ComparisonJob">
-        <result column="id" property="id" jdbcType="DECIMAL"/>
-        <result column="job_name" property="jobName" jdbcType="VARCHAR"/>
+    <resultMap id="BaseResultMap" type="com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob">
+        <result column="job_id" property="jobId" jdbcType="DECIMAL"/>
+        <result column="job_code" property="jobCode" jdbcType="VARCHAR"/>
         <result column="job_desc" property="jobDesc" jdbcType="VARCHAR"/>
         <result column="job_mode" property="jobMode" jdbcType="VARCHAR"/>
-        <result column="application_conf" property="applicationConf" jdbcType="VARCHAR"/>
+        <result column="app_conf" property="appConf" jdbcType="VARCHAR"/>
         <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
         <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>
         <result column="creation_date" property="creationDate" jdbcType="TIMESTAMP"/>
