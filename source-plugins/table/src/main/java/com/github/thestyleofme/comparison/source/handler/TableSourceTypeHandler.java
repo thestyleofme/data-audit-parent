@@ -1,5 +1,7 @@
 package com.github.thestyleofme.comparison.source.handler;
 
+import static com.github.thestyleofme.comparison.common.infra.utils.CommonUtil.requireNonNullElse;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -7,8 +9,8 @@ import java.util.stream.Stream;
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
 import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.source.pojo.TableInfo;
@@ -42,12 +44,14 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
                                     Map<String, Object> sourceMap) {
         Long tenantId = comparisonJob.getTenantId();
         TableInfo tableInfo = BeanUtils.map2Bean(sourceMap, TableInfo.class);
-        String sourceDatasourceCode = tableInfo.getSourceDatasourceCode();
-        String sourceSchema = tableInfo.getSourceSchema();
-        String sourceTable = tableInfo.getSourceTable();
-        String targetDatasourceCode = tableInfo.getTargetDatasourceCode();
-        String targetSchema = tableInfo.getTargetSchema();
-        String targetTable = tableInfo.getTargetTable();
+        JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
+        // 优先从tableInfo取 取不到从jobEnv取
+        String sourceDatasourceCode = requireNonNullElse(tableInfo.getSourceDatasourceCode(), jobEnv.getSourceDatasourceCode());
+        String sourceSchema = requireNonNullElse(tableInfo.getSourceSchema(), jobEnv.getSourceSchema());
+        String sourceTable = requireNonNullElse(tableInfo.getSourceTable(), jobEnv.getSourceTable());
+        String targetDatasourceCode = requireNonNullElse(tableInfo.getTargetDatasourceCode(), jobEnv.getTargetDatasourceCode());
+        String targetSchema = requireNonNullElse(tableInfo.getTargetSchema(), jobEnv.getTargetSchema());
+        String targetTable = requireNonNullElse(tableInfo.getTargetTable(), jobEnv.getTargetTable());
         boolean anyMatch = Stream.of(tenantId, sourceDatasourceCode, sourceSchema, sourceTable,
                 targetDatasourceCode, targetSchema, targetTable)
                 .anyMatch(Objects::isNull);
@@ -58,12 +62,12 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         }
         // 封装ComparisonMapping
         SourceDataMapping sourceDataMapping = new SourceDataMapping();
-        handleSource(env, sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);
-        handleTarget(env, sourceDataMapping, tenantId, targetDatasourceCode, targetSchema, targetTable);
+        handleSource(jobEnv, sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);
+        handleTarget(jobEnv, sourceDataMapping, tenantId, targetDatasourceCode, targetSchema, targetTable);
         return sourceDataMapping;
     }
 
-    private void handleSource(Map<String, Object> env,
+    private void handleSource(JobEnv jobEnv,
                               SourceDataMapping sourceDataMapping,
                               Long tenantId,
                               String sourceDatasourceCode,
@@ -72,11 +76,11 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, sourceDatasourceCode);
         List<Map<String, Object>> sourceList = sourceDriverSession.tableQuery(sourceSchema, sourceTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = sortListMap(env, sourceList, ColMapping.SOURCE);
+        List<LinkedHashMap<String, Object>> result = sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
         sourceDataMapping.setSourceDataList(result);
     }
 
-    private void handleTarget(Map<String, Object> env,
+    private void handleTarget(JobEnv jobEnv,
                               SourceDataMapping sourceDataMapping,
                               Long tenantId,
                               String targetDatasourceCode,
@@ -85,14 +89,13 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, targetDatasourceCode);
         List<Map<String, Object>> targetList = targetDriverSession.tableQuery(targetSchema, targetTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = sortListMap(env, targetList, ColMapping.TARGET);
+        List<LinkedHashMap<String, Object>> result = sortListMap(jobEnv, targetList, ColMapping.TARGET);
         sourceDataMapping.setTargetDataList(result);
     }
 
-    private List<LinkedHashMap<String, Object>> sortListMap(Map<String, Object> env,
+    private List<LinkedHashMap<String, Object>> sortListMap(JobEnv jobEnv,
                                                             List<Map<String, Object>> list,
                                                             String position) {
-        JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();
         List<LinkedHashMap<String, Object>> result = new ArrayList<>(list.size());
         if (CollectionUtils.isEmpty(colMapping)) {

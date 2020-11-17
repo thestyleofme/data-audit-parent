@@ -22,6 +22,13 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobEnv {
 
+    private String sourceDatasourceCode;
+    private String targetDatasourceCode;
+    private String sourceSchema;
+    private String targetSchema;
+    private String sourceTable;
+    private String targetTable;
+
     private String sourcePk;
     private String targetPk;
     private String sourceIndex;

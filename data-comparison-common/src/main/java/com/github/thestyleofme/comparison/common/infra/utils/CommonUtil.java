@@ -7,8 +7,9 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -35,6 +36,10 @@ public class CommonUtil {
                 classLoader,
                 new Class[]{clazz},
                 invocationHandler);
+    }
+
+    public static <T> T requireNonNullElse(T obj, T defaultObj) {
+        return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
     }
 
     /**
@@ -91,7 +96,7 @@ public class CommonUtil {
 
     public static void deleteFile(ComparisonJob comparisonJob, String path) {
         if (!StringUtils.isEmpty(path)) {
-            String excelName = String.format("%s/%d_%s.xlsx", path, comparisonJob.getTenantId(), comparisonJob.getJobName());
+            String excelName = String.format("%s/%d_%s.xlsx", path, comparisonJob.getTenantId(), comparisonJob.getJobCode());
             deleteFile(excelName);
         }
     }

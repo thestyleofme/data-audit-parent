@@ -3,7 +3,7 @@ package com.github.thestyleofme.comparison.common.app.service.sink;
 import java.util.Map;
 
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 
 
 /**

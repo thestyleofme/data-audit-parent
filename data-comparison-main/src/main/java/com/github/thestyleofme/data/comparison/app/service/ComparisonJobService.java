@@ -3,7 +3,7 @@ package com.github.thestyleofme.data.comparison.app.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 
 /**
@@ -29,9 +29,10 @@ public interface ComparisonJobService extends IService<ComparisonJob> {
      * 执行数据稽核job
      *
      * @param tenantId 租户id
-     * @param id       job id
+     * @param jobCode    jobCode
+     * @param groupCode  groupCode
      */
-    void execute(Long tenantId, Long id);
+    void execute(Long tenantId, String jobCode, String groupCode);
 
     /**
      * 保存数据稽核job

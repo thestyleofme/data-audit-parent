@@ -1,0 +1,65 @@
+{
+  "env": {
+    "sourcePk": "id",
+    "targetPk": "id",
+    "sourceIndex": "",
+    "targetIndex": "",
+    "colMapping": [
+      {
+        "sourceCol": "id",
+        "targetCol": "id",
+        "index": 0
+      },
+      {
+        "sourceCol": "name",
+        "targetCol": "name",
+        "index": 1
+      },
+      {
+        "sourceCol": "sex",
+        "targetCol": "sex",
+        "index": 2
+      },
+      {
+        "sourceCol": "phone",
+        "targetCol": "call",
+        "index": 3
+      },
+      {
+        "sourceCol": "address",
+        "targetCol": "address",
+        "index": 4
+      },
+      {
+        "sourceCol": "education",
+        "targetCol": "education",
+        "index": 5
+      },
+      {
+        "sourceCol": "state",
+        "targetCol": "state",
+        "index": 6
+      }
+    ]
+  },
+  "source": {
+    "table": {
+      "sourceDatasourceCode": "hdsp_mysql5",
+      "targetDatasourceCode": "hdsp_mysql5",
+      "sourceSchema": "hdsp_test",
+      "sourceTable": "resume",
+      "targetSchema": "hdsp_test",
+      "targetTable": "resume_bak"
+    }
+  },
+  "transform": {
+    "bloom_filter": {
+      "type": "redis"
+    }
+  },
+  "sink": {
+    "excel": {
+      "outputPath": "C:/Users/isaac/Desktop"
+    }
+  }
+}

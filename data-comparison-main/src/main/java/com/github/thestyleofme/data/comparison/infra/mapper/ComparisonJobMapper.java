@@ -1,7 +1,7 @@
 package com.github.thestyleofme.data.comparison.infra.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 
 /**
  * <p>

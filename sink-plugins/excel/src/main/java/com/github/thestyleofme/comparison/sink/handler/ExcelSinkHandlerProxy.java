@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.sink.pojo.ExcelInfo;

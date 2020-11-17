@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.domain.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
@@ -63,7 +63,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
             return null;
         }
         int seed = ThreadLocalRandom.current().nextInt(bloom.getBitSize());
-        String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobName());
+        String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
             throw new RedisBloomException("redis key[%s] already exists, maybe this job is currently running, please try again later", redisKey);
         }
@@ -128,7 +128,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                                  LinkedHashMap<String, Object> map,
                                  SourceDataMapping sourceDataMapping) {
         String pkRedisKey = String.format(CommonConstant.RedisKey.TARGET_PK,
-                comparisonJob.getTenantId(), comparisonJob.getJobName());
+                comparisonJob.getTenantId(), comparisonJob.getJobCode());
         Object pkValue = map.get(jobEnv.getSourcePk());
         Boolean isMember = redisTemplate.opsForSet().isMember(pkRedisKey, String.valueOf(pkValue));
         if (Boolean.FALSE.equals(isMember)) {
@@ -145,7 +145,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                     .count();
             if (count == split.length) {
                 String indexRedisKey = String.format(CommonConstant.RedisKey.TARGET_INDEX,
-                        comparisonJob.getTenantId(), comparisonJob.getJobName());
+                        comparisonJob.getTenantId(), comparisonJob.getJobCode());
                 String value = Stream.of(split).map(s -> (String) map.get(s)).collect(Collectors.joining(","));
                 Boolean exists = redisTemplate.opsForSet().isMember(indexRedisKey, value);
                 if (Boolean.TRUE.equals(exists)) {
