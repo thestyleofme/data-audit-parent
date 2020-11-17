@@ -20,7 +20,6 @@ import com.github.thestyleofme.comparison.sink.pojo.ExcelInfo;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -87,10 +86,6 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
     }
 
     private void doSame(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        List<LinkedHashMap<String, Object>> sameDataList = handlerResult.getSameDataList();
-        if(CollectionUtils.isEmpty(sameDataList)){
-            return;
-        }
         // 生成excel头 List<List<String>>
         List<List<String>> headerList = sourceToTargetHeader(colMappingList);
         // 生成excel数据 List<List<Object>>
@@ -106,10 +101,6 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
     }
 
     private void doPkOrIndexSame(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        List<LinkedHashMap<String, Object>> pkOrIndexSameDataList = handlerResult.getPkOrIndexSameDataList();
-        if(CollectionUtils.isEmpty(pkOrIndexSameDataList)){
-            return;
-        }
         List<List<String>> headerList = sourceToTargetHeader(colMappingList);
         // 生成excel数据 List<List<Object>>
         List<List<Object>> pkOrIndexList = handlerResult.getPkOrIndexSameDataList().stream()
@@ -123,9 +114,9 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         excelWriter.write(pkOrIndexList, writeSheet);
     }
 
-    private List<List<String>> sourceToTargetHeader( List<ColMapping> colMappingList){
+    private List<List<String>> sourceToTargetHeader(List<ColMapping> colMappingList) {
         // 生成excel头 List<List<String>>
-        return  colMappingList.stream()
+        return colMappingList.stream()
                 .map(colMapping -> Collections.singletonList(
                         colMapping.getSourceCol().equals(colMapping.getTargetCol()) ? colMapping.getSourceCol() :
                                 String.format("%s -> %s", colMapping.getSourceCol(), colMapping.getTargetCol())))
@@ -133,16 +124,12 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
     }
 
     private void doTargetUnique(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        List<LinkedHashMap<String, Object>> targetUniqueDataList = handlerResult.getTargetUniqueDataList();
-        if(CollectionUtils.isEmpty(targetUniqueDataList)){
-          return;
-        }
         // 生成excel头 List<List<String>>
         List<List<String>> excelTargetHeaderList = colMappingList.stream()
                 .map(colMapping -> Collections.singletonList(colMapping.getTargetCol()))
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
-        List<List<Object>> targetDataList = targetUniqueDataList.stream()
+        List<List<Object>> targetDataList = handlerResult.getTargetUniqueDataList().stream()
                 .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
@@ -154,16 +141,12 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
     }
 
     private void doSourceUnique(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        List<LinkedHashMap<String, Object>> sourceUniqueDataList = handlerResult.getSourceUniqueDataList();
-        if (CollectionUtils.isEmpty(sourceUniqueDataList)) {
-            return;
-        }
         // 生成excel头 List<List<String>>
         List<List<String>> excelSourceHeaderList = colMappingList.stream()
                 .map(colMapping -> Collections.singletonList(colMapping.getSourceCol()))
                 .collect(Collectors.toList());
         // 生成excel数据 List<List<Object>>
-        List<List<Object>> sourceDataList = sourceUniqueDataList.stream()
+        List<List<Object>> sourceDataList = handlerResult.getSourceUniqueDataList().stream()
                 .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());

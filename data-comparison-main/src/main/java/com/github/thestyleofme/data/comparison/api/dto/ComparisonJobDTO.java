@@ -3,8 +3,6 @@ package com.github.thestyleofme.data.comparison.api.dto;
 import java.time.LocalDateTime;
 import javax.validation.constraints.NotBlank;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -26,7 +24,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComparisonJobDTO {
-    @TableId(type = IdType.AUTO)
+
     private Long jobId;
     private String groupCode;
     @NotBlank

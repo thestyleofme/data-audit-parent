@@ -14,6 +14,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PrestoInfo {
+
     private String clusterCode;
     private String dataSourceCode;
     private String coordinatorUrl;

@@ -100,11 +100,11 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
             String key;
             TransformInfo transformInfo = BeanUtils.map2Bean(entry.getValue(), TransformInfo.class);
-            // presto 类型
             if (Objects.isNull(transformInfo) || StringUtils.isEmpty(transformInfo.getType())) {
+                // 如presto类型
                 key = entry.getKey().toUpperCase();
             } else {
-                // 布隆过滤器类型
+                // 如布隆过滤器类型
                 key = String.format(CommonConstant.CONTACT, entry.getKey().toUpperCase(), transformInfo.getType());
             }
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);

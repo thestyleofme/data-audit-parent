@@ -39,7 +39,7 @@ public class CommonUtil {
     }
 
     public static <T> T requireNonNullElse(T obj, T defaultObj) {
-        return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "defaultObj");
+        return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "both are null");
     }
 
     /**
@@ -108,7 +108,7 @@ public class CommonUtil {
                 Files.delete(file.toPath());
                 log.debug("the file[{}] successfully deleted", path);
             } catch (IOException e) {
-                throw new HandlerException("file[{}] delete error", path);
+                throw new HandlerException("file[%s] delete error", path);
             }
         }
     }

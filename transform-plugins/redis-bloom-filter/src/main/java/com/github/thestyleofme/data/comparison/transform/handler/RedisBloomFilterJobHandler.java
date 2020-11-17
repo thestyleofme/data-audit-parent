@@ -34,7 +34,10 @@ import org.springframework.util.StringUtils;
 
 /**
  * <p>
- * description
+ * 有误差，无法保证正确性，不可基于此去做数据补偿
+ * 场景可能是，当表数据量特别大时，可生成布隆过滤器，做一些数据判断是否存在
+ * 有点<strong>鸡肋</strong> 计算时间长还不准确
+ * 推荐使用presto，运行快且准
  * </p>
  *
  * @author isaac 2020/10/22 15:33
@@ -99,9 +102,14 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                         boolean exists = hashList.stream()
                                 .map(hash -> redisTemplate.opsForValue().getBit(redisKey, hash))
                                 .anyMatch(Boolean.FALSE::equals);
+                        // 可能存在的这里不做处理 因为没什么意义
                         if (Boolean.TRUE.equals(exists)) {
-                            // 肯定不存在 需判断主键或唯一索引是否一样
+                            // 肯定不存在 需判断主键或唯一索引是否一样 存在误差 若能忽略可以使用
+                            // 一般场景用于找pk或索引相同 判断数据是否一致
                             handlerNotExits(handlerResult, jobEnv, comparisonJob, map, sourceDataMapping);
+                        } else {
+                            // 只能说可能存在 不能百分百保证 尽可能降低误判率
+                            handlerResult.getSameDataList().add(map);
                         }
                     }
                     LocalDateTime end = LocalDateTime.now();

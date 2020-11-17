@@ -12,13 +12,12 @@ public class CommonConstant {
 
     private CommonConstant() {
     }
+
     public static final String CONTACT = "%s_%s";
-    public static final String TYPE = "type";
-    public static final Integer FOUR = 4;
 
     public static class RedisKey {
-        private RedisKey() {
-        }
+
+        private RedisKey() {}
 
         public static final String JOB_PREFIX = "hdsp:job:comparison:";
         public static final String JOB_FORMAT = JOB_PREFIX + "%d_%s";
