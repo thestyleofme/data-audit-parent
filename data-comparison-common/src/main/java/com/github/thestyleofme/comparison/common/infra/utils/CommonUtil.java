@@ -53,16 +53,16 @@ public class CommonUtil {
             // 1024*10 -> 1万 1
             batchSize = defaultBatchSize;
         } else if (listSize < defaultBatchSize * pow * pow) {
-            // 1024*100 -> 10万 4
-            batchSize = listSize / 6;
+            // 1024*100 -> 10万 8
+            batchSize = listSize / 8;
         } else if (listSize < defaultBatchSize * pow * pow * pow) {
-            // 1024*1000 -> 100万 8
-            batchSize = listSize / 10;
-        } else if (listSize < defaultBatchSize * pow * pow * pow * pow) {
-            // 1024*10000 -> 1000万 16
+            // 1024*1000 -> 100万 16
             batchSize = listSize / 16;
-        } else {
+        } else if (listSize < defaultBatchSize * pow * pow * pow * pow) {
+            // 1024*10000 -> 1000万 32
             batchSize = listSize / 32;
+        } else {
+            batchSize = listSize / 64;
         }
         return batchSize;
     }
