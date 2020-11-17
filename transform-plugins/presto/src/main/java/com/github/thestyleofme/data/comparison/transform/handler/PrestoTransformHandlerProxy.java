@@ -1,30 +1,22 @@
 package com.github.thestyleofme.data.comparison.transform.handler;
 
-import java.lang.reflect.InvocationTargetException;
-
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
-import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
-import com.github.thestyleofme.data.comparison.transform.exceptions.RedisBloomException;
+import com.github.thestyleofme.data.comparison.transform.exceptions.PrestoException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Component;
 
 /**
- * <p>
- * description
- * </p>
- *
- * @author isaac 2020/11/12 15:49
- * @since 1.0.0
+ * @author siqi.hou@hand-china.com
+ * @date 2020-11-16 19:45
  */
+@TransformType("PRESTO")
 @Component
-@TransformType(value = "BLOOM_FILTER",type = "REDIS")
 @Slf4j
-public class RedisBloomTransformHandlerProxy implements TransformHandlerProxy {
+public class PrestoTransformHandlerProxy implements TransformHandlerProxy {
 
     @Override
     public BaseTransformHandler proxy(BaseTransformHandler baseTransformHandler) {
@@ -34,12 +26,11 @@ public class RedisBloomTransformHandlerProxy implements TransformHandlerProxy {
                 (proxy, method, args) -> {
                     try {
                         Object invoke = method.invoke(baseTransformHandler, args);
-                        // 正常执行完删除redis相关的key
-                        HandlerUtil.deleteRedisKey(args);
+                        // 正常执行完操作 // TODO
+                        System.out.println("presto 执行完毕");
                         return invoke;
-                    } catch (RedisBloomException | InvocationTargetException e) {
-                        // todo 起一个定时线程 10分钟后删除redis key
-                        throw new HandlerException(ExceptionUtils.getRootCauseMessage(e));
+                    } catch (PrestoException e) {
+                        throw e;
                     } catch (Exception e) {
                         // 抛其他异常需删除redis相关的key
                         HandlerUtil.deleteRedisKey(args);

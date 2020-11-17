@@ -12,6 +12,9 @@ public class CommonConstant {
 
     private CommonConstant() {
     }
+    public static final String CONTACT = "%s_%s";
+    public static final String TYPE = "type";
+    public static final Integer FOUR = 4;
 
     public static class RedisKey {
         private RedisKey() {

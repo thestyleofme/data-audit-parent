@@ -8,7 +8,9 @@ import com.github.thestyleofme.comparison.common.app.service.transform.Transform
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
+import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -44,11 +46,15 @@ public class JobHandlerProcessor implements BeanPostProcessor {
         if (transformType != null) {
             String value = transformType.value();
             String type = transformType.type();
-            if (bean instanceof BaseTransformHandler) {
-                jobHandlerContext.register(String.format("%s_%s", value, type).toUpperCase(), (BaseTransformHandler) bean);
+            String key = value;
+            if (!StringUtils.isEmpty(type)) {
+                key = String.format(CommonConstant.CONTACT, value, type);
             }
-            if(bean instanceof TransformHandlerProxy){
-                jobHandlerContext.register(String.format("%s_%s", value, type).toUpperCase(), (TransformHandlerProxy) bean);
+            if (bean instanceof BaseTransformHandler) {
+                jobHandlerContext.register(key.toUpperCase(), (BaseTransformHandler) bean);
+            }
+            if (bean instanceof TransformHandlerProxy) {
+                jobHandlerContext.register(key.toUpperCase(), (TransformHandlerProxy) bean);
             }
         }
         SinkType sinkType = clazz.getAnnotation(SinkType.class);

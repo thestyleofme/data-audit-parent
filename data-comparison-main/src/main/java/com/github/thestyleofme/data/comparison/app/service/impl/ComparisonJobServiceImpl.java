@@ -2,6 +2,7 @@ package com.github.thestyleofme.data.comparison.app.service.impl;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -20,6 +21,7 @@ import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.TransformInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
+import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
@@ -30,8 +32,8 @@ import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -96,8 +98,15 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         // transform
         HandlerResult handlerResult = null;
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
+            String key;
             TransformInfo transformInfo = BeanUtils.map2Bean(entry.getValue(), TransformInfo.class);
-            String key = entry.getKey().toUpperCase() + "_" + transformInfo.getType();
+            // presto 类型
+            if (Objects.isNull(transformInfo) || StringUtils.isEmpty(transformInfo.getType())) {
+                key = entry.getKey().toUpperCase();
+            } else {
+                // 布隆过滤器类型
+                key = String.format(CommonConstant.CONTACT, entry.getKey().toUpperCase(), transformInfo.getType());
+            }
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);
             // 可对BaseTransformHandler创建代理
             TransformHandlerProxy transformHandlerProxy = jobHandlerContext.getTransformHandleHook(key);

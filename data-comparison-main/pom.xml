@@ -34,6 +34,11 @@
             <artifactId>redis-bloom-filter</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>presto</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!--sink-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>

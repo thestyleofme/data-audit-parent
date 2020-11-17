@@ -32,9 +32,10 @@ public class ComparisonJob {
 
     public static final String FIELD_ID = "job_id";
 
+    private String groupCode;
+
     @TableId(type = IdType.AUTO)
     private Long jobId;
-    private String groupCode;
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务名称，英文下划线")
     private String jobCode;

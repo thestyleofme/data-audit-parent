@@ -18,5 +18,5 @@ public @interface TransformType {
 
     String value();
 
-    String type() default "REDIS";
+    String type() default "";
 }

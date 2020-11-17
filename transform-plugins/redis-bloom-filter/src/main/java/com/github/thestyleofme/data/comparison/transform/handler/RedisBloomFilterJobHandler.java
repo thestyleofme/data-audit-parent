@@ -40,7 +40,7 @@ import org.springframework.util.StringUtils;
  * @author isaac 2020/10/22 15:33
  * @since 1.0.0
  */
-@TransformType(value = "BLOOM_FILTER")
+@TransformType(value = "BLOOM_FILTER",type = "REDIS")
 @Component
 @Slf4j
 public class RedisBloomFilterJobHandler implements BaseTransformHandler {

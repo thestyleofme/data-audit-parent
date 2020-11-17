@@ -2,8 +2,10 @@ package com.github.thestyleofme.comparison.source.handler;
 
 import static com.github.thestyleofme.comparison.common.infra.utils.CommonUtil.requireNonNullElse;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
@@ -13,12 +15,12 @@ import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
 import com.github.thestyleofme.comparison.source.pojo.TableInfo;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 /**
  * <p>
@@ -76,7 +78,7 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, sourceDatasourceCode);
         List<Map<String, Object>> sourceList = sourceDriverSession.tableQuery(sourceSchema, sourceTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
+        List<LinkedHashMap<String, Object>> result = TransformUtils.sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
         sourceDataMapping.setSourceDataList(result);
     }
 
@@ -89,48 +91,7 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, targetDatasourceCode);
         List<Map<String, Object>> targetList = targetDriverSession.tableQuery(targetSchema, targetTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = sortListMap(jobEnv, targetList, ColMapping.TARGET);
+        List<LinkedHashMap<String, Object>> result = TransformUtils.sortListMap(jobEnv, targetList, ColMapping.TARGET);
         sourceDataMapping.setTargetDataList(result);
-    }
-
-    private List<LinkedHashMap<String, Object>> sortListMap(JobEnv jobEnv,
-                                                            List<Map<String, Object>> list,
-                                                            String position) {
-        List<Map<String, Object>> colMapping = jobEnv.getColMapping();
-        List<LinkedHashMap<String, Object>> result = new ArrayList<>(list.size());
-        if (CollectionUtils.isEmpty(colMapping)) {
-            SortedMap<String, Object> sortedMap;
-            LinkedHashMap<String, Object> linkedHashMap;
-            for (Map<String, Object> map : list) {
-                sortedMap = new TreeMap<>(Comparator.reverseOrder());
-                sortedMap.putAll(map);
-                linkedHashMap = new LinkedHashMap<>(sortedMap);
-                result.add(linkedHashMap);
-            }
-            return result;
-        }
-        // 根据ColMapping的index进行排序
-        List<ColMapping> colMappingList = colMapping.stream()
-                .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
-                .collect(Collectors.toList());
-        LinkedHashMap<String, Object> linkedHashMap = colMappingList.stream()
-                .sorted(Comparator.comparingInt(ColMapping::getIndex))
-                .collect(Collectors.toMap(
-                        o -> {
-                            if (ColMapping.SOURCE.equals(position)) {
-                                return o.getSourceCol();
-                            }
-                            return o.getTargetCol();
-                        },
-                        ColMapping::getIndex,
-                        (oldValue, newValue) -> oldValue,
-                        LinkedHashMap::new));
-        LinkedHashMap<String, Object> temp;
-        for (Map<String, Object> map : list) {
-            linkedHashMap.putAll(map);
-            temp = new LinkedHashMap<>(linkedHashMap);
-            result.add(temp);
-        }
-        return result;
     }
 }
