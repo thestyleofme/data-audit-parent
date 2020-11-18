@@ -1,6 +1,7 @@
 package com.github.thestyleofme.data.comparison.infra.exceptions;
 
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.driver.core.domain.entity.Err;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -24,26 +25,13 @@ public class DataComparisonExceptionHandler {
     @ExceptionHandler(HandlerException.class)
     public Err handleHandlerException(HandlerException e) {
         log.error("HandlerException", e);
-        return Err.of(getMessage(e));
+        return Err.of(HandlerUtil.getMessage(e));
     }
 
     @ExceptionHandler(Exception.class)
     public Err handleException(Exception e) {
         log.error("Exception", e);
-        return Err.of(getMessage(e));
+        return Err.of(HandlerUtil.getMessage(e));
     }
 
-    /**
-     * 获取原始的错误信息，如果没有cause则返回当前message
-     *
-     * @param e Exception
-     * @return 错误信息
-     */
-    private String getMessage(Exception e) {
-        Throwable cause = e.getCause();
-        if (cause == null) {
-            return e.getMessage();
-        }
-        return cause.getMessage();
-    }
 }

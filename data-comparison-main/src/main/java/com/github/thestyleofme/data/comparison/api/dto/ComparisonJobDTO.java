@@ -37,6 +37,14 @@ public class ComparisonJobDTO {
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务json配置文件")
     private String appConf;
+    @ApiModelProperty(value = "任务执行开始时间")
+    private LocalDateTime startTime;
+    @ApiModelProperty(value = "任务状态")
+    private String status;
+    @ApiModelProperty(value = "任务执行时长")
+    private String executeTime;
+    @ApiModelProperty(value = "错误信息")
+    private String errorMsg;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

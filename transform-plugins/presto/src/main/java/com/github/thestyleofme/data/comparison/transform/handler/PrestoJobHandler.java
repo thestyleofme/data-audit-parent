@@ -2,7 +2,10 @@ package com.github.thestyleofme.data.comparison.transform.handler;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -17,7 +20,6 @@ import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
-import com.github.thestyleofme.data.comparison.transform.constants.PrestoConstant;
 import com.github.thestyleofme.data.comparison.transform.constants.PrestoConstant.SqlConstant;
 import com.github.thestyleofme.data.comparison.transform.pojo.PrestoInfo;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
@@ -50,23 +52,21 @@ public class PrestoJobHandler implements BaseTransformHandler {
     }
 
     @Override
-    public HandlerResult handle(ComparisonJob comparisonJob, Map<String, Object> env, SourceDataMapping sourceDataMapping) {
+    public HandlerResult handle(ComparisonJob comparisonJob,
+                                Map<String, Object> env,
+                                Map<String, Object> transformMap,
+                                SourceDataMapping sourceDataMapping) {
         HandlerResult handlerResult = new HandlerResult();
         LocalDateTime startTime = LocalDateTime.now();
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
-        Set<Map.Entry<String, Map<String, Object>>> entrySet = appConf.getTransform().entrySet();
-        for (Map.Entry<String, Map<String, Object>> entry : entrySet) {
-            if (entry.getKey().equalsIgnoreCase(PrestoConstant.PRESTO_TYPE)) {
-                PrestoInfo prestoInfo = getPrestoInfo(appConf, comparisonJob, entry.getValue());
-                // 走数据源
-                if (!StringUtils.isEmpty(prestoInfo.getDataSourceCode())) {
-                    handleByDataSourceCode(handlerResult, prestoInfo, comparisonJob, jobEnv);
-                } else {
-                    // 走url
-                    throw new HandlerException("hdsp.xadt.hand.presto.not_support");
-                }
-            }
+        PrestoInfo prestoInfo = getPrestoInfo(appConf, comparisonJob, transformMap);
+        // 走数据源
+        if (!StringUtils.isEmpty(prestoInfo.getDataSourceCode())) {
+            handleByDataSourceCode(handlerResult, prestoInfo, comparisonJob, jobEnv);
+        } else {
+            // 走url
+            throw new HandlerException("hdsp.xadt.hand.presto.not_support");
         }
         LocalDateTime endTime = LocalDateTime.now();
         log.debug("job time cost :" + Duration.between(endTime, startTime));

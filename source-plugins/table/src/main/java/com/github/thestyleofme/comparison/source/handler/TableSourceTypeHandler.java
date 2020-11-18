@@ -5,8 +5,6 @@ import static com.github.thestyleofme.comparison.common.infra.utils.CommonUtil.r
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
 import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
@@ -14,7 +12,6 @@ import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
-import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
 import com.github.thestyleofme.comparison.source.pojo.TableInfo;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
@@ -54,14 +51,6 @@ public class TableSourceTypeHandler implements BaseSourceHandler {
         String targetDatasourceCode = requireNonNullElse(tableInfo.getTargetDatasourceCode(), jobEnv.getTargetDatasourceCode());
         String targetSchema = requireNonNullElse(tableInfo.getTargetSchema(), jobEnv.getTargetSchema());
         String targetTable = requireNonNullElse(tableInfo.getTargetTable(), jobEnv.getTargetTable());
-        boolean anyMatch = Stream.of(tenantId, sourceDatasourceCode, sourceSchema, sourceTable,
-                targetDatasourceCode, targetSchema, targetTable)
-                .anyMatch(Objects::isNull);
-        if (anyMatch) {
-            throw new HandlerException("when comparisonType=TABLE, " +
-                    "[tenantId, sourceDatasourceCode, sourceSchema, sourceTable, " +
-                    "targetDatasourceCode, targetSchema, targetTable] all cannot be null");
-        }
         // 封装ComparisonMapping
         SourceDataMapping sourceDataMapping = new SourceDataMapping();
         handleSource(jobEnv, sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);

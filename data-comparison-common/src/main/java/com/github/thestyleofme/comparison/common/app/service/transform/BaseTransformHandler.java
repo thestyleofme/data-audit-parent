@@ -21,10 +21,12 @@ public interface BaseTransformHandler {
      *
      * @param comparisonJob     ComparisonJob
      * @param env               Map
+     * @param transformMap      Map
      * @param sourceDataMapping ComparisonMapping
      * @return HandlerResult
      */
     HandlerResult handle(ComparisonJob comparisonJob,
                          Map<String, Object> env,
+                         Map<String, Object> transformMap,
                          SourceDataMapping sourceDataMapping);
 }

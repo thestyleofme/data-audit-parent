@@ -13,6 +13,7 @@ import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJob
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobGroupMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * <p>
@@ -40,6 +41,7 @@ public class ComparisonJobGroupServiceImpl extends ServiceImpl<ComparisonJobGrou
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ComparisonJobGroupDTO save(ComparisonJobGroupDTO comparisonJobGroupDTO) {
         ComparisonJobGroup comparisonJobGroup = BaseComparisonJobGroupConvert.INSTANCE.dtoToEntity(comparisonJobGroupDTO);
         this.saveOrUpdate(comparisonJobGroup);

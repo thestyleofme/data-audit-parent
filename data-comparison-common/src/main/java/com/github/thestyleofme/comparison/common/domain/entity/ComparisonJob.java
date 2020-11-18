@@ -32,10 +32,9 @@ public class ComparisonJob {
 
     public static final String FIELD_ID = "job_id";
 
-    private String groupCode;
-
     @TableId(type = IdType.AUTO)
     private Long jobId;
+    private String groupCode;
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务名称，英文下划线")
     private String jobCode;
@@ -46,6 +45,14 @@ public class ComparisonJob {
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务json配置文件")
     private String appConf;
+    @ApiModelProperty(value = "任务执行开始时间")
+    private LocalDateTime startTime;
+    @ApiModelProperty(value = "任务状态")
+    private String status;
+    @ApiModelProperty(value = "任务执行时长")
+    private String executeTime;
+    @ApiModelProperty(value = "错误信息")
+    private String errorMsg;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

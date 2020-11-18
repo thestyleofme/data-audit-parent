@@ -14,6 +14,7 @@ import com.github.thestyleofme.presto.infra.mapper.ClusterMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * <p>
@@ -41,6 +42,7 @@ public class ClusterServiceImpl extends ServiceImpl<ClusterMapper, Cluster> impl
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ClusterDTO save(ClusterDTO clusterDTO) {
         Cluster cluster = BaseClusterConvert.INSTANCE.dtoToEntity(clusterDTO);
         this.saveOrUpdate(cluster);

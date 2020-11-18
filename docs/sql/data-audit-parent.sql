@@ -11,7 +11,7 @@
  Target Server Version : 50730
  File Encoding         : 65001
 
- Date: 17/11/2020 14:10:34
+ Date: 18/11/2020 11:22:18
 */
 
 SET NAMES utf8mb4;
@@ -28,6 +28,10 @@ CREATE TABLE `xadt_comparison_job`  (
   `job_desc` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '任务描述',
   `job_mode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '任务模式(OPTION:页面向导/IMPORT:脚本配置即自行编写配置文件或自行上传配置文件)',
   `app_conf` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '数据稽核任务json配置文件',
+  `start_time` datetime(0) NULL DEFAULT NULL COMMENT '任务执行开始时间',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT 'NEW' COMMENT '任务状态',
+  `error_msg` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '错误信息',
+  `execute_time` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '任务执行时长',
   `tenant_id` bigint(20) NOT NULL DEFAULT 0 COMMENT '租户ID',
   `object_version_number` bigint(20) NOT NULL DEFAULT 1 COMMENT '行版本号，用来处理锁',
   `creation_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
@@ -36,7 +40,7 @@ CREATE TABLE `xadt_comparison_job`  (
   `last_update_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`job_id`) USING BTREE,
   INDEX `xadt_comparison_job_u1`(`group_code`, `tenant_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for xadt_comparison_job_group

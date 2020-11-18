@@ -1,16 +1,6 @@
 package com.github.thestyleofme.comparison.common.infra.utils;
 
-import java.util.Optional;
-import java.util.Set;
-
-import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
-import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
-import com.github.thestyleofme.plugin.core.infra.utils.ApplicationContextHelper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.plugin.PluginException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.CollectionUtils;
 
 /**
  * <p>
@@ -26,27 +16,46 @@ public class HandlerUtil {
     private HandlerUtil() {
     }
 
-    private static final RedisTemplate<String, String> REDIS_TEMPLATE;
-
-    static {
-        ApplicationContext context = Optional.ofNullable(ApplicationContextHelper.getContext())
-                .orElseThrow(() -> new PluginException("not spring env, cannot get ApplicationContext"));
-        // noinspection unchecked
-        REDIS_TEMPLATE = context.getBean("redisTemplate", RedisTemplate.class);
-    }
-
-    public static void deleteRedisKey(Object[] args) {
-        ComparisonJob comparisonJob = (ComparisonJob) args[0];
-        HandlerUtil.deleteRedisKey(comparisonJob);
-        log.debug("delete comparison job[{}_{}] redis key", comparisonJob.getJobId(), comparisonJob.getJobCode());
-    }
-
-    public static void deleteRedisKey(ComparisonJob comparisonJob) {
-        String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobCode());
-        Set<String> keys = REDIS_TEMPLATE.keys(redisKey + "*");
-        if (!CollectionUtils.isEmpty(keys)) {
-            REDIS_TEMPLATE.delete(keys);
+    /**
+     * 获取原始的错误信息，如果没有cause则返回当前message
+     *
+     * @param e Exception
+     * @return 错误信息
+     */
+    public static String getMessage(Exception e) {
+        Throwable cause = e.getCause();
+        if (cause == null) {
+            return e.getMessage();
         }
+        return cause.getMessage();
+    }
+
+    /**
+     * 时间戳转为时分秒
+     *
+     * @param milliseconds 毫秒
+     * @return java.lang.String
+     */
+    public static String timestamp2String(long milliseconds) {
+        long seconds = milliseconds / 1000;
+        long hour = seconds / 3600;
+        long minute = (seconds - hour * 3600) / 60;
+        long second = (seconds - hour * 3600 - minute * 60);
+
+        StringBuilder sb = new StringBuilder();
+        if (hour > 0) {
+            sb.append(hour).append("h ");
+        }
+        if (minute > 0) {
+            sb.append(minute).append("m ");
+        }
+        if (second > 0) {
+            sb.append(second).append("s");
+        }
+        if (second == 0) {
+            sb.append("<1s");
+        }
+        return sb.toString();
     }
 
 }

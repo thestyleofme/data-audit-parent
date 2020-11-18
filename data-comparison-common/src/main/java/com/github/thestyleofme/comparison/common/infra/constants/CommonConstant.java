@@ -15,16 +15,4 @@ public class CommonConstant {
 
     public static final String CONTACT = "%s_%s";
 
-    public static class RedisKey {
-
-        private RedisKey() {}
-
-        public static final String JOB_PREFIX = "hdsp:job:comparison:";
-        public static final String JOB_FORMAT = JOB_PREFIX + "%d_%s";
-        public static final String TARGET_PK_SUFFIX = ":pk";
-        public static final String TARGET_PK = JOB_FORMAT + ":pk";
-        public static final String TARGET_INDEX_SUFFIX = ":index";
-        public static final String TARGET_INDEX = JOB_FORMAT + TARGET_INDEX_SUFFIX;
-    }
-
 }

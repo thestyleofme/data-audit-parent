@@ -18,12 +18,12 @@ import com.github.thestyleofme.comparison.common.app.service.transform.HandlerRe
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
-import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.Md5Util;
 import com.github.thestyleofme.comparison.common.infra.utils.ThreadPoolUtil;
-import com.github.thestyleofme.data.comparison.transform.exceptions.RedisBloomException;
+import com.github.thestyleofme.data.comparison.transform.constants.RedisBloomConstant;
 import com.github.thestyleofme.data.comparison.transform.pojo.Bloom;
+import com.github.thestyleofme.data.comparison.transform.pojo.BloomTransformInfo;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,13 @@ import org.springframework.util.StringUtils;
 /**
  * <p>
  * 有误差，无法保证正确性，不可基于此去做数据补偿
+ * <p>
+ * table A -> table B
+ * 以B为基准，遍历A，只找出A在B中不存在的数据以及相同数据 但是有误差 可以调小errorRate,默认0.001
+ * 无法找出B有A无的
+ * <p>
  * 场景可能是，当表数据量特别大时，可生成布隆过滤器，做一些数据判断是否存在
+ * <p>
  * 有点<strong>鸡肋</strong> 计算时间长还不准确
  * 推荐使用presto，运行快且准
  * </p>
@@ -43,7 +49,7 @@ import org.springframework.util.StringUtils;
  * @author isaac 2020/10/22 15:33
  * @since 1.0.0
  */
-@TransformType(value = "BLOOM_FILTER",type = "REDIS")
+@TransformType(value = "BLOOM_FILTER", type = "REDIS")
 @Component
 @Slf4j
 public class RedisBloomFilterJobHandler implements BaseTransformHandler {
@@ -58,17 +64,19 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
     @Override
     public HandlerResult handle(ComparisonJob comparisonJob,
                                 Map<String, Object> env,
+                                Map<String, Object> transformMap,
                                 SourceDataMapping sourceDataMapping) {
         LocalDateTime startTime = LocalDateTime.now();
         log.debug("use redis bloom filter to handle this job");
-        Bloom bloom = createBloom(sourceDataMapping);
+        Bloom bloom = createBloom(sourceDataMapping, transformMap);
         if (Objects.isNull(bloom)) {
             return null;
         }
         int seed = ThreadLocalRandom.current().nextInt(bloom.getBitSize());
-        String redisKey = String.format(CommonConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobCode());
+        String redisKey = String.format(RedisBloomConstant.RedisKey.JOB_FORMAT, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         if (Boolean.TRUE.equals(redisTemplate.hasKey(redisKey))) {
-            throw new RedisBloomException("redis key[%s] already exists, maybe this job is currently running, please try again later", redisKey);
+            log.info("redis key[{}] already exists, delete it first", redisKey);
+            redisTemplate.delete(redisKey);
         }
         JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
         genRedisBloomFilter(jobEnv, sourceDataMapping, bloom, seed, redisKey);
@@ -135,7 +143,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                                  ComparisonJob comparisonJob,
                                  LinkedHashMap<String, Object> map,
                                  SourceDataMapping sourceDataMapping) {
-        String pkRedisKey = String.format(CommonConstant.RedisKey.TARGET_PK,
+        String pkRedisKey = String.format(RedisBloomConstant.RedisKey.TARGET_PK,
                 comparisonJob.getTenantId(), comparisonJob.getJobCode());
         Object pkValue = map.get(jobEnv.getSourcePk());
         Boolean isMember = redisTemplate.opsForSet().isMember(pkRedisKey, String.valueOf(pkValue));
@@ -152,7 +160,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                     .filter(v -> Objects.nonNull(map.get(v)))
                     .count();
             if (count == split.length) {
-                String indexRedisKey = String.format(CommonConstant.RedisKey.TARGET_INDEX,
+                String indexRedisKey = String.format(RedisBloomConstant.RedisKey.TARGET_INDEX,
                         comparisonJob.getTenantId(), comparisonJob.getJobCode());
                 String value = Stream.of(split).map(s -> (String) map.get(s)).collect(Collectors.joining(","));
                 Boolean exists = redisTemplate.opsForSet().isMember(indexRedisKey, value);
@@ -236,7 +244,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                 log.debug("not exists, pk unique index exists: {}", map);
                 // 有index
                 String value = Stream.of(split).map(s -> (String) map.get(s)).collect(Collectors.joining(","));
-                redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_INDEX_SUFFIX, value);
+                redisTemplate.opsForSet().add(redisKey + RedisBloomConstant.RedisKey.TARGET_INDEX_SUFFIX, value);
             }
         } else {
             // 有pk
@@ -244,11 +252,11 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
             if (Objects.isNull(pkValue)) {
                 return;
             }
-            redisTemplate.opsForSet().add(redisKey + CommonConstant.RedisKey.TARGET_PK_SUFFIX, String.valueOf(pkValue));
+            redisTemplate.opsForSet().add(redisKey + RedisBloomConstant.RedisKey.TARGET_PK_SUFFIX, String.valueOf(pkValue));
         }
     }
 
-    private Bloom createBloom(SourceDataMapping sourceDataMapping) {
+    private Bloom createBloom(SourceDataMapping sourceDataMapping, Map<String, Object> transformMap) {
         if (Objects.isNull(sourceDataMapping)) {
             return null;
         }
@@ -260,6 +268,11 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
         List<LinkedHashMap<String, Object>> sourceDataList = sourceDataMapping.getSourceDataList();
         int bound = Math.toIntExact(Math.max(targetDataList.size(),
                 CollectionUtils.isEmpty(sourceDataList) ? 0 : sourceDataList.size()));
+        // 获取fpp
+        BloomTransformInfo bloomTransformInfo = BeanUtils.map2Bean(transformMap, BloomTransformInfo.class);
+        if (!StringUtils.isEmpty(bloomTransformInfo.getErrorRate())) {
+            return new Bloom(bound, bloomTransformInfo.getErrorRate());
+        }
         return new Bloom(bound);
     }
 

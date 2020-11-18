@@ -54,7 +54,8 @@
   },
   "transform": {
     "bloom_filter": {
-      "type": "redis"
+      "type": "redis",
+      "errorRate": 0.0001
     }
   },
   "sink": {

@@ -1,8 +1,12 @@
 package com.github.thestyleofme.data.comparison.app.service.impl;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -22,7 +26,9 @@ import com.github.thestyleofme.comparison.common.domain.TransformInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
+import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
@@ -32,8 +38,9 @@ import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -49,6 +56,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     private final JobHandlerContext jobHandlerContext;
     private final ComparisonJobGroupService comparisonJobGroupService;
+    private final ReentrantLock lock = new ReentrantLock();
 
     public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
                                     ComparisonJobGroupService comparisonJobGroupService) {
@@ -70,30 +78,68 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
-        // 要么执行组下的任务，要么执行某一个job 两者取其一
-        if (!StringUtils.isEmpty(groupCode)) {
-            doGroupJob(tenantId, groupCode);
-            return;
-        }
-        if (StringUtils.isEmpty(jobCode)) {
-            // 都没传 直接抛异常
-            throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
-        }
-        ComparisonJob comparisonJob = this.getOne(new QueryWrapper<>(ComparisonJob.builder()
-                .tenantId(tenantId).jobCode(jobCode).build()));
-        doJob(comparisonJob);
+        CompletableFuture.supplyAsync(() -> {
+            // 要么执行组下的任务，要么执行某一个job 两者取其一
+            if (!StringUtils.isEmpty(groupCode)) {
+                doGroupJob(tenantId, groupCode);
+                return false;
+            }
+            if (StringUtils.isEmpty(jobCode)) {
+                // 都没传 直接抛异常
+                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
+            }
+            ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
+                    .tenantId(tenantId).jobCode(jobCode).build()));
+            doJob(comparisonJob);
+            return true;
+        });
     }
 
     private void doJob(ComparisonJob comparisonJob) {
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        // env
-        Map<String, Object> env = appConf.getEnv();
-        SourceDataMapping sourceDataMapping = doSource(appConf, env, comparisonJob);
-        // transform
-        HandlerResult handlerResult = doTransform(appConf, env, sourceDataMapping, comparisonJob);
-        // sink
-        doSink(appConf, env, comparisonJob, handlerResult);
+        // 检验任务是否正在执行 以及设置开始执行状态
+        doBefore(comparisonJob);
+        try {
+            AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+            // env
+            Map<String, Object> env = appConf.getEnv();
+            // source
+            SourceDataMapping sourceDataMapping = doSource(appConf, env, comparisonJob);
+            // transform
+            HandlerResult handlerResult = doTransform(appConf, env, sourceDataMapping, comparisonJob);
+            // sink
+            doSink(appConf, env, comparisonJob, handlerResult);
+        } catch (Exception e) {
+            updateJobStatus(comparisonJob, JobStatusEnum.FAILED.name(), HandlerUtil.getMessage(e));
+        } finally {
+            updateJobStatus(comparisonJob, JobStatusEnum.SUCCESS.name(), null);
+        }
+    }
+
+    private void updateJobStatus(ComparisonJob comparisonJob, String status, String errorMag) {
+        comparisonJob.setStatus(status);
+        comparisonJob.setErrorMsg(errorMag);
+        long millis = Duration.between(comparisonJob.getStartTime(), LocalDateTime.now()).toMillis();
+        comparisonJob.setExecuteTime(HandlerUtil.timestamp2String(millis));
+        updateById(comparisonJob);
+    }
+
+    private void doBefore(ComparisonJob comparisonJob) {
+        lock.lock();
+        try {
+            // 任务正在运行则抛异常
+            if (comparisonJob.getStatus().equals(JobStatusEnum.STARTING.name())) {
+                throw new HandlerException("hdsp.xadt.error.job[%d_%s].is_staring",
+                        comparisonJob.getTenantId(), comparisonJob.getJobCode());
+            }
+            // 开始执行 状态更新
+            comparisonJob.setStatus(JobStatusEnum.STARTING.name());
+            comparisonJob.setStartTime(LocalDateTime.now());
+            updateById(comparisonJob);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private void doSink(AppConf appConf,
@@ -133,7 +179,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             if (transformHandlerProxy != null) {
                 transformHandler = transformHandlerProxy.proxy(transformHandler);
             }
-            handlerResult = transformHandler.handle(comparisonJob, env, sourceDataMapping);
+            handlerResult = transformHandler.handle(comparisonJob, env, entry.getValue(), sourceDataMapping);
         }
         return handlerResult;
     }
@@ -155,7 +201,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         if (jobGroup == null) {
             throw new HandlerException("hdsp.xadt.error.comparison.job.group[%s].not_exist", groupCode);
         }
-        List<ComparisonJob> jobList = this.list(new QueryWrapper<>(ComparisonJob.builder()
+        List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(tenantId).groupCode(groupCode).build()));
         for (ComparisonJob comparisonJob : jobList) {
             // 将group中的信息写到job的全局参数env中 后续job执行或许用的上
@@ -170,9 +216,10 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO) {
         ComparisonJob comparisonJob = BaseComparisonJobConvert.INSTANCE.dtoToEntity(comparisonJobDTO);
-        this.saveOrUpdate(comparisonJob);
+        saveOrUpdate(comparisonJob);
         return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
     }
 }
