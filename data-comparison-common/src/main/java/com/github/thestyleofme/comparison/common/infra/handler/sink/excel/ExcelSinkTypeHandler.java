@@ -1,9 +1,12 @@
-package com.github.thestyleofme.comparison.sink.handler;
+package com.github.thestyleofme.comparison.common.infra.handler.sink.excel;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.alibaba.excel.EasyExcelFactory;
@@ -11,12 +14,10 @@ import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.sink.pojo.ExcelInfo;
+import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -40,7 +41,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
                        Map<String, Object> env,
                        Map<String, Object> sinkMap,
                        HandlerResult handlerResult) {
-        if(Objects.isNull(handlerResult)){
+        if (Objects.isNull(handlerResult)) {
             throw new HandlerException("hdsp.xadt.error.handlerResult.is_null");
         }
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
@@ -50,20 +51,17 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         }
         String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);
-        JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
-        List<Map<String, Object>> colMapping = jobEnv.getColMapping();
-        List<ColMapping> colMappingList = colMapping.stream()
-                .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
-                .sorted(Comparator.comparingInt(ColMapping::getIndex))
-                .collect(Collectors.toList());
+        List<List<String>> sourceExcelHeader = ExcelUtil.getSourceExcelHeader(comparisonJob);
+        List<List<String>> sourceToTargetHeader = ExcelUtil.getSourceToTargetHeader(comparisonJob);
+        List<List<String>> targetExcelHeader = ExcelUtil.getTargetExcelHeader(comparisonJob);
         log.debug("output to excel[{}] start", excelName);
         ExcelWriter excelWriter = null;
         try {
             excelWriter = EasyExcelFactory.write(excelName).build();
-            doSourceUnique(excelWriter, colMappingList, handlerResult);
-            doTargetUnique(excelWriter, colMappingList, handlerResult);
-            doPkOrIndexSame(excelWriter, colMappingList, handlerResult);
-            doSame(excelWriter, colMappingList, handlerResult);
+            doSourceUnique(excelWriter, sourceExcelHeader, handlerResult);
+            doTargetUnique(excelWriter, targetExcelHeader, handlerResult);
+            doPkOrIndexSame(excelWriter, sourceToTargetHeader, handlerResult);
+            doSame(excelWriter, sourceToTargetHeader, handlerResult);
         } finally {
             if (excelWriter != null) {
                 excelWriter.finish();
@@ -85,9 +83,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         }
     }
 
-    private void doSame(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        // 生成excel头 List<List<String>>
-        List<List<String>> headerList = sourceToTargetHeader(colMappingList);
+    private void doSame(ExcelWriter excelWriter, List<List<String>> sourceToTargetHeader, HandlerResult handlerResult) {
         // 生成excel数据 List<List<Object>>
         List<List<Object>> sameList = handlerResult.getSameDataList().stream()
                 .filter(Objects::nonNull)
@@ -96,12 +92,11 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         // 开始写 多sheet页
         WriteSheet writeSheet = EasyExcelFactory.writerSheet(
                 3, "源表目标表数据一样")
-                .head(headerList).build();
+                .head(sourceToTargetHeader).build();
         excelWriter.write(sameList, writeSheet);
     }
 
-    private void doPkOrIndexSame(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        List<List<String>> headerList = sourceToTargetHeader(colMappingList);
+    private void doPkOrIndexSame(ExcelWriter excelWriter, List<List<String>> sourceToTargetHeader, HandlerResult handlerResult) {
         // 生成excel数据 List<List<Object>>
         List<List<Object>> pkOrIndexList = handlerResult.getPkOrIndexSameDataList().stream()
                 .filter(Objects::nonNull)
@@ -110,24 +105,13 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         // 开始写 多sheet页
         WriteSheet writeSheet = EasyExcelFactory.writerSheet(
                 2, "源表目标表主键或唯一索引一样数据却不一样")
-                .head(headerList).build();
+                .head(sourceToTargetHeader).build();
         excelWriter.write(pkOrIndexList, writeSheet);
     }
 
-    private List<List<String>> sourceToTargetHeader(List<ColMapping> colMappingList) {
-        // 生成excel头 List<List<String>>
-        return colMappingList.stream()
-                .map(colMapping -> Collections.singletonList(
-                        colMapping.getSourceCol().equals(colMapping.getTargetCol()) ? colMapping.getSourceCol() :
-                                String.format("%s -> %s", colMapping.getSourceCol(), colMapping.getTargetCol())))
-                .collect(Collectors.toList());
-    }
-
-    private void doTargetUnique(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        // 生成excel头 List<List<String>>
-        List<List<String>> excelTargetHeaderList = colMappingList.stream()
-                .map(colMapping -> Collections.singletonList(colMapping.getTargetCol()))
-                .collect(Collectors.toList());
+    private void doTargetUnique(ExcelWriter excelWriter,
+                                List<List<String>> targetExcelHeader,
+                                HandlerResult handlerResult) {
         // 生成excel数据 List<List<Object>>
         List<List<Object>> targetDataList = handlerResult.getTargetUniqueDataList().stream()
                 .filter(Objects::nonNull)
@@ -136,15 +120,13 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         // 开始写 多sheet页
         WriteSheet writeSheet = EasyExcelFactory.writerSheet(
                 1, "仅目标表拥有")
-                .head(excelTargetHeaderList).build();
+                .head(targetExcelHeader).build();
         excelWriter.write(targetDataList, writeSheet);
     }
 
-    private void doSourceUnique(ExcelWriter excelWriter, List<ColMapping> colMappingList, HandlerResult handlerResult) {
-        // 生成excel头 List<List<String>>
-        List<List<String>> excelSourceHeaderList = colMappingList.stream()
-                .map(colMapping -> Collections.singletonList(colMapping.getSourceCol()))
-                .collect(Collectors.toList());
+    private void doSourceUnique(ExcelWriter excelWriter,
+                                List<List<String>> sourceExcelHeader,
+                                HandlerResult handlerResult) {
         // 生成excel数据 List<List<Object>>
         List<List<Object>> sourceDataList = handlerResult.getSourceUniqueDataList().stream()
                 .filter(Objects::nonNull)
@@ -153,7 +135,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         // 开始写 多sheet页
         WriteSheet writeSheet = EasyExcelFactory.writerSheet(
                 0, "仅源表拥有")
-                .head(excelSourceHeaderList).build();
+                .head(sourceExcelHeader).build();
         excelWriter.write(sourceDataList, writeSheet);
     }
 }

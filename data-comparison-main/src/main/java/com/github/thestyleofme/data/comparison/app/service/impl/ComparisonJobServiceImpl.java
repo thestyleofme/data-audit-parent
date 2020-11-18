@@ -9,8 +9,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.ExcelReader;
+import com.alibaba.excel.read.metadata.ReadSheet;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
@@ -21,13 +25,17 @@ import com.github.thestyleofme.comparison.common.app.service.transform.BaseTrans
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.TransformInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
+import com.github.thestyleofme.comparison.common.infra.excel.CommonExcelListener;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
+import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
@@ -123,6 +131,11 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         long millis = Duration.between(comparisonJob.getStartTime(), LocalDateTime.now()).toMillis();
         comparisonJob.setExecuteTime(HandlerUtil.timestamp2String(millis));
         updateById(comparisonJob);
+        if (StringUtils.isEmpty(errorMag)) {
+            update(Wrappers.<ComparisonJob>lambdaUpdate()
+                    .set(ComparisonJob::getErrorMsg, null)
+                    .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+        }
     }
 
     private void doBefore(ComparisonJob comparisonJob) {
@@ -137,6 +150,9 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             comparisonJob.setStatus(JobStatusEnum.STARTING.name());
             comparisonJob.setStartTime(LocalDateTime.now());
             comparisonJob.setExecuteTime(null);
+            update(Wrappers.<ComparisonJob>lambdaUpdate()
+                    .set(ComparisonJob::getExecuteTime, null)
+                    .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
             updateById(comparisonJob);
         } finally {
             lock.unlock();
@@ -197,11 +213,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     private void doGroupJob(Long tenantId, String groupCode) {
-        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(new QueryWrapper<>(ComparisonJobGroup.builder()
-                .tenantId(tenantId).groupCode(groupCode).build()));
-        if (jobGroup == null) {
-            throw new HandlerException("hdsp.xadt.error.comparison.job.group[%s].not_exist", groupCode);
-        }
+        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(tenantId, groupCode);
         List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(tenantId).groupCode(groupCode).build()));
         for (ComparisonJob comparisonJob : jobList) {
@@ -223,4 +235,54 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         saveOrUpdate(comparisonJob);
         return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
     }
+
+    @Override
+    public void deploy(Long tenantId, String jobCode, String groupCode) {
+        CompletableFuture.supplyAsync(() -> {
+            // 要么执行组下的任务，要么执行某一个job 两者取其一
+            if (!StringUtils.isEmpty(groupCode)) {
+                doGroupJobDeploy(tenantId, groupCode);
+                return false;
+            }
+            if (StringUtils.isEmpty(jobCode)) {
+                // 都没传 直接抛异常
+                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
+            }
+            ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
+                    .tenantId(tenantId).jobCode(jobCode).build()));
+            doJobDeploy(comparisonJob);
+            return true;
+        });
+    }
+
+    private void doJobDeploy(ComparisonJob comparisonJob) {
+        // excel 路径
+        String excelPath = ExcelUtil.getExcelPath(comparisonJob);
+        List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
+        List<List<String>> sourceExcelHeader = ExcelUtil.getSourceExcelHeader(colMappingList);
+        ExcelReader excelReader = null;
+        try {
+            excelReader = EasyExcelFactory.read(excelPath).build();
+            ReadSheet readSheet1 =
+                    EasyExcelFactory.readSheet(0)
+                            .head(ExcelUtil.getSourceExcelHeader(comparisonJob))
+                            .registerReadListener(new CommonExcelListener<List<Object>>(sourceExcelHeader))
+                            .build();
+            excelReader.read(readSheet1);
+        } finally {
+            if (excelReader != null) {
+                excelReader.finish();
+            }
+        }
+    }
+
+    private void doGroupJobDeploy(Long tenantId, String groupCode) {
+        List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
+                .tenantId(tenantId).groupCode(groupCode).build()));
+        for (ComparisonJob comparisonJob : jobList) {
+            doJobDeploy(comparisonJob);
+        }
+    }
+
+
 }

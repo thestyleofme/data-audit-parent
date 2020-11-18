@@ -32,4 +32,13 @@ public interface ComparisonJobGroupService extends IService<ComparisonJobGroup> 
      * @return ComparisonJobGroupDTO
      */
     ComparisonJobGroupDTO save(ComparisonJobGroupDTO comparisonJobGroupDTO);
+
+    /**
+     * 获取一个
+     *
+     * @param tenantId  tenantId
+     * @param groupCode groupCode
+     * @return ComparisonJobGroup
+     */
+    ComparisonJobGroup getOne(Long tenantId, String groupCode);
 }

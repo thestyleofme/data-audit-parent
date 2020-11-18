@@ -40,11 +40,6 @@
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <!--sink-->
-        <dependency>
-            <groupId>com.github.thestyleofme</groupId>
-            <artifactId>excel</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
         <!--presto-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>

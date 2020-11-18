@@ -5,12 +5,16 @@ import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import com.github.thestyleofme.comparison.common.domain.AppConf;
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
+import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
@@ -111,6 +115,16 @@ public class CommonUtil {
                 throw new HandlerException("file[%s] delete error", path);
             }
         }
+    }
+
+    public static List<ColMapping> getColMappingList(ComparisonJob comparisonJob) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+        List<Map<String, Object>> colMapping = jobEnv.getColMapping();
+        return colMapping.stream()
+                .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
+                .sorted(Comparator.comparingInt(ColMapping::getIndex))
+                .collect(Collectors.toList());
     }
 
 }

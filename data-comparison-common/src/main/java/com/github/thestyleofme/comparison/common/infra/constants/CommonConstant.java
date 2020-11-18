@@ -15,4 +15,12 @@ public class CommonConstant {
 
     public static final String CONTACT = "%s_%s";
 
+    public static class Sink {
+
+        private Sink() {
+        }
+
+        public static final String EXCEL = "excel";
+    }
+
 }

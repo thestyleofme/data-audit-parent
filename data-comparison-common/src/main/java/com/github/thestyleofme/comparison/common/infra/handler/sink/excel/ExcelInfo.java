@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.sink.pojo;
+package com.github.thestyleofme.comparison.common.infra.handler.sink.excel;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
