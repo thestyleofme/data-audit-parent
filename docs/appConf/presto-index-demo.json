@@ -1,0 +1,66 @@
+{
+  "env": {
+    "sourcePk": "",
+    "targetPk": "",
+    "sourceIndex": "name,phone",
+    "targetIndex": "name,call",
+    "colMapping": [
+      {
+        "sourceCol": "id",
+        "targetCol": "id",
+        "index": 0
+      },
+      {
+        "sourceCol": "name",
+        "targetCol": "name",
+        "index": 2
+      },
+      {
+        "sourceCol": "sex",
+        "targetCol": "sex",
+        "index": 1
+      },
+      {
+        "sourceCol": "phone",
+        "targetCol": "call",
+        "index": 3
+      },
+      {
+        "sourceCol": "address",
+        "targetCol": "address",
+        "index": 4
+      },
+      {
+        "sourceCol": "education",
+        "targetCol": "education",
+        "index": 5
+      },
+      {
+        "sourceCol": "state",
+        "targetCol": "state",
+        "index": 6
+      }
+    ]
+  },
+  "source": {
+
+  },
+  "transform": {
+    "presto": {
+      "clusterCode": "dev_presto",
+      "coordinatorUrl": "http://172.23.16.78:29527",
+      "username": "presto",
+      "sourceDatasourceCode": "devmysql",
+      "targetDatasourceCode": "devmysql",
+      "sourceSchema": "hdsp_test",
+      "sourceTable": "resume",
+      "targetSchema": "hdsp_test",
+      "targetTable": "resume_bak"
+    }
+  },
+  "sink": {
+    "excel": {
+      "outputPath": "C:/Users/housiqi/Desktop"
+    }
+  }
+}
