@@ -136,6 +136,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             // 开始执行 状态更新
             comparisonJob.setStatus(JobStatusEnum.STARTING.name());
             comparisonJob.setStartTime(LocalDateTime.now());
+            comparisonJob.setExecuteTime(null);
             updateById(comparisonJob);
         } finally {
             lock.unlock();

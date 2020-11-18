@@ -53,7 +53,7 @@ public class ComparisonJobController {
     @ApiOperation(value = "保存数据稽核任务")
     @PostMapping
     public ResponseEntity<ComparisonJobDTO> save(@PathVariable(name = "organizationId") Long tenantId,
-                                                 ComparisonJobDTO comparisonJobDTO) {
+                                                 @RequestBody ComparisonJobDTO comparisonJobDTO) {
         comparisonJobDTO.setTenantId(tenantId);
         return ResponseEntity.ok(comparisonJobService.save(comparisonJobDTO));
     }

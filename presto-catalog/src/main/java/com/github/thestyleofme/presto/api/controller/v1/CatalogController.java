@@ -46,7 +46,7 @@ public class CatalogController {
     @ApiOperation(value = "创建或更新catalog")
     @PostMapping
     public ResponseEntity<CatalogDTO> save(@PathVariable(name = "organizationId") Long tenantId,
-                                           @Valid CatalogDTO catalogDTO) {
+                                           @Valid @RequestBody CatalogDTO catalogDTO) {
         catalogDTO.setTenantId(tenantId);
         return ResponseEntity.ok(catalogService.save(catalogDTO));
     }
@@ -54,9 +54,9 @@ public class CatalogController {
     @ApiOperation(value = "删除catalog")
     @DeleteMapping("/{clusterCode}/{catalogName}")
     public ResponseEntity<Void> delete(@PathVariable(name = "organizationId") Long tenantId,
-                                             @PathVariable String clusterCode,
-                                             @PathVariable String catalogName) {
-        catalogService.delete(tenantId,clusterCode,catalogName);
+                                       @PathVariable String clusterCode,
+                                       @PathVariable String catalogName) {
+        catalogService.delete(tenantId, clusterCode, catalogName);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
