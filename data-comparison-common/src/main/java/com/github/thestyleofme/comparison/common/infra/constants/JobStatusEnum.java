@@ -14,8 +14,12 @@ public enum JobStatusEnum {
      * NEW 新建
      */
     NEW,
+    /**
+     * 数据稽核处理中
+     */
     STARTING,
-    SUCCESS,
-    FAILED
-    ;
+    AUDIT_SUCCESS,
+    AUDIT_FAILED,
+    DEPLOY_SUCCESS,
+    DEPLOY_FAILED;
 }

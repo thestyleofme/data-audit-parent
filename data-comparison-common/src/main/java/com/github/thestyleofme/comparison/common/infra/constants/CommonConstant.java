@@ -14,6 +14,9 @@ public class CommonConstant {
     }
 
     public static final String CONTACT = "%s_%s";
+    public static final String AUDIT = "AUDIT";
+    public static final String DEPLOY = "DEPLOY";
+    public static final String FAILED_FORMAT = "%s_FAILED";
 
     public static class Sink {
 

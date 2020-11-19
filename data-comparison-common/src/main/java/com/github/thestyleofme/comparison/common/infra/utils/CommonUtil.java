@@ -127,4 +127,11 @@ public class CommonUtil {
                 .collect(Collectors.toList());
     }
 
+    public static JobEnv getJobEnv(ComparisonJob comparisonJob) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+        // todo 将catalog等信息也放入jobEnv
+        return jobEnv;
+    }
+
 }

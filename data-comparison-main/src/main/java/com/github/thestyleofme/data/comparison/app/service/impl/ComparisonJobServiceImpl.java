@@ -42,6 +42,7 @@ import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
+import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -64,11 +65,14 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private final JobHandlerContext jobHandlerContext;
     private final ComparisonJobGroupService comparisonJobGroupService;
     private final ReentrantLock lock = new ReentrantLock();
+    private final DriverSessionService driverSessionService;
 
     public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
-                                    ComparisonJobGroupService comparisonJobGroupService) {
+                                    ComparisonJobGroupService comparisonJobGroupService,
+                                    DriverSessionService driverSessionService) {
         this.jobHandlerContext = jobHandlerContext;
         this.comparisonJobGroupService = comparisonJobGroupService;
+        this.driverSessionService = driverSessionService;
     }
 
     @Override
@@ -106,7 +110,9 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     private void doJob(ComparisonJob comparisonJob) {
         // 检验任务是否正在执行 以及设置开始执行状态
-        doBefore(comparisonJob);
+        if (isFilterJob(comparisonJob)) {
+            return;
+        }
         try {
             AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
             // env
@@ -117,42 +123,53 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             HandlerResult handlerResult = doTransform(appConf, env, sourceDataMapping, comparisonJob);
             // sink
             doSink(appConf, env, comparisonJob, handlerResult);
+            updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
         } catch (Exception e) {
-            updateJobStatus(comparisonJob, JobStatusEnum.FAILED.name(), HandlerUtil.getMessage(e));
-        } finally {
-            updateJobStatus(comparisonJob, JobStatusEnum.SUCCESS.name(), null);
+            updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
         }
     }
 
-    private void updateJobStatus(ComparisonJob comparisonJob, String status, String errorMag) {
-        comparisonJob.setStatus(status);
-        comparisonJob.setErrorMsg(errorMag);
-        long millis = Duration.between(comparisonJob.getStartTime(), LocalDateTime.now()).toMillis();
-        comparisonJob.setExecuteTime(HandlerUtil.timestamp2String(millis));
-        updateById(comparisonJob);
-        if (StringUtils.isEmpty(errorMag)) {
+    private void updateJobStatus(String process,
+                                 ComparisonJob comparisonJob,
+                                 String status,
+                                 String errorMag) {
+        try {
+            comparisonJob.setStatus(status);
+            comparisonJob.setErrorMsg(errorMag);
+            long millis = Duration.between(comparisonJob.getStartTime(), LocalDateTime.now()).toMillis();
+            comparisonJob.setExecuteTime(HandlerUtil.timestamp2String(millis));
+            updateById(comparisonJob);
+            if (StringUtils.isEmpty(errorMag)) {
+                update(Wrappers.<ComparisonJob>lambdaUpdate()
+                        .set(ComparisonJob::getErrorMsg, null)
+                        .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+            }
+        } catch (Exception e) {
             update(Wrappers.<ComparisonJob>lambdaUpdate()
-                    .set(ComparisonJob::getErrorMsg, null)
+                    .set(ComparisonJob::getStatus, JobStatusEnum.valueOf(String.format(CommonConstant.FAILED_FORMAT, process)).name())
+                    .set(ComparisonJob::getErrorMsg, HandlerUtil.getMessage(e))
                     .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
         }
     }
 
-    private void doBefore(ComparisonJob comparisonJob) {
+    private boolean isFilterJob(ComparisonJob comparisonJob) {
         lock.lock();
         try {
-            // 任务正在运行则抛异常
-            if (JobStatusEnum.STARTING.name().equals(comparisonJob.getStatus())) {
-                throw new HandlerException("hdsp.xadt.error.job[%d_%s].is_staring",
-                        comparisonJob.getTenantId(), comparisonJob.getJobCode());
+            // 任务正在运行则跳过
+            if (comparisonJob.getStatus().equals(JobStatusEnum.STARTING.name())) {
+                update(Wrappers.<ComparisonJob>lambdaUpdate()
+                        .set(ComparisonJob::getErrorMsg, "the job is running, please try again later")
+                        .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+                return true;
             }
             // 开始执行 状态更新
             comparisonJob.setStatus(JobStatusEnum.STARTING.name());
             comparisonJob.setStartTime(LocalDateTime.now());
-            comparisonJob.setExecuteTime(null);
             update(Wrappers.<ComparisonJob>lambdaUpdate()
                     .set(ComparisonJob::getExecuteTime, null)
                     .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
             updateById(comparisonJob);
+            return false;
         } finally {
             lock.unlock();
         }
@@ -216,13 +233,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(tenantId).groupCode(groupCode).build()));
         for (ComparisonJob comparisonJob : jobList) {
-            // 将group中的信息写到job的全局参数env中 后续job执行或许用的上
-            AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-            JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
-            // 拷贝group信息到env
-            org.springframework.beans.BeanUtils.copyProperties(jobGroup, jobEnv);
-            appConf.setEnv(BeanUtils.bean2Map(jobEnv));
-            comparisonJob.setAppConf(JsonUtil.toJson(appConf));
+            copyGroupInfoToJob(comparisonJob, jobGroup);
             doJob(comparisonJob);
         }
     }
@@ -281,32 +292,59 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     private void doDeployByExcel(ComparisonJob comparisonJob) {
+    private void doJobDeploy(ComparisonJob comparisonJob) {
+        // 检验任务是否正在执行 以及设置开始执行状态
+        if (isFilterJob(comparisonJob)) {
+            return;
+        }
         // excel 路径
-        String excelPath = ExcelUtil.getExcelPath(comparisonJob);
-        List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
-        List<List<String>> sourceExcelHeader = ExcelUtil.getSourceExcelHeader(colMappingList);
-        ExcelReader excelReader = null;
         try {
-            excelReader = EasyExcelFactory.read(excelPath).build();
-            ReadSheet readSheet1 =
-                    EasyExcelFactory.readSheet(0)
-                            .head(ExcelUtil.getSourceExcelHeader(comparisonJob))
-                            .registerReadListener(new CommonExcelListener<List<Object>>(sourceExcelHeader))
-                            .build();
-            excelReader.read(readSheet1);
-        } finally {
-            if (excelReader != null) {
-                excelReader.finish();
+            String excelPath = ExcelUtil.getExcelPath(comparisonJob);
+            List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
+            List<List<String>> targetExcelHeader = ExcelUtil.getTargetExcelHeader(colMappingList);
+            ExcelReader excelReader = null;
+            try {
+                excelReader = EasyExcelFactory.read(excelPath).build();
+                // A有B无
+                ReadSheet readSheet1 =
+                        EasyExcelFactory.readSheet(0)
+                                .head(ExcelUtil.getSourceExcelHeader(comparisonJob))
+                                .registerReadListener(new CommonExcelListener<List<Object>>(
+                                        comparisonJob, targetExcelHeader, driverSessionService))
+                                .build();
+                // todo AB主键或唯一索引相同 覆盖
+                excelReader.read(readSheet1);
+            } finally {
+                if (excelReader != null) {
+                    excelReader.finish();
+                }
             }
+            updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_SUCCESS.name(), null);
+        } catch (Exception e) {
+            updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_FAILED.name(), HandlerUtil.getMessage(e));
         }
     }
 
     private void doGroupJobDeploy(DeployInfo deployInfo) {
+    private void doGroupJobDeploy(Long tenantId, String groupCode) {
+        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(tenantId, groupCode);
         List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(deployInfo.getTenantId()).groupCode(deployInfo.getGroupCode()).build()));
         for (ComparisonJob comparisonJob : jobList) {
             doJobDeploy(comparisonJob, deployInfo);
+            copyGroupInfoToJob(comparisonJob, jobGroup);
+            doJobDeploy(comparisonJob);
         }
+    }
+
+    private void copyGroupInfoToJob(ComparisonJob comparisonJob, ComparisonJobGroup jobGroup) {
+        // 将group中的信息写到job的全局参数env中 后续job执行或许用的上
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+        // 拷贝group信息到env
+        org.springframework.beans.BeanUtils.copyProperties(jobGroup, jobEnv);
+        appConf.setEnv(BeanUtils.bean2Map(jobEnv));
+        comparisonJob.setAppConf(JsonUtil.toJson(appConf));
     }
 
 
