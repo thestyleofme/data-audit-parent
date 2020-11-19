@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
@@ -24,10 +26,7 @@ import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMa
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
-import com.github.thestyleofme.comparison.common.domain.AppConf;
-import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
-import com.github.thestyleofme.comparison.common.domain.TransformInfo;
+import com.github.thestyleofme.comparison.common.domain.*;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
@@ -142,7 +141,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         lock.lock();
         try {
             // 任务正在运行则抛异常
-            if (comparisonJob.getStatus().equals(JobStatusEnum.STARTING.name())) {
+            if (JobStatusEnum.STARTING.name().equals(comparisonJob.getStatus())) {
                 throw new HandlerException("hdsp.xadt.error.job[%d_%s].is_staring",
                         comparisonJob.getTenantId(), comparisonJob.getJobCode());
             }
@@ -236,26 +235,52 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
     }
 
+//    @Override
+//    public void deploy(Long tenantId, String jobCode, String groupCode) {
+//        CompletableFuture.supplyAsync(() -> {
+//            // 要么执行组下的任务，要么执行某一个job 两者取其一
+//            if (!StringUtils.isEmpty(groupCode)) {
+//                doGroupJobDeploy(tenantId, groupCode);
+//                return false;
+//            }
+//            if (StringUtils.isEmpty(jobCode)) {
+//                // 都没传 直接抛异常
+//                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
+//            }
+//            ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
+//                    .tenantId(tenantId).jobCode(jobCode).build()));
+//            doJobDeploy(comparisonJob);
+//            return true;
+//        });
+//    }
+
     @Override
-    public void deploy(Long tenantId, String jobCode, String groupCode) {
+    public void deploy(DeployInfo deployInfo) {
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
-            if (!StringUtils.isEmpty(groupCode)) {
-                doGroupJobDeploy(tenantId, groupCode);
+            if (!StringUtils.isEmpty(deployInfo.getGroupCode())) {
+                doGroupJobDeploy(deployInfo);
                 return false;
             }
-            if (StringUtils.isEmpty(jobCode)) {
+            if (StringUtils.isEmpty(deployInfo.getJobCode())) {
                 // 都没传 直接抛异常
                 throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
             }
             ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
-                    .tenantId(tenantId).jobCode(jobCode).build()));
-            doJobDeploy(comparisonJob);
+                    .tenantId(deployInfo.getTenantId()).jobCode(deployInfo.getJobCode()).build()));
+            doJobDeploy(comparisonJob, deployInfo);
             return true;
         });
     }
 
-    private void doJobDeploy(ComparisonJob comparisonJob) {
+    private void doJobDeploy(ComparisonJob comparisonJob, DeployInfo deployInfo) {
+        String deployType = Optional.ofNullable(deployInfo.getDeployType()).orElse(CommonConstant.Deploy.EXCEL_DEPLOY);
+        BaseDeployHandler deployHandler = jobHandlerContext.getDeployHandler(deployType.toUpperCase());
+        deployHandler.handle(comparisonJob, deployInfo);
+//        doDeployByExcel(comparisonJob);
+    }
+
+    private void doDeployByExcel(ComparisonJob comparisonJob) {
         // excel 路径
         String excelPath = ExcelUtil.getExcelPath(comparisonJob);
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
@@ -276,11 +301,11 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         }
     }
 
-    private void doGroupJobDeploy(Long tenantId, String groupCode) {
+    private void doGroupJobDeploy(DeployInfo deployInfo) {
         List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
-                .tenantId(tenantId).groupCode(groupCode).build()));
+                .tenantId(deployInfo.getTenantId()).groupCode(deployInfo.getGroupCode()).build()));
         for (ComparisonJob comparisonJob : jobList) {
-            doJobDeploy(comparisonJob);
+            doJobDeploy(comparisonJob, deployInfo);
         }
     }
 

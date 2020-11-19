@@ -23,4 +23,12 @@ public class CommonConstant {
         public static final String EXCEL = "excel";
     }
 
+    public static class Deploy {
+        public static final String EXCEL_DEPLOY = "excel";
+        public static final String PRESTO_DEPLOY = "presto";
+
+        private Deploy() {
+        }
+    }
+
 }

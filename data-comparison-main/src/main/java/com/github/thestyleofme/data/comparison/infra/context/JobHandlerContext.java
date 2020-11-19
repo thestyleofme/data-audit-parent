@@ -3,6 +3,7 @@ package com.github.thestyleofme.data.comparison.infra.context;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
@@ -29,6 +30,7 @@ public class JobHandlerContext {
     private static final Map<String, TransformHandlerProxy> TRANSFORM_HANDLER_PROXY_MAP = new HashMap<>();
     private static final Map<String, BaseSinkHandler> SINK_HANDLER_MAP = new HashMap<>();
     private static final Map<String, SinkHandlerProxy> SINK_HANDLER_PROXY_MAP = new HashMap<>();
+    private static final Map<String, BaseDeployHandler> DEPLOY_HANDLER_MAP = new HashMap<>();
 
     //===============================================================================
     //  SourceType
@@ -114,4 +116,23 @@ public class JobHandlerContext {
         return SINK_HANDLER_PROXY_MAP.get(sinkType.toUpperCase());
     }
 
+    //===============================================================================
+    //  DeployType
+    //===============================================================================
+
+    public void register(String deployType, BaseDeployHandler deployHandler) {
+        if (DEPLOY_HANDLER_MAP.containsKey(deployType)) {
+            log.error("deployType {} exists", deployType);
+            throw new HandlerException("hdsp.xadt.error.deploy.handler.deployType.exist");
+        }
+        DEPLOY_HANDLER_MAP.put(deployType, deployHandler);
+    }
+
+    public BaseDeployHandler getDeployHandler(String deployType) {
+        BaseDeployHandler deployHandler = DEPLOY_HANDLER_MAP.get(deployType.toUpperCase());
+        if (deployHandler == null) {
+            throw new HandlerException("hdsp.xadt.error.deploy.handler.deployType.not_exist");
+        }
+        return deployHandler;
+    }
 }

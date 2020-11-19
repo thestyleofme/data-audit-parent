@@ -10,11 +10,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.sql.DataSource;
 
+import com.github.thestyleofme.comparison.common.domain.PrestoInfo;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.data.comparison.transform.pojo.PrestoInfo;
+import com.github.thestyleofme.comparison.common.infra.utils.PrestoUtils;
 import com.github.thestyleofme.driver.core.infra.utils.CloseUtil;
 import com.github.thestyleofme.plugin.core.infra.constants.BaseConstant;
-import com.github.thestyleofme.presto.infra.utils.PrestoUtil;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.extern.slf4j.Slf4j;
@@ -72,7 +72,7 @@ public class JdbcHandler {
     }
 
     private String changeToJdbcUrl(String url) {
-        Pattern pattern = PrestoUtil.HTTP_PATTERN;
+        Pattern pattern = PrestoUtils.HTTP_PATTERN;
         Matcher matcher = pattern.matcher(url);
         if (matcher.matches()) {
             String ip = matcher.group(1);

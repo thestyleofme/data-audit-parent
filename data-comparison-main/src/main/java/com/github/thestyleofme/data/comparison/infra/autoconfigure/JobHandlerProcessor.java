@@ -1,10 +1,14 @@
 package com.github.thestyleofme.data.comparison.infra.autoconfigure;
 
+import java.util.Optional;
+
+import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
+import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
@@ -67,6 +71,14 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 jobHandlerContext.register(value.toUpperCase(), (SinkHandlerProxy) bean);
             }
         }
+        DeployType deployType = clazz.getAnnotation(DeployType.class);
+        Optional.ofNullable(deployType).map(DeployType::value).ifPresent(
+                value -> {
+                    if (bean instanceof BaseDeployHandler) {
+                        jobHandlerContext.register(value.toUpperCase(), (BaseDeployHandler) bean);
+                    }
+                }
+        );
         return bean;
     }
 }

@@ -1,4 +1,4 @@
-package com.github.thestyleofme.data.comparison.transform.pojo;
+package com.github.thestyleofme.comparison.common.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -20,8 +20,8 @@ public class PrestoInfo {
     private String coordinatorUrl;
     private String username;
 
-    private String sourceDatasourceCode;
-    private String targetDatasourceCode;
+    private String sourcePrestoCatalog;
+    private String targetPrestoCatalog;
     private String sourceSchema;
     private String targetSchema;
     private String sourceTable;

@@ -3,6 +3,7 @@ package com.github.thestyleofme.data.comparison.api.controller.v1;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
@@ -50,12 +51,22 @@ public class ComparisonJobController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-    @ApiOperation(value = "excel数据补偿")
-    @GetMapping("/excel/deploy")
-    public ResponseEntity<Void> deploy(@PathVariable(name = "organizationId") Long tenantId,
-                                        @RequestParam(value = "jobCode", required = false) String jobCode,
-                                        @RequestParam(value = "groupCode", required = false) String groupCode) {
-        comparisonJobService.deploy(tenantId, jobCode, groupCode);
+//    @ApiOperation(value = "excel数据补偿")
+//    @GetMapping("/excel/deploy")
+//    public ResponseEntity<Void> deploy(@PathVariable(name = "organizationId") Long tenantId,
+//                                        @RequestParam(value = "jobCode", required = false) String jobCode,
+//                                        @RequestParam(value = "groupCode", required = false) String groupCode) {
+//        comparisonJobService.deploy(tenantId, jobCode,groupCode);
+//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+//    }
+
+
+    @ApiOperation(value = "数据补偿")
+    @GetMapping("/deploy")
+    public ResponseEntity<Void> deploy1(@PathVariable(name = "organizationId") Long tenantId,
+                                        @RequestBody DeployInfo deployInfo) {
+        deployInfo.setTenantId(tenantId);
+        comparisonJobService.deploy(deployInfo);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
