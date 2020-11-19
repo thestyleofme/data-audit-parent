@@ -1,8 +1,11 @@
 package com.github.thestyleofme.comparison.common.infra.handler.sink.excel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.github.thestyleofme.driver.core.infra.meta.Tuple;
 
 /**
  * <p>
@@ -18,13 +21,15 @@ public class ExcelListenerUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static Map<String, Object> rowToMap(Object object, List<List<String>> excelHeader) {
-        Map<Integer, Object> row = (LinkedHashMap<Integer, Object>) object;
-        Map<String, Object> map = new LinkedHashMap<>();
-        for (Map.Entry<Integer, Object> entry : row.entrySet()) {
+    public static List<Tuple<String, String>> rowToTupleList(Object object, List<List<String>> excelHeader) {
+        Map<Integer, String> row = (LinkedHashMap<Integer, String>) object;
+        List<Tuple<String, String>> tupleList = new ArrayList<>();
+        Tuple<String, String> tuple;
+        for (Map.Entry<Integer, String> entry : row.entrySet()) {
             String name = excelHeader.get(entry.getKey()).get(0);
-            map.put(name, entry.getValue());
+            tuple = new Tuple<>(name, entry.getValue());
+            tupleList.add(tuple);
         }
-        return map;
+        return tupleList;
     }
 }

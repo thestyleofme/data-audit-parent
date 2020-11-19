@@ -29,9 +29,13 @@ public class JobEnv {
     private String sourceTable;
     private String targetTable;
 
+    private String sourcePrestoCatalog;
+    private String targetPrestoCatalog;
+
     private String sourcePk;
     private String targetPk;
     private String sourceIndex;
     private String targetIndex;
     private List<Map<String,Object>> colMapping;
+
 }
