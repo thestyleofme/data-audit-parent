@@ -10,9 +10,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import com.alibaba.excel.EasyExcelFactory;
-import com.alibaba.excel.ExcelReader;
-import com.alibaba.excel.read.metadata.ReadSheet;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -26,15 +23,16 @@ import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMa
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
-import com.github.thestyleofme.comparison.common.domain.*;
+import com.github.thestyleofme.comparison.common.domain.AppConf;
+import com.github.thestyleofme.comparison.common.domain.DeployInfo;
+import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.TransformInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
-import com.github.thestyleofme.comparison.common.infra.excel.CommonExcelListener;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
-import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
@@ -42,7 +40,6 @@ import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
-import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -65,14 +62,11 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private final JobHandlerContext jobHandlerContext;
     private final ComparisonJobGroupService comparisonJobGroupService;
     private final ReentrantLock lock = new ReentrantLock();
-    private final DriverSessionService driverSessionService;
 
     public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
-                                    ComparisonJobGroupService comparisonJobGroupService,
-                                    DriverSessionService driverSessionService) {
+                                    ComparisonJobGroupService comparisonJobGroupService) {
         this.jobHandlerContext = jobHandlerContext;
         this.comparisonJobGroupService = comparisonJobGroupService;
-        this.driverSessionService = driverSessionService;
     }
 
     @Override
@@ -90,18 +84,22 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO) {
+        ComparisonJob comparisonJob = BaseComparisonJobConvert.INSTANCE.dtoToEntity(comparisonJobDTO);
+        saveOrUpdate(comparisonJob);
+        return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
-        // todo 校验
+        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.error.both.jobCode.groupCode.is_null",
+                groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
             if (!StringUtils.isEmpty(groupCode)) {
                 doGroupJob(tenantId, groupCode);
                 return false;
-            }
-            if (StringUtils.isEmpty(jobCode)) {
-                // 都没传 直接抛异常
-                log.error("hdsp.xadt.error.both.jobCode.groupCode.is_null");
-                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
             }
             ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
                     .tenantId(tenantId).jobCode(jobCode).build()));
@@ -110,12 +108,22 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         });
     }
 
-    private void doJob(ComparisonJob comparisonJob) {
-        // 检验任务是否正在执行 以及设置开始执行状态
-        if (isFilterJob(comparisonJob)) {
-            return;
+    private void doGroupJob(Long tenantId, String groupCode) {
+        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(tenantId, groupCode);
+        List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
+                .tenantId(tenantId).groupCode(groupCode).build()));
+        for (ComparisonJob comparisonJob : jobList) {
+            copyGroupInfoToJob(comparisonJob, jobGroup);
+            doJob(comparisonJob);
         }
+    }
+
+    private void doJob(ComparisonJob comparisonJob) {
         try {
+            // 检验任务是否正在执行 以及设置开始执行状态
+            if (isFilterJob(comparisonJob)) {
+                return;
+            }
             AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
             // env
             Map<String, Object> env = appConf.getEnv();
@@ -151,29 +159,6 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                     .set(ComparisonJob::getStatus, JobStatusEnum.valueOf(String.format(CommonConstant.FAILED_FORMAT, process)).name())
                     .set(ComparisonJob::getErrorMsg, HandlerUtil.getMessage(e))
                     .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
-        }
-    }
-
-    private boolean isFilterJob(ComparisonJob comparisonJob) {
-        lock.lock();
-        try {
-            // 任务正在运行则跳过
-            if (comparisonJob.getStatus().equals(JobStatusEnum.STARTING.name())) {
-                update(Wrappers.<ComparisonJob>lambdaUpdate()
-                        .set(ComparisonJob::getErrorMsg, "the job is running, please try again later")
-                        .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
-                return true;
-            }
-            // 开始执行 状态更新
-            comparisonJob.setStatus(JobStatusEnum.STARTING.name());
-            comparisonJob.setStartTime(LocalDateTime.now());
-            update(Wrappers.<ComparisonJob>lambdaUpdate()
-                    .set(ComparisonJob::getExecuteTime, null)
-                    .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
-            updateById(comparisonJob);
-            return false;
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -230,86 +215,70 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         return sourceDataMapping;
     }
 
-    private void doGroupJob(Long tenantId, String groupCode) {
-        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(tenantId, groupCode);
-        List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
-                .tenantId(tenantId).groupCode(groupCode).build()));
-        for (ComparisonJob comparisonJob : jobList) {
-            copyGroupInfoToJob(comparisonJob, jobGroup);
-            doJob(comparisonJob);
+    private boolean isFilterJob(ComparisonJob comparisonJob) {
+        lock.lock();
+        try {
+            // 任务正在运行则跳过
+            if (comparisonJob.getStatus().equals(JobStatusEnum.STARTING.name())) {
+                update(Wrappers.<ComparisonJob>lambdaUpdate()
+                        .set(ComparisonJob::getErrorMsg, "the job is running, please try again later")
+                        .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+                return true;
+            }
+            // 开始执行 状态更新
+            updateJobStarting(comparisonJob);
+            return false;
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO) {
-        ComparisonJob comparisonJob = BaseComparisonJobConvert.INSTANCE.dtoToEntity(comparisonJobDTO);
-        saveOrUpdate(comparisonJob);
-        return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
-    }
-
-    @Override
     public void deploy(DeployInfo deployInfo) {
-        // todo 校验
-        CompletableFuture<Boolean> booleanCompletableFuture = CompletableFuture.supplyAsync(() -> {
+        String groupCode = deployInfo.getGroupCode();
+        String jobCode = deployInfo.getJobCode();
+        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.error.both.jobCode.groupCode.is_null",
+                groupCode, jobCode);
+        CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
-            if (!StringUtils.isEmpty(deployInfo.getGroupCode())) {
+            if (!StringUtils.isEmpty(groupCode)) {
                 doGroupJobDeploy(deployInfo);
                 return false;
             }
-            if (StringUtils.isEmpty(deployInfo.getJobCode())) {
-                // 都没传 直接抛异常
-                log.error("hdsp.xadt.error.both.jobCode.groupCode.is_null");
-                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
-            }
             ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
-                    .tenantId(deployInfo.getTenantId()).jobCode(deployInfo.getJobCode()).build()));
+                    .tenantId(deployInfo.getTenantId()).jobCode(jobCode).build()));
             doJobDeploy(comparisonJob, deployInfo);
             return true;
         });
     }
 
     private void doJobDeploy(ComparisonJob comparisonJob, DeployInfo deployInfo) {
-        if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
-            throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
-        }
-        // todo 开始deploy 更新job表状态位STARTING
-        String deployType = Optional.ofNullable(deployInfo.getDeployType()).orElse(CommonConstant.Deploy.EXCEL_DEPLOY);
-        BaseDeployHandler deployHandler = jobHandlerContext.getDeployHandler(deployType.toUpperCase());
-        deployHandler.handle(comparisonJob, deployInfo);
-    }
-
-    private void doDeployByExcel(ComparisonJob comparisonJob,DeployInfo deployInfo) {
-        // 检验任务是否正在执行 以及设置开始执行状态
-        if (isFilterJob(comparisonJob)) {
-            return;
-        }
-        // excel 路径
         try {
-            String excelPath = ExcelUtil.getExcelPath(comparisonJob);
-            List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
-            List<List<String>> targetExcelHeader = ExcelUtil.getTargetExcelHeader(colMappingList);
-            ExcelReader excelReader = null;
-            try {
-                excelReader = EasyExcelFactory.read(excelPath).build();
-                // A有B无
-                ReadSheet readSheet1 =
-                        EasyExcelFactory.readSheet(0)
-                                .head(ExcelUtil.getSourceExcelHeader(comparisonJob))
-                                .registerReadListener(new CommonExcelListener<List<Object>>(
-                                        comparisonJob, targetExcelHeader, driverSessionService))
-                                .build();
-                // todo AB主键或唯一索引相同 覆盖
-                excelReader.read(readSheet1);
-            } finally {
-                if (excelReader != null) {
-                    excelReader.finish();
-                }
+            // 必须数据稽核后才能补偿
+            if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
+                throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
             }
+            // 检验任务是否正在执行 以及设置开始执行状态
+            if (isFilterJob(comparisonJob)) {
+                return;
+            }
+            String deployType = Optional.ofNullable(deployInfo.getDeployType()).orElse(CommonConstant.Deploy.EXCEL);
+            BaseDeployHandler deployHandler = jobHandlerContext.getDeployHandler(deployType.toUpperCase());
+            deployHandler.handle(comparisonJob, deployInfo);
             updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_SUCCESS.name(), null);
         } catch (Exception e) {
             updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_FAILED.name(), HandlerUtil.getMessage(e));
         }
+    }
+
+    private void updateJobStarting(ComparisonJob comparisonJob) {
+        comparisonJob.setStatus(JobStatusEnum.STARTING.name());
+        comparisonJob.setStartTime(LocalDateTime.now());
+        update(Wrappers.<ComparisonJob>lambdaUpdate()
+                .set(ComparisonJob::getExecuteTime, null)
+                .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+        updateById(comparisonJob);
     }
 
     private void doGroupJobDeploy(DeployInfo deployInfo) {

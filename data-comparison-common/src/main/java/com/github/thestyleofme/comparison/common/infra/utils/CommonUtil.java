@@ -7,6 +7,7 @@ import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
@@ -45,6 +46,14 @@ public class CommonUtil {
     public static <T> T requireNonNullElse(T obj, T defaultObj) {
         return (obj != null) ? obj : Optional.ofNullable(defaultObj)
                 .orElseThrow(() -> new HandlerException("hdsp.xadt.error.both.null"));
+    }
+
+    @SafeVarargs
+    public static <T> void requireAllNonNullElseThrow(String errorMsg, T... objs) {
+        boolean allMatch = Stream.of(objs).allMatch(Objects::isNull);
+        if (allMatch) {
+            throw new HandlerException(errorMsg);
+        }
     }
 
     /**

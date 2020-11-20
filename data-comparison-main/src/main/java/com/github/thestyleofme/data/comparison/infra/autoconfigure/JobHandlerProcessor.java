@@ -39,6 +39,14 @@ public class JobHandlerProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, @NonNull String beanName) {
         Class<?> clazz = bean.getClass();
+        doSource(bean, clazz);
+        doTransform(bean, clazz);
+        doSink(bean, clazz);
+        doDeploy(bean, clazz);
+        return bean;
+    }
+
+    private void doSource(Object bean, Class<?> clazz) {
         SourceType sourceType = clazz.getAnnotation(SourceType.class);
         if (sourceType != null) {
             String value = sourceType.value();
@@ -46,6 +54,9 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 jobHandlerContext.register(value.toUpperCase(), (BaseSourceHandler) bean);
             }
         }
+    }
+
+    private void doTransform(Object bean, Class<?> clazz) {
         TransformType transformType = clazz.getAnnotation(TransformType.class);
         if (transformType != null) {
             String value = transformType.value();
@@ -61,6 +72,9 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 jobHandlerContext.register(key.toUpperCase(), (TransformHandlerProxy) bean);
             }
         }
+    }
+
+    private void doSink(Object bean, Class<?> clazz) {
         SinkType sinkType = clazz.getAnnotation(SinkType.class);
         if (sinkType != null) {
             String value = sinkType.value();
@@ -71,6 +85,9 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 jobHandlerContext.register(value.toUpperCase(), (SinkHandlerProxy) bean);
             }
         }
+    }
+
+    private void doDeploy(Object bean, Class<?> clazz) {
         DeployType deployType = clazz.getAnnotation(DeployType.class);
         Optional.ofNullable(deployType).map(DeployType::value).ifPresent(
                 value -> {
@@ -79,6 +96,5 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                     }
                 }
         );
-        return bean;
     }
 }

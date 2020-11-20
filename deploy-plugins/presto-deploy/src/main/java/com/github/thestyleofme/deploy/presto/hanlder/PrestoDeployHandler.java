@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * @author siqi.hou 2020/11/20 9:43
  * @since 1.0.0
  */
-@DeployType(CommonConstant.Deploy.PRESTO_DEPLOY)
+@DeployType(CommonConstant.Deploy.PRESTO)
 @Component
 @Slf4j
 public class PrestoDeployHandler implements BaseDeployHandler {

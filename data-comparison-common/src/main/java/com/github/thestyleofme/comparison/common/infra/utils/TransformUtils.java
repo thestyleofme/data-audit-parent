@@ -14,6 +14,9 @@ import org.springframework.util.CollectionUtils;
  */
 public class TransformUtils {
 
+    private TransformUtils() {
+    }
+
     /**
      * 按mapping映射顺序对 数据集list进行排序
      *

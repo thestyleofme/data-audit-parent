@@ -15,11 +15,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 /**
- * @author siqi.hou
- * @date 2020-11-19 15:13
+ * <p>
+ * siqi.hou
+ * </p>
+ *
+ * @author isaac 2020/11/20 14:26
+ * @since 1.0.0
  */
 @Slf4j
 public class SqlGeneratorUtil {
+
+    private SqlGeneratorUtil(){
+
+    }
 
     public static String generateSql(PrestoInfo prestoInfo, JobEnv jobEnv) {
         String sql;
