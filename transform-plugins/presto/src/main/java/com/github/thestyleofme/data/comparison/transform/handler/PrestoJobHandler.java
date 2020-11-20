@@ -11,12 +11,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.PrestoInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
+import com.github.thestyleofme.comparison.common.infra.context.JdbcHandler;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.PrestoUtils;
 import com.github.thestyleofme.comparison.common.infra.utils.SqlGeneratorUtil;
@@ -24,7 +24,6 @@ import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
-import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import com.github.thestyleofme.presto.app.service.ClusterService;
 import com.github.thestyleofme.presto.domain.entity.Cluster;
 import lombok.extern.slf4j.Slf4j;
@@ -33,19 +32,26 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
- * @author siqi.hou@hand-china.com
- * @date 2020-11-16 19:43
+ * <p>
+ * description
+ * </p>
+ *
+ * @author siqi.hou 2020/11/20 11:25
+ * @since 1.0.0
  */
 @TransformType(value = "PRESTO")
 @Component
 @Slf4j
 public class PrestoJobHandler implements BaseTransformHandler {
+
     private static final int FOUR = 4;
     private final DriverSessionService driverSessionService;
     private final ClusterService clusterService;
     private final JdbcHandler jdbcHandler;
 
-    public PrestoJobHandler(DriverSessionService driverSessionService, ClusterService clusterService, JdbcHandler jdbcHandler) {
+    public PrestoJobHandler(DriverSessionService driverSessionService,
+                            ClusterService clusterService,
+                            JdbcHandler jdbcHandler) {
         this.driverSessionService = driverSessionService;
         this.clusterService = clusterService;
         this.jdbcHandler = jdbcHandler;
@@ -57,9 +63,8 @@ public class PrestoJobHandler implements BaseTransformHandler {
                                 Map<String, Object> transformMap,
                                 SourceDataMapping sourceDataMapping) {
         LocalDateTime startTime = LocalDateTime.now();
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
-        PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(appConf, transformMap);
+        PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(jobEnv, transformMap);
         HandlerResult handlerResult = new HandlerResult();
 
         // 尝试获取 presto 的dataSourceCode
@@ -78,18 +83,18 @@ public class PrestoJobHandler implements BaseTransformHandler {
             handleByDataSourceCode(handlerResult, prestoInfo, comparisonJob, jobEnv);
         } else {
             // 走jdbc
-            handleByJDBC(handlerResult, prestoInfo, jobEnv);
+            handleByJdbc(handlerResult, prestoInfo, jobEnv);
         }
         LocalDateTime endTime = LocalDateTime.now();
         log.debug("job time cost :" + Duration.between(endTime, startTime));
         return handlerResult;
     }
 
-    private void handleByJDBC(HandlerResult handlerResult, PrestoInfo prestoInfo, JobEnv jobEnv) {
+    private void handleByJdbc(HandlerResult handlerResult, PrestoInfo prestoInfo, JobEnv jobEnv) {
         // 生成sql
         String sql = SqlGeneratorUtil.generateSql(prestoInfo, jobEnv);
         // 执行sql
-        List<List<Map<String, Object>>> list = jdbcHandler.executeAllSql(prestoInfo, sql);
+        List<List<Map<String, Object>>> list = jdbcHandler.executeBatchQuerySql(prestoInfo, sql);
         // 装载数据到handlerResult
         this.fillHandlerResult(handlerResult, jobEnv, list);
     }

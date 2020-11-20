@@ -4,11 +4,15 @@ import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 
 /**
- * @author siqi.hou@hand-china.com
- * @date 2020-11-19 11:37
+ * <p>
+ * description
+ * </p>
+ *
+ * @author siqi.hou 2020/11/20 9:42
+ * @since 1.0.0
  */
-
 public interface BaseDeployHandler {
+
     /**
      * 处理数据补偿任务
      *

@@ -43,7 +43,8 @@ public class CommonUtil {
     }
 
     public static <T> T requireNonNullElse(T obj, T defaultObj) {
-        return (obj != null) ? obj : Objects.requireNonNull(defaultObj, "both are null");
+        return (obj != null) ? obj : Optional.ofNullable(defaultObj)
+                .orElseThrow(() -> new HandlerException("hdsp.xadt.error.both.null"));
     }
 
     /**

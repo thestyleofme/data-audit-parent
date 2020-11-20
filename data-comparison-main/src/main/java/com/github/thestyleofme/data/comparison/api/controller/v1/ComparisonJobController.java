@@ -51,20 +51,10 @@ public class ComparisonJobController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
-//    @ApiOperation(value = "excel数据补偿")
-//    @GetMapping("/excel/deploy")
-//    public ResponseEntity<Void> deploy(@PathVariable(name = "organizationId") Long tenantId,
-//                                        @RequestParam(value = "jobCode", required = false) String jobCode,
-//                                        @RequestParam(value = "groupCode", required = false) String groupCode) {
-//        comparisonJobService.deploy(tenantId, jobCode,groupCode);
-//        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-//    }
-
-
     @ApiOperation(value = "数据补偿")
     @GetMapping("/deploy")
-    public ResponseEntity<Void> deploy1(@PathVariable(name = "organizationId") Long tenantId,
-                                        @RequestBody DeployInfo deployInfo) {
+    public ResponseEntity<Void> deploy(@PathVariable(name = "organizationId") Long tenantId,
+                                       DeployInfo deployInfo) {
         deployInfo.setTenantId(tenantId);
         comparisonJobService.deploy(deployInfo);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);

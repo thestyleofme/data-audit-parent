@@ -91,6 +91,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
+        // todo 校验
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
             if (!StringUtils.isEmpty(groupCode)) {
@@ -99,6 +100,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             }
             if (StringUtils.isEmpty(jobCode)) {
                 // 都没传 直接抛异常
+                log.error("hdsp.xadt.error.both.jobCode.groupCode.is_null");
                 throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
             }
             ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
@@ -246,28 +248,10 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         return BaseComparisonJobConvert.INSTANCE.entityToDTO(comparisonJob);
     }
 
-//    @Override
-//    public void deploy(Long tenantId, String jobCode, String groupCode) {
-//        CompletableFuture.supplyAsync(() -> {
-//            // 要么执行组下的任务，要么执行某一个job 两者取其一
-//            if (!StringUtils.isEmpty(groupCode)) {
-//                doGroupJobDeploy(tenantId, groupCode);
-//                return false;
-//            }
-//            if (StringUtils.isEmpty(jobCode)) {
-//                // 都没传 直接抛异常
-//                throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
-//            }
-//            ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
-//                    .tenantId(tenantId).jobCode(jobCode).build()));
-//            doJobDeploy(comparisonJob);
-//            return true;
-//        });
-//    }
-
     @Override
     public void deploy(DeployInfo deployInfo) {
-        CompletableFuture.supplyAsync(() -> {
+        // todo 校验
+        CompletableFuture<Boolean> booleanCompletableFuture = CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
             if (!StringUtils.isEmpty(deployInfo.getGroupCode())) {
                 doGroupJobDeploy(deployInfo);
@@ -275,6 +259,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             }
             if (StringUtils.isEmpty(deployInfo.getJobCode())) {
                 // 都没传 直接抛异常
+                log.error("hdsp.xadt.error.both.jobCode.groupCode.is_null");
                 throw new HandlerException("hdsp.xadt.error.both.jobCode.groupCode.is_null");
             }
             ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
@@ -285,14 +270,16 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     private void doJobDeploy(ComparisonJob comparisonJob, DeployInfo deployInfo) {
+        if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
+            throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
+        }
+        // todo 开始deploy 更新job表状态位STARTING
         String deployType = Optional.ofNullable(deployInfo.getDeployType()).orElse(CommonConstant.Deploy.EXCEL_DEPLOY);
         BaseDeployHandler deployHandler = jobHandlerContext.getDeployHandler(deployType.toUpperCase());
         deployHandler.handle(comparisonJob, deployInfo);
-//        doDeployByExcel(comparisonJob);
     }
 
-    private void doDeployByExcel(ComparisonJob comparisonJob) {
-    private void doJobDeploy(ComparisonJob comparisonJob) {
+    private void doDeployByExcel(ComparisonJob comparisonJob,DeployInfo deployInfo) {
         // 检验任务是否正在执行 以及设置开始执行状态
         if (isFilterJob(comparisonJob)) {
             return;
@@ -326,14 +313,12 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     private void doGroupJobDeploy(DeployInfo deployInfo) {
-    private void doGroupJobDeploy(Long tenantId, String groupCode) {
-        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(tenantId, groupCode);
+        ComparisonJobGroup jobGroup = comparisonJobGroupService.getOne(deployInfo.getTenantId(), deployInfo.getGroupCode());
         List<ComparisonJob> jobList = list(new QueryWrapper<>(ComparisonJob.builder()
                 .tenantId(deployInfo.getTenantId()).groupCode(deployInfo.getGroupCode()).build()));
         for (ComparisonJob comparisonJob : jobList) {
-            doJobDeploy(comparisonJob, deployInfo);
             copyGroupInfoToJob(comparisonJob, jobGroup);
-            doJobDeploy(comparisonJob);
+            doJobDeploy(comparisonJob, deployInfo);
         }
     }
 
@@ -346,6 +331,5 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         appConf.setEnv(BeanUtils.bean2Map(jobEnv));
         comparisonJob.setAppConf(JsonUtil.toJson(appConf));
     }
-
 
 }

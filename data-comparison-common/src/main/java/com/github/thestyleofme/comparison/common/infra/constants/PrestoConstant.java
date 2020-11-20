@@ -1,7 +1,7 @@
 package com.github.thestyleofme.comparison.common.infra.constants;
 
 /**
- * @author siqi.hou@hand-china.com
+ * @author siqi.hou
  * @date 2020-11-17 13:58
  */
 public class PrestoConstant {

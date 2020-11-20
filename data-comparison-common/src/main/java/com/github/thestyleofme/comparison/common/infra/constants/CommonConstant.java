@@ -17,6 +17,7 @@ public class CommonConstant {
     public static final String AUDIT = "AUDIT";
     public static final String DEPLOY = "DEPLOY";
     public static final String FAILED_FORMAT = "%s_FAILED";
+    public static final String DEFAULT_PRESTO_USERNAME = "PRESTO";
 
     public static class Sink {
 
@@ -27,11 +28,12 @@ public class CommonConstant {
     }
 
     public static class Deploy {
+
+        private Deploy() {}
+
         public static final String EXCEL_DEPLOY = "excel";
         public static final String PRESTO_DEPLOY = "presto";
 
-        private Deploy() {
-        }
     }
 
 }

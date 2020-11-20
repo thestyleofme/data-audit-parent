@@ -43,15 +43,6 @@ public interface ComparisonJobService extends IService<ComparisonJob> {
      */
     ComparisonJobDTO save(ComparisonJobDTO comparisonJobDTO);
 
-//    /**
-//     * 执行数据补偿
-//     *
-//     * @param tenantId  租户id
-//     * @param jobCode   jobCode
-//     * @param groupCode groupCode
-//     */
-//    void deploy(Long tenantId, String jobCode, String groupCode);
-
     /**
      * 执行数据补偿
      *

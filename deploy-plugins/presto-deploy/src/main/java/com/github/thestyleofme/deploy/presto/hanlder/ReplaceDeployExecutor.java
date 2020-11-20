@@ -5,29 +5,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * @author siqi.hou@hand-china.com
- * @date 2020-11-19 14:48
+ * <p>
+ * siqi.hou
+ * </p>
+ *
+ * @author isaac 2020/11/20 10:10
+ * @since 1.0.0
  */
 @Slf4j
 @Component
-public class ReplaceDeployExecutor extends BaseDeployExecutor {
+public class ReplaceDeployExecutor implements BaseDeployExecutor {
 
     @Override
-    void doSourceToTarget(AppConf appConf) {
+    public void doSourceToTarget(AppConf appConf) {
         log.debug("==> doSourceToTarget deploy start");
-
     }
 
     @Override
-    void doTargetExtraData(AppConf appConf) {
-
+    public void doTargetExtraData(AppConf appConf) {
         log.debug("==> doTargetExtraData target deploy start");
-
     }
 
     @Override
-    void doOnlySamePkOrIndexData(AppConf appConf) {
+    public void doOnlySamePkOrIndexData(AppConf appConf) {
         log.debug("==> target doOnlySamePkOrIndexData deploy start");
-
     }
+
 }

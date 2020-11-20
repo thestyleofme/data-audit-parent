@@ -3,16 +3,17 @@ package com.github.thestyleofme.deploy.presto.hanlder;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 
 /**
- * @author siqi.hou@hand-china.com
+ * @author siqi.hou
  * @date 2020-11-19 14:41
  */
-public abstract class BaseDeployExecutor {
+public interface BaseDeployExecutor {
+
     /**
      * 执行数据补偿
      *
-     * @param appConf
+     * @param appConf AppConf
      */
-    public void doDeploy(AppConf appConf) {
+    default void doDeploy(AppConf appConf) {
         doSourceToTarget(appConf);
         doTargetExtraData(appConf);
         doOnlySamePkOrIndexData(appConf);
@@ -23,19 +24,19 @@ public abstract class BaseDeployExecutor {
      *
      * @param appConf AppConf
      */
-    abstract void doSourceToTarget(AppConf appConf);
+    void doSourceToTarget(AppConf appConf);
 
     /**
      * 目标表多余的数据处理
      *
      * @param appConf AppConf
      */
-    abstract void doTargetExtraData(AppConf appConf);
+    void doTargetExtraData(AppConf appConf);
 
     /**
      * 对仅主键或索引相同的数据进行补偿
      *
      * @param appConf AppConf
      */
-    abstract void doOnlySamePkOrIndexData(AppConf appConf);
+    void doOnlySamePkOrIndexData(AppConf appConf);
 }

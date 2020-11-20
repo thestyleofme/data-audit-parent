@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 /**
- * @author siqi.hou@hand-china.com
+ * @author siqi.hou
  * @date 2020-11-19 15:13
  */
 @Slf4j
