@@ -15,12 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
 
 /**
- * <p>
- * siqi.hou
- * </p>
- *
- * @author isaac 2020/11/20 14:26
- * @since 1.0.0
+ * @author hsq
+ * @date 2020-11-19 15:13
  */
 @Slf4j
 public class SqlGeneratorUtil {
@@ -62,11 +58,11 @@ public class SqlGeneratorUtil {
                 .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
                 .collect(Collectors.toList());
         /*
-        AB都有的数据
+        1. AB都有的数据
         例：
-        `select a.* from devmysql.hdsp_test.resume as a join devmysql.hdsp_test.resume_bak  as b
-        ON a.id = b.id WHERE a.id = b.id and a.name = b.name and a.sex = b.sex and a.phone = b
-        .call and a.address = b.address and a.education = b.education and a.state = b.state;`
+        `select _a.* from devmysql.hdsp_test.resume as _a join devmysql.hdsp_test.resume_bak  as _b
+        ON _a.id = _b.id WHERE _a.id = _b.id and _a.name = _b.name and _a.sex = _b.sex and _a.phone = _b
+        .call and _a.address = _b.address and _a.education = _b.education and _a.state = _b.state;`
         */
         StringBuilder equalsBuilder = new StringBuilder();
         for (ColMapping mapping : colMappingList) {
@@ -76,22 +72,22 @@ public class SqlGeneratorUtil {
                 equalsBuilder.toString()))
                 .append(PrestoConstant.SqlConstant.LINE_END);
         /*
-         A有B无
-         `select a.* from devmysql.hdsp_test.resume  as a left join devmysql.hdsp_test.resume_bak  as b ON a.id = b.id WHERE b.id is null;`
+         2. A有B无
+         `select _a.* from devmysql.hdsp_test.resume  as _a left join devmysql.hdsp_test.resume_bak  as _b ON _a.id = _b.id WHERE _b.id is null;`
          */
         createUniqueDataSqlByPk(builder, sourceTable, targetTable, sourcePk, targetPk);
         /*
-          A无B有
-          `select a.* from devmysql.hdsp_test.resume_bak  as a left join devmysql.hdsp_test.resume  as b ON a.id = b.id WHERE b.id is null  ;`
+         3. A无B有
+          `select _a.* from devmysql.hdsp_test.resume_bak  as _a left join devmysql.hdsp_test.resume  as _b ON _a.id = _b.id WHERE _b.id is null  ;`
          */
         createUniqueDataSqlByPk(builder, targetTable, sourceTable, targetPk, sourcePk);
 
         /*
-          AB主键或唯一索引相同，部分字段不一样
-          `select a.* from devmysql.hdsp_test.resume  as a left join devmysql.hdsp_test.resume_bak  as b
-          ON a.id = b.id
-          WHERE a.id != b.id or a.name != b.name or a.sex != b.sex or a.phone != b.call or a.address != b.address
-          or a.education != b.education or a.state != b.state or 1=2  ;`
+          4. AB主键或唯一索引相同，部分字段不一样
+          `select _a.* from devmysql.hdsp_test.resume  as _a left join devmysql.hdsp_test.resume_bak  as _b
+          ON _a.id = _b.id
+          WHERE _a.id != _b.id or _a.name != _b.name or _a.sex != _b.sex or _a.phone != _b.call or _a.address != _b.address
+          or _a.education != _b.education or _a.state != _b.state or 1=2  ;`
          */
         StringBuilder whereBuilder = new StringBuilder();
         for (ColMapping mapping : colMappingList) {
@@ -150,74 +146,71 @@ public class SqlGeneratorUtil {
             onConditionBuilder.append(String.format(PrestoConstant.SqlConstant.ON_EQUAL, sourceIndexArray[i], targetIndexArray[i])).append(PrestoConstant.SqlConstant.AND);
         }
         onConditionBuilder.delete(onConditionBuilder.lastIndexOf(PrestoConstant.SqlConstant.AND), onConditionBuilder.length());
-        String onConditionAB = onConditionBuilder.toString();
+        String onCondition1 = onConditionBuilder.toString();
         // 创建on语句 AB型
         onConditionBuilder.setLength(0);
         for (int i = 0; i < sourceIndexArray.length; i++) {
             onConditionBuilder.append(String.format(PrestoConstant.SqlConstant.ON_EQUAL, targetIndexArray[i], sourceIndexArray[i])).append(PrestoConstant.SqlConstant.AND);
         }
         onConditionBuilder.delete(onConditionBuilder.lastIndexOf(PrestoConstant.SqlConstant.AND), onConditionBuilder.length());
-        String onConditionBA = onConditionBuilder.toString();
+        String onCondition2 = onConditionBuilder.toString();
 
         /*
         AB都有的数据
         例：
-        `select a.* from devmysql.hdsp_test.resume as a join devmysql.hdsp_test.resume_bak  as b
-        ON a.name = b.name and a.phone = b.call WHERE a.id = b.id and a.sex = b.sex and a.address = b.address
-        and a.education = b.education and a.state = b.state;`
+        `select _a.* from devmysql.hdsp_test.resume as _a join devmysql.hdsp_test.resume_bak  as _b
+        ON _a.name = _b.name and _a.phone = _b.call WHERE _a.id = _b.id and _a.sex = _b.sex and _a.address = _b.address
+        and _a.education = _b.education and _a.state = _b.state;`
         */
         StringBuilder equalsBuilder = new StringBuilder();
         for (ColMapping mapping : colList) {
             equalsBuilder.append(String.format(PrestoConstant.SqlConstant.EQUAL, mapping.getSourceCol(), mapping.getTargetCol()));
         }
-        builder.append(String.format(PrestoConstant.SqlConstant.ALL_HAVE_SQL_INDEX, sourceTable, targetTable, onConditionAB, equalsBuilder.toString()))
+        builder.append(String.format(PrestoConstant.SqlConstant.ALL_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1, equalsBuilder.toString()))
                 .append(PrestoConstant.SqlConstant.LINE_END);
         /*
          A有B无
-         `select a.* from devmysql.hdsp_test.resume as a left join devmysql.hdsp_test.resume_bak  as b ON a.name = b.name and a.phone = b.call where b.name is null and b.call is null;`
+         `select _a.* from devmysql.hdsp_test.resume as _a left join devmysql.hdsp_test.resume_bak  as _b ON _a.name = _b.name and _a.phone = _b.call where _b.name is null and _b.call is null;`
          */
         StringBuilder whereCondition1 = new StringBuilder();
         for (String idx : targetIndexArray) {
             whereCondition1.append(String.format(PrestoConstant.SqlConstant.IS_NULL, idx)).append(PrestoConstant.SqlConstant.AND);
         }
         whereCondition1.delete(whereCondition1.lastIndexOf(PrestoConstant.SqlConstant.AND), whereCondition1.length());
-        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, sourceTable, targetTable, onConditionAB,
+        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1,
                 whereCondition1.toString()))
                 .append(PrestoConstant.SqlConstant.LINE_END);
         /*
          B有A无
-         `select a.* from devmysql.hdsp_test.resume_bak as a left join devmysql.hdsp_test.resume  as b ON a.name = b.name and a.call = b.phone where b.name is null and b.phone is null;`
+         `select _a.* from devmysql.hdsp_test.resume_bak as _a left join devmysql.hdsp_test.resume  as _b ON _a.name = _b.name and _a.call = _b.phone where _b.name is null and _b.phone is null;`
          */
         StringBuilder whereCondition2 = new StringBuilder();
         for (String idx : sourceIndexArray) {
             whereCondition2.append(String.format(PrestoConstant.SqlConstant.IS_NULL, idx)).append(PrestoConstant.SqlConstant.AND);
         }
         whereCondition2.delete(whereCondition2.lastIndexOf(PrestoConstant.SqlConstant.AND), whereCondition2.length());
-        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, targetTable, sourceTable, onConditionBA,
+        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, targetTable, sourceTable, onCondition2,
                 whereCondition2.toString()))
                 .append(PrestoConstant.SqlConstant.LINE_END);
 
         /*
           AB唯一索引相同，部分字段不一样
-          `select a.* from devmysql.hdsp_test.resume as a left join devmysql.hdsp_test.resume_bak  as b
-          ON a.name = b.name and a.phone = b.call
-          WHERE a.id != b.id or a.sex != b.sex or a.address != b.address
-          or a.education != b.education or a.state != b.state or 1=2  ;`
+          `select _a.* from devmysql.hdsp_test.resume as _a left join devmysql.hdsp_test.resume_bak  as _b
+          ON _a.name = _b.name and _a.phone = _b.call
+          WHERE _a.id != _b.id or _a.sex != _b.sex or _a.address != _b.address
+          or _a.education != _b.education or _a.state != _b.state or 1=2  ;`
          */
         StringBuilder whereBuilder = new StringBuilder();
         for (ColMapping mapping : colList) {
             whereBuilder.append(String.format(PrestoConstant.SqlConstant.NOT_EQUAL, mapping.getSourceCol(), mapping.getTargetCol()));
         }
         whereBuilder.append(PrestoConstant.SqlConstant.OR_END);
-        builder.append(String.format(PrestoConstant.SqlConstant.ANY_NOT_IN_SQL_INDEX, sourceTable, targetTable, onConditionAB,
+        builder.append(String.format(PrestoConstant.SqlConstant.ANY_NOT_IN_SQL_INDEX, sourceTable, targetTable, onCondition1,
                 whereBuilder.toString()))
                 .append(PrestoConstant.SqlConstant.LINE_END);
 
         log.debug("==> presto create sql by index: {}", builder.toString());
         return builder.toString();
     }
-
-//    private String createColSql(List<ColMapping> columns){
-//    }
 
 }

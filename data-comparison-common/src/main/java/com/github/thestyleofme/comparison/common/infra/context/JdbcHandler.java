@@ -26,28 +26,22 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Component
 public class JdbcHandler {
+    private static final String ORACLE_TIMESTAMP = "oracle.sql.TIMESTAMP";
+    private static final String ORACLE_DATE = "oracle.sql.DATE";
+    private static final String ORACLE_TIMESTAMP_TZ = "oracle.sql.TIMESTAMPTZ";
 
-    private static final int DEFAULT_BATCH_SIZE = 1024;
-
-    public void executeBatchUpdateSql(PrestoInfo prestoInfo, String text) {
-        try (Connection connection = DatasourceProvider.getOrCreate(prestoInfo.getUsername(), prestoInfo.getCoordinatorUrl()).getConnection();
+    public void executeBatchUpdateSql(String username, String url, String text) {
+        try (Connection connection = DatasourceProvider.getOrCreate(username, url).getConnection();
              Statement st = connection.createStatement()) {
             List<String> sqlList = sqlExtract2List(text);
             // 执行
-            int count = 0;
             for (String sql : sqlList) {
-                st.addBatch(sql);
-                // 当循环达到指定次数后执行executeBatch()，将缓存中的sql全部发给数据库，然后执行clearBatch()清除缓存
-                // ，否则数据过大是会出现OutOfMemory(内存不足)
-                count++;
-                if (count >= DEFAULT_BATCH_SIZE) {
-                    st.executeBatch();
-                    st.clearBatch();
-                    count = 0;
+                sql = sql.trim();
+                // 去掉sql后面的分号
+                if (sql.endsWith(SEMICOLON)) {
+                    sql = sql.substring(0, sql.lastIndexOf(BaseConstant.Symbol.SEMICOLON));
                 }
-            }
-            if (count != 0) {
-                st.executeBatch();
+                st.executeUpdate(sql);
             }
         } catch (SQLException e) {
             throw new HandlerException("hdsp.xadt.error.sql.execute", e);
@@ -75,7 +69,6 @@ public class JdbcHandler {
                 sqlBuilder.append(line).append(SPACE);
             }
         });
-        // 如果最后一条语句没有;结尾，补充
         if (!StringUtils.isEmpty(sqlBuilder)) {
             String r = new LineNumberReader(new StringReader(sqlBuilder.toString().trim()))
                     .lines()
@@ -101,8 +94,11 @@ public class JdbcHandler {
             connection = DatasourceProvider.getOrCreate(prestoInfo.getUsername(), prestoInfo.getCoordinatorUrl()).getConnection();
             statement = connection.createStatement();
             for (String sql : sqlList) {
+                sql = sql.trim();
                 // 去掉sql后面的分号
-                sql = sql.substring(0, sql.lastIndexOf(BaseConstant.Symbol.SEMICOLON));
+                if (sql.endsWith(SEMICOLON)) {
+                    sql = sql.substring(0, sql.lastIndexOf(BaseConstant.Symbol.SEMICOLON));
+                }
                 List<Map<String, Object>> rows = new ArrayList<>();
                 nowSql = sql;
                 resultSet = statement.executeQuery(nowSql);
@@ -149,19 +145,23 @@ public class JdbcHandler {
         } else if (obj instanceof Clob) {
             Clob clob = (Clob) obj;
             obj = clob.getSubString(1, (int) clob.length());
-        } else if ("oracle.sql.TIMESTAMP".equals(className) || "oracle.sql.TIMESTAMPTZ".equals(className)) {
-            obj = rs.getTimestamp(index);
-        } else if (className.startsWith("oracle.sql.DATE")) {
-            String metaDataClassName = rs.getMetaData().getColumnClassName(index);
-            if (Timestamp.class.getName().equals(metaDataClassName) || "oracle.sql.TIMESTAMP"
-                    .equals(metaDataClassName)) {
+        } else {
+            if (ORACLE_TIMESTAMP.equals(className) || ORACLE_TIMESTAMP_TZ.equals(className)) {
                 obj = rs.getTimestamp(index);
             } else {
-                obj = rs.getDate(index);
+                if (className.startsWith(ORACLE_DATE)) {
+                    String metaDataClassName = rs.getMetaData().getColumnClassName(index);
+                    if (Timestamp.class.getName().equals(metaDataClassName) || ORACLE_TIMESTAMP
+                            .equals(metaDataClassName)) {
+                        obj = rs.getTimestamp(index);
+                    } else {
+                        obj = rs.getDate(index);
+                    }
+                } else if (obj instanceof java.sql.Date &&
+                        Timestamp.class.getName().equals(rs.getMetaData().getColumnClassName(index))) {
+                    obj = rs.getTimestamp(index);
+                }
             }
-        } else if (obj instanceof java.sql.Date &&
-                Timestamp.class.getName().equals(rs.getMetaData().getColumnClassName(index))) {
-            obj = rs.getTimestamp(index);
         }
         return obj;
     }

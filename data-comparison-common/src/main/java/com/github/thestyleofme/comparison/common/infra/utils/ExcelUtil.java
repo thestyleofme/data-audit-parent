@@ -46,7 +46,6 @@ public class ExcelUtil {
                 .map(colMapping -> Collections.singletonList(colMapping.getTargetCol()))
                 .collect(Collectors.toList());
     }
-
     public static List<List<String>> getTargetExcelHeader(ComparisonJob comparisonJob) {
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
         return colMappingList.stream()

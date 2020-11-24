@@ -9,7 +9,7 @@ import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**
- * @author siqi.hou
+ * @author hsq
  * @date 2020-11-17 11:48
  */
 public class TransformUtils {

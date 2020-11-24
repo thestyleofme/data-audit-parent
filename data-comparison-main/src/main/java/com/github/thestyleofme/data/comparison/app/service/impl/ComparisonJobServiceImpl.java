@@ -135,6 +135,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             doSink(appConf, env, comparisonJob, handlerResult);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
         } catch (Exception e) {
+            log.error("doJob error:", e);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
         }
     }
@@ -268,6 +269,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             deployHandler.handle(comparisonJob, deployInfo);
             updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_SUCCESS.name(), null);
         } catch (Exception e) {
+            log.error("deploy error:", e);
             updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_FAILED.name(), HandlerUtil.getMessage(e));
         }
     }

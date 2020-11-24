@@ -11,8 +11,5 @@
 
     <artifactId>deploy-plugins</artifactId>
     <packaging>pom</packaging>
-    <modules>
-        <module>presto-deploy</module>
-    </modules>
 
 </project>

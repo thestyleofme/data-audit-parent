@@ -47,7 +47,8 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
         String fileOutputPath = excelInfo.getOutputPath();
         if (StringUtils.isEmpty(fileOutputPath)) {
-            throw new HandlerException("when sinkType=EXCEL, fileOutputPath cannot be null");
+            //when sinkType=EXCEL, fileOutputPath cannot be null
+            throw new HandlerException("hdsp.xadt.error.sink.fileOutputPath.is_null");
         }
         String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);

@@ -16,7 +16,6 @@ import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
 import com.github.thestyleofme.driver.core.infra.meta.Tuple;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -27,7 +26,7 @@ import org.springframework.util.StringUtils;
  * @since 1.0.0
  */
 @Slf4j
-public class CommonExcelListener<T> extends BaseExcelListener<T> {
+public class InsertExcelListener<T> extends BaseExcelListener<T> {
 
     private final List<String> sqlList = new LinkedList<>();
     private final List<CompletableFuture<?>> completableFutureList = new LinkedList<>();
@@ -36,12 +35,13 @@ public class CommonExcelListener<T> extends BaseExcelListener<T> {
     private final DriverSession driverSession;
     private static final int BATCH_COUNT = 2000;
 
-    public CommonExcelListener(ComparisonJob comparisonJob,
+    public InsertExcelListener(ComparisonJob comparisonJob,
+                               String targetDataSourceCode,
                                List<List<String>> excelHeader,
                                DriverSessionService driverSessionService) {
         this.jobEnv = CommonUtil.getJobEnv(comparisonJob);
         this.excelHeader = excelHeader;
-        this.driverSession = driverSessionService.getDriverSession(comparisonJob.getTenantId(), jobEnv.getTargetDatasourceCode());
+        this.driverSession = driverSessionService.getDriverSession(comparisonJob.getTenantId(), targetDataSourceCode);
     }
 
     @Override
@@ -62,11 +62,13 @@ public class CommonExcelListener<T> extends BaseExcelListener<T> {
 
     private void saveToTable(List<String> list) {
         CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(() -> {
-            if (StringUtils.isEmpty(jobEnv.getTargetDatasourceCode())) {
-                // todo 使用presto导入到表
-                throw new UnsupportedOperationException();
+            if (driverSession.supportedBatch()) {
+                driverSession.executeBatch(jobEnv.getTargetSchema(), list);
+            } else {
+                for (String sql : list) {
+                    driverSession.executeOneUpdate(null, sql);
+                }
             }
-            driverSession.executeBatch(jobEnv.getTargetSchema(), list);
             log.debug("add {} data to the table", list.size());
             return true;
         });

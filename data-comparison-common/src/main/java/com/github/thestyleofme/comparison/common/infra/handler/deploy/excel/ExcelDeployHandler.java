@@ -5,13 +5,16 @@ import java.util.List;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.ExcelReader;
 import com.alibaba.excel.read.metadata.ReadSheet;
+import com.alibaba.excel.util.StringUtils;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
-import com.github.thestyleofme.comparison.common.infra.excel.CommonExcelListener;
+import com.github.thestyleofme.comparison.common.infra.excel.InsertExcelListener;
+import com.github.thestyleofme.comparison.common.infra.excel.UpdateExcelListener;
+import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
@@ -39,6 +42,9 @@ public class ExcelDeployHandler implements BaseDeployHandler {
 
     @Override
     public void handle(ComparisonJob comparisonJob, DeployInfo deployInfo) {
+        if (StringUtils.isEmpty(deployInfo.getTargetDataSourceCode())) {
+            throw new HandlerException("hdsp.xadt.error.deploy.excel.datasource.not_found");
+        }
         String excelPath = ExcelUtil.getExcelPath(comparisonJob);
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
         List<List<String>> targetExcelHeader = ExcelUtil.getTargetExcelHeader(colMappingList);
@@ -49,11 +55,19 @@ public class ExcelDeployHandler implements BaseDeployHandler {
             ReadSheet readSheet1 =
                     EasyExcelFactory.readSheet(0)
                             .head(ExcelUtil.getSourceExcelHeader(comparisonJob))
-                            .registerReadListener(new CommonExcelListener<List<Object>>(
-                                    comparisonJob, targetExcelHeader, driverSessionService))
+                            .registerReadListener(new InsertExcelListener<List<Object>>(
+                                    comparisonJob, deployInfo.getTargetDataSourceCode(), targetExcelHeader,
+                                    driverSessionService))
                             .build();
-            // todo AB主键或唯一索引相同 覆盖
-            excelReader.read(readSheet1);
+            // AB主键或唯一索引相同 覆盖
+            ReadSheet readSheet2 =
+                    EasyExcelFactory.readSheet(2)
+                            .head(ExcelUtil.getSourceToTargetHeader(comparisonJob))
+                            .registerReadListener(new UpdateExcelListener<List<Object>>(
+                                    comparisonJob, deployInfo.getTargetDataSourceCode(), colMappingList,
+                                    driverSessionService))
+                            .build();
+            excelReader.read(readSheet1, readSheet2);
         } finally {
             if (excelReader != null) {
                 excelReader.finish();

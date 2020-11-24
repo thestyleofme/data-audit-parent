@@ -8,7 +8,7 @@ import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
  * description
  * </p>
  *
- * @author siqi.hou 2020/11/20 9:42
+ * @author hsq 2020/11/20 9:42
  * @since 1.0.0
  */
 public interface BaseDeployHandler {

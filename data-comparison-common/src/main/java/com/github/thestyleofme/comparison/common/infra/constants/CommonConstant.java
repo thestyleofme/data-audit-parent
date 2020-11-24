@@ -32,7 +32,6 @@ public class CommonConstant {
         private Deploy() {}
 
         public static final String EXCEL = "excel";
-        public static final String PRESTO = "presto";
 
     }
 

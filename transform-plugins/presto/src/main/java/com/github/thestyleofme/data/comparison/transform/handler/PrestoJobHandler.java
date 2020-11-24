@@ -36,12 +36,12 @@ import org.springframework.util.StringUtils;
  * description
  * </p>
  *
- * @author siqi.hou 2020/11/20 11:25
+ * @author hsq 2020/11/20 11:25
  * @since 1.0.0
  */
-@TransformType(value = "PRESTO")
 @Component
 @Slf4j
+@TransformType(value = "PRESTO")
 public class PrestoJobHandler implements BaseTransformHandler {
 
     private static final int FOUR = 4;
@@ -67,7 +67,7 @@ public class PrestoJobHandler implements BaseTransformHandler {
         PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(jobEnv, transformMap);
         HandlerResult handlerResult = new HandlerResult();
 
-        // 尝试获取 presto 的dataSourceCode
+        // 尝试获取 presto 的 dataSourceCode
         if (StringUtils.isEmpty(prestoInfo.getDataSourceCode()) && !StringUtils.isEmpty(prestoInfo.getClusterCode())) {
             Cluster one = clusterService.getOne(new QueryWrapper<>(Cluster.builder()
                     .tenantId(comparisonJob.getTenantId()).clusterCode(prestoInfo.getClusterCode()).build()));

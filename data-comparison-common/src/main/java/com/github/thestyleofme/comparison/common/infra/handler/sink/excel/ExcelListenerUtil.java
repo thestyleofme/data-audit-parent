@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.driver.core.infra.meta.Tuple;
 
 /**
@@ -27,6 +28,19 @@ public class ExcelListenerUtil {
         Tuple<String, String> tuple;
         for (Map.Entry<Integer, String> entry : row.entrySet()) {
             String name = excelHeader.get(entry.getKey()).get(0);
+            tuple = new Tuple<>(name, entry.getValue());
+            tupleList.add(tuple);
+        }
+        return tupleList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Tuple<String, String>> rowToTupleListByColMapping(Object object, List<ColMapping> colMappings) {
+        Map<Integer, String> row = (LinkedHashMap<Integer, String>) object;
+        List<Tuple<String, String>> tupleList = new ArrayList<>();
+        Tuple<String, String> tuple;
+        for (Map.Entry<Integer, String> entry : row.entrySet()) {
+            String name = colMappings.get(entry.getKey()).getTargetCol();
             tuple = new Tuple<>(name, entry.getValue());
             tupleList.add(tuple);
         }

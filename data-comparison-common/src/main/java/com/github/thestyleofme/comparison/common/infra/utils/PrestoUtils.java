@@ -10,12 +10,13 @@ import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**
- * @author siqi.hou
+ * @author hsq
  * @date 2020-11-19 16:42
  */
 public class PrestoUtils {
 
-    private PrestoUtils(){}
+    private PrestoUtils() {
+    }
 
     public static final Pattern HTTP_PATTERN = Pattern.compile("http://(.*?):(.*?)");
 

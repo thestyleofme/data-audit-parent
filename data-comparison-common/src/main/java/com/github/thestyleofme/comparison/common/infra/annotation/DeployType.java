@@ -7,7 +7,8 @@ import java.lang.annotation.*;
  * description
  * </p>
  *
- * @author siqi.hou 2020/11/20 14:08
+ * @author hsq
+ * @date 2020-11-19 11:45
  * @since 1.0.0
  */
 @Target(ElementType.TYPE)

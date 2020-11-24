@@ -8,7 +8,7 @@ import lombok.*;
 /**
  * 数据补偿 -- API入参
  *
- * @author siqi.hou
+ * @author hsq
  * @date 2020-11-19 11:19
  */
 @Data
@@ -27,6 +27,8 @@ public class DeployInfo {
     private String groupCode;
     @ApiModelProperty(value = "补偿类型")
     private String deployType;
+    @ApiModelProperty(value = "目标数据源")
+    private String targetDataSourceCode;
     @ApiModelProperty(value = "补偿策略，默认REPLACE")
     @Builder.Default
     private String strategy = DeployStrategyEnum.REPLACE.name();
