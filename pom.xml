@@ -27,10 +27,7 @@
         <module>data-comparison-common</module>
         <module>data-comparison-main</module>
         <module>presto-catalog</module>
-        <module>source-plugins</module>
-        <module>transform-plugins</module>
-        <module>sink-plugins</module>
-        <module>deploy-plugins</module>
+        <module>plugins</module>
     </modules>
 
 </project>

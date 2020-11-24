@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Component
 public class JdbcHandler {
+
     private static final String ORACLE_TIMESTAMP = "oracle.sql.TIMESTAMP";
     private static final String ORACLE_DATE = "oracle.sql.DATE";
     private static final String ORACLE_TIMESTAMP_TZ = "oracle.sql.TIMESTAMPTZ";

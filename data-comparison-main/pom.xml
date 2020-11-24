@@ -22,13 +22,12 @@
     </properties>
 
     <dependencies>
-        <!--source plugin-->
+        <!--plugin-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>
-            <artifactId>table</artifactId>
+            <artifactId>table-source</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-        <!--transform plugin-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>
             <artifactId>redis-bloom-filter</artifactId>
@@ -39,11 +38,9 @@
             <artifactId>presto</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
-        <!--sink plugin-->
-        <!--deploy plugin-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>
-            <artifactId>presto-deploy</artifactId>
+            <artifactId>phoenix</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <!--presto-->

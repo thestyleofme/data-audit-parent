@@ -137,6 +137,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         } catch (Exception e) {
             log.error("doJob error:", e);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
+            throw e;
         }
     }
 
@@ -160,6 +161,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                     .set(ComparisonJob::getStatus, JobStatusEnum.valueOf(String.format(CommonConstant.FAILED_FORMAT, process)).name())
                     .set(ComparisonJob::getErrorMsg, HandlerUtil.getMessage(e))
                     .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
+            throw e;
         }
     }
 
@@ -271,6 +273,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         } catch (Exception e) {
             log.error("deploy error:", e);
             updateJobStatus(CommonConstant.DEPLOY, comparisonJob, JobStatusEnum.DEPLOY_FAILED.name(), HandlerUtil.getMessage(e));
+            throw e;
         }
     }
 
