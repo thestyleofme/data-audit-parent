@@ -33,7 +33,7 @@ public class InsertExcelListener<T> extends BaseExcelListener<T> {
     private final List<List<String>> excelHeader;
     private final JobEnv jobEnv;
     private final DriverSession driverSession;
-    private static final int BATCH_COUNT = 2000;
+    private static final int BATCH_COUNT = 2048;
 
     public InsertExcelListener(ComparisonJob comparisonJob,
                                String targetDataSourceCode,

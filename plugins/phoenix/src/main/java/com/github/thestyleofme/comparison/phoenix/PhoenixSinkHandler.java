@@ -128,8 +128,8 @@ public class PhoenixSinkHandler implements BaseSinkHandler {
             list.add(sql);
             // 别忘了清空
             valueStringBuilder.setLength(0);
-            if (list.size() == 2000) {
-                // 分批执行 2000一批
+            if (list.size() == 1024) {
+                // 分批执行 1024 一批
                 futureList.add(PhoenixHelper.executeAsync(dataSource, new ArrayList<>(list)));
                 list.clear();
             }

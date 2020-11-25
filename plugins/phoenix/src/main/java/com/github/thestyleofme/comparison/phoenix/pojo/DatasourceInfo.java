@@ -21,7 +21,9 @@ public class DatasourceInfo {
 
     public static final String FIELD_JDBC_URL = "jdbcUrl";
     public static final String DEFAULT_CLASS_NAME = "org.apache.phoenix.queryserver.client.Driver";
-
+    /**
+     * jdbc:phoenix:thin:url=http://hdspdev001.hand-china.com:8765;serialization=PROTOBUF
+     */
     private String jdbcUrl;
 
 }
