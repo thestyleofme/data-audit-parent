@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.sink.phoenix.pojo;
+package com.github.thestyleofme.comparison.phoenix.pojo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -12,17 +12,16 @@ import lombok.*;
  * @since 1.0.0
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DatasourceInfo {
 
     public static final String FIELD_JDBC_URL = "jdbcUrl";
+    public static final String DEFAULT_CLASS_NAME = "org.apache.phoenix.queryserver.client.Driver";
 
     private String jdbcUrl;
-    @Builder.Default
-    private String driverClassName = "org.apache.phoenix.queryserver.client.Driver";
 
 }

@@ -280,10 +280,10 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private void updateJobStarting(ComparisonJob comparisonJob) {
         comparisonJob.setStatus(JobStatusEnum.STARTING.name());
         comparisonJob.setStartTime(LocalDateTime.now());
+        updateById(comparisonJob);
         update(Wrappers.<ComparisonJob>lambdaUpdate()
                 .set(ComparisonJob::getExecuteTime, null)
                 .eq(ComparisonJob::getJobId, comparisonJob.getJobId()));
-        updateById(comparisonJob);
     }
 
     private void doGroupJobDeploy(DeployInfo deployInfo) {

@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -139,9 +141,20 @@ public class CommonUtil {
 
     public static JobEnv getJobEnv(ComparisonJob comparisonJob) {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
-        // todo 将catalog等信息也放入jobEnv
-        return jobEnv;
+        return BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+    }
+
+    public static void completableFutureAllOf(List<CompletableFuture<?>> completableFutureList){
+        CompletableFuture<Void> future = CompletableFuture.allOf(completableFutureList.toArray(new CompletableFuture[0]));
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new HandlerException(e);
+        } catch (
+                ExecutionException e) {
+            throw new HandlerException(e);
+        }
     }
 
 }

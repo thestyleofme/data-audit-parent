@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.sink.phoenix.context;
+package com.github.thestyleofme.comparison.phoenix.context;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import javax.sql.DataSource;
 
-import com.github.thestyleofme.comparison.sink.phoenix.pojo.DatasourceInfo;
+import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.zaxxer.hikari.HikariConfig;
@@ -56,7 +56,8 @@ public class PhoenixDatasourceHolder {
         // 创建
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(datasourceInfo.getJdbcUrl());
-        hikariConfig.setDriverClassName(datasourceInfo.getDriverClassName());
+        hikariConfig.setDriverClassName(DatasourceInfo.DEFAULT_CLASS_NAME);
+        hikariConfig.setConnectionTestQuery("SELECT 1");
         HikariDataSource instance = new HikariDataSource(hikariConfig);
         DATASOURCE_MAP.put(key, ImmutablePair.of(LocalDateTime.now(), instance));
         return instance;
