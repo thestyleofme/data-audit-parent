@@ -20,7 +20,6 @@
     </properties>
 
     <modules>
-        <module>table-source</module>
         <module>presto</module>
         <module>redis-bloom-filter</module>
         <module>phoenix</module>

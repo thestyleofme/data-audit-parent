@@ -17,6 +17,4 @@ import java.lang.annotation.*;
 public @interface TransformType {
 
     String value();
-
-    String type() default "";
 }

@@ -2,7 +2,6 @@ package com.github.thestyleofme.comparison.common.app.service.transform;
 
 import java.util.Map;
 
-import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 
 
@@ -19,14 +18,12 @@ public interface BaseTransformHandler {
     /**
      * 处理job
      *
-     * @param comparisonJob     ComparisonJob
-     * @param env               Map
-     * @param transformMap      Map
-     * @param sourceDataMapping ComparisonMapping
+     * @param comparisonJob ComparisonJob
+     * @param env           Map
+     * @param transformMap  Map
      * @return HandlerResult
      */
     HandlerResult handle(ComparisonJob comparisonJob,
                          Map<String, Object> env,
-                         Map<String, Object> transformMap,
-                         SourceDataMapping sourceDataMapping);
+                         Map<String, Object> transformMap);
 }

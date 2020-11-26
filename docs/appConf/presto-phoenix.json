@@ -1,9 +1,13 @@
 {
   "env": {
-    "sourcePk": "",
-    "targetPk": "",
-    "sourceIndex": "name,phone",
-    "targetIndex": "name,call",
+    "sourcePk": "id",
+    "targetPk": "id",
+    "sourcePrestoCatalog": "devmysql",
+    "targetPrestoCatalog": "devmysql",
+    "sourceSchema": "hdsp_test",
+    "sourceTable": "resume",
+    "targetSchema": "hdsp_test",
+    "targetTable": "resume_bak",
     "colMapping": [
       {
         "sourceCol": "id",
@@ -22,7 +26,7 @@
       },
       {
         "sourceCol": "phone",
-        "targetCol": "call",
+        "targetCol": "phone1",
         "index": 3
       },
       {
@@ -42,25 +46,14 @@
       }
     ]
   },
-  "source": {
-
-  },
   "transform": {
     "presto": {
-      "clusterCode": "dev_presto",
-      "coordinatorUrl": "http://172.23.16.78:29527",
-      "username": "presto",
-      "sourceDatasourceCode": "devmysql",
-      "targetDatasourceCode": "devmysql",
-      "sourceSchema": "hdsp_test",
-      "sourceTable": "resume",
-      "targetSchema": "hdsp_test",
-      "targetTable": "resume_bak"
+      "clusterCode": "dev_presto1"
     }
   },
   "sink": {
-    "excel": {
-      "outputPath": "C:/Users/housiqi/Desktop"
+    "phoenix": {
+      "jdbcUrl": "jdbc:phoenix:thin:url=http://hdspdev001.hand-china.com:8765;serialization=PROTOBUF"
     }
   }
 }

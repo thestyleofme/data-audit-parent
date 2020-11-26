@@ -5,16 +5,12 @@ import java.util.Optional;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
-import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
-import com.github.thestyleofme.comparison.common.infra.annotation.SourceType;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
-import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -39,32 +35,16 @@ public class JobHandlerProcessor implements BeanPostProcessor {
     @Override
     public Object postProcessAfterInitialization(Object bean, @NonNull String beanName) {
         Class<?> clazz = bean.getClass();
-        doSource(bean, clazz);
         doTransform(bean, clazz);
         doSink(bean, clazz);
         doDeploy(bean, clazz);
         return bean;
     }
 
-    private void doSource(Object bean, Class<?> clazz) {
-        SourceType sourceType = clazz.getAnnotation(SourceType.class);
-        if (sourceType != null) {
-            String value = sourceType.value();
-            if (bean instanceof BaseSourceHandler) {
-                jobHandlerContext.register(value.toUpperCase(), (BaseSourceHandler) bean);
-            }
-        }
-    }
-
     private void doTransform(Object bean, Class<?> clazz) {
         TransformType transformType = clazz.getAnnotation(TransformType.class);
         if (transformType != null) {
-            String value = transformType.value();
-            String type = transformType.type();
-            String key = value;
-            if (!StringUtils.isEmpty(type)) {
-                key = String.format(CommonConstant.CONTACT, value, type);
-            }
+            String key = transformType.value();
             if (bean instanceof BaseTransformHandler) {
                 jobHandlerContext.register(key.toUpperCase(), (BaseTransformHandler) bean);
             }

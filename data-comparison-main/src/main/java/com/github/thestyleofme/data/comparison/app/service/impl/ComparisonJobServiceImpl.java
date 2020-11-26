@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -18,15 +17,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
-import com.github.thestyleofme.comparison.common.app.service.source.BaseSourceHandler;
-import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
-import com.github.thestyleofme.comparison.common.domain.TransformInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
@@ -124,13 +120,12 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             if (isFilterJob(comparisonJob)) {
                 return;
             }
+            // 配置文件
             AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
             // env
             Map<String, Object> env = appConf.getEnv();
-            // source
-            SourceDataMapping sourceDataMapping = doSource(appConf, env, comparisonJob);
             // transform
-            HandlerResult handlerResult = doTransform(appConf, env, sourceDataMapping, comparisonJob);
+            HandlerResult handlerResult = doTransform(appConf, env, comparisonJob);
             // sink
             doSink(appConf, env, comparisonJob, handlerResult);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
@@ -183,39 +178,19 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     private HandlerResult doTransform(AppConf appConf,
                                       Map<String, Object> env,
-                                      SourceDataMapping sourceDataMapping,
                                       ComparisonJob comparisonJob) {
         HandlerResult handlerResult = null;
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
-            String key;
-            TransformInfo transformInfo = BeanUtils.map2Bean(entry.getValue(), TransformInfo.class);
-            if (Objects.isNull(transformInfo) || StringUtils.isEmpty(transformInfo.getType())) {
-                // 如presto类型
-                key = entry.getKey().toUpperCase();
-            } else {
-                // 如布隆过滤器类型
-                key = String.format(CommonConstant.CONTACT, entry.getKey().toUpperCase(), transformInfo.getType());
-            }
+            String key = entry.getKey().toUpperCase();
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);
             // 可对BaseTransformHandler创建代理
-            TransformHandlerProxy transformHandlerProxy = jobHandlerContext.getTransformHandleHook(key);
+            TransformHandlerProxy transformHandlerProxy = jobHandlerContext.getTransformHandlerProxy(key);
             if (transformHandlerProxy != null) {
                 transformHandler = transformHandlerProxy.proxy(transformHandler);
             }
-            handlerResult = transformHandler.handle(comparisonJob, env, entry.getValue(), sourceDataMapping);
+            handlerResult = transformHandler.handle(comparisonJob, env, entry.getValue());
         }
         return handlerResult;
-    }
-
-    private SourceDataMapping doSource(AppConf appConf,
-                                       Map<String, Object> env,
-                                       ComparisonJob comparisonJob) {
-        SourceDataMapping sourceDataMapping = null;
-        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSource().entrySet()) {
-            BaseSourceHandler sourceHandler = jobHandlerContext.getSourceHandler(entry.getKey().toUpperCase());
-            sourceDataMapping = sourceHandler.handle(comparisonJob, env, entry.getValue());
-        }
-        return sourceDataMapping;
     }
 
     private boolean isFilterJob(ComparisonJob comparisonJob) {

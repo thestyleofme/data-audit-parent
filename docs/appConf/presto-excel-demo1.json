@@ -1,62 +1,54 @@
 {
   "env": {
     "sourcePk": "id",
-    "targetPk": "id",
-    "sourceIndex": "",
-    "targetIndex": "",
+    "targetPk": "id1",
+    "sourcePrestoCatalog": "devmysql",
+    "sourceSchema": "test_28729",
+    "sourceTable": "source_t1",
+    "targetPrestoCatalog": "devmysql",
+    "targetSchema": "test_28729",
+    "targetTable": "target_t1",
     "colMapping": [
       {
         "sourceCol": "id",
-        "targetCol": "id",
+        "targetCol": "id1",
         "index": 0
       },
       {
         "sourceCol": "name",
-        "targetCol": "name",
+        "targetCol": "name1",
         "index": 2
       },
       {
         "sourceCol": "sex",
-        "targetCol": "sex",
+        "targetCol": "sex1",
         "index": 1
       },
       {
         "sourceCol": "phone",
-        "targetCol": "call",
+        "targetCol": "phone1",
         "index": 3
       },
       {
         "sourceCol": "address",
-        "targetCol": "address",
+        "targetCol": "address1",
         "index": 4
       },
       {
         "sourceCol": "education",
-        "targetCol": "education",
+        "targetCol": "education1",
         "index": 5
       },
       {
         "sourceCol": "state",
-        "targetCol": "state",
+        "targetCol": "state1",
         "index": 6
       }
     ]
   },
-  "source": {
-
-  },
   "transform": {
     "presto": {
-      "clusterCode": "dev_presto",
-      "coordinatorUrl": "http://172.23.16.78:29527",
-      "username": "presto",
-
-      "sourceDatasourceCode": "devmysql",
-      "targetDatasourceCode": "devmysql",
-      "sourceSchema": "hdsp_test",
-      "sourceTable": "resume",
-      "targetSchema": "hdsp_test",
-      "targetTable": "resume_bak"
+      "clusterCode": "dev_presto"
     }
   },
   "sink": {

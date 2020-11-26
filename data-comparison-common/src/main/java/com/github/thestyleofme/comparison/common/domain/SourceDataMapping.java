@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.app.service.source;
+package com.github.thestyleofme.comparison.common.domain;
 
 import java.util.LinkedHashMap;
 import java.util.List;

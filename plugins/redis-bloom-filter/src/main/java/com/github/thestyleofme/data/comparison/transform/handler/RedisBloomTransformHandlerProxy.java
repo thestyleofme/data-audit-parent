@@ -22,7 +22,7 @@ import org.springframework.util.CollectionUtils;
  * @since 1.0.0
  */
 @Component
-@TransformType(value = "BLOOM_FILTER", type = "REDIS")
+@TransformType(value = "REDIS_BLOOM_FILTER")
 @Slf4j
 public class RedisBloomTransformHandlerProxy implements TransformHandlerProxy {
 

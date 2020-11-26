@@ -19,6 +19,5 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class BloomTransformInfo {
 
-    private String type;
     private Double errorRate;
 }

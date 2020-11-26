@@ -2,8 +2,6 @@
   "env": {
     "sourcePk": "id",
     "targetPk": "id",
-    "sourceIndex": "",
-    "targetIndex": "",
     "sourceDatasourceCode": "hdsp_mysql5",
     "targetDatasourceCode": "hdsp_mysql5",
     "sourceSchema": "hdsp_test",
@@ -19,16 +17,16 @@
       {
         "sourceCol": "name",
         "targetCol": "name",
-        "index": 2
+        "index": 1
       },
       {
         "sourceCol": "sex",
         "targetCol": "sex",
-        "index": 1
+        "index": 2
       },
       {
         "sourceCol": "phone",
-        "targetCol": "call",
+        "targetCol": "phone1",
         "index": 3
       },
       {
@@ -48,13 +46,9 @@
       }
     ]
   },
-  "source": {
-
-  },
   "transform": {
-    "presto": {
-      "coordinatorUrl": "http://172.23.16.78:29527",
-      "username": "presto"
+    "redis_bloom_filter": {
+      "errorRate": 0.0001
     }
   },
   "sink": {

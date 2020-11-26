@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
@@ -60,8 +59,7 @@ public class PrestoJobHandler implements BaseTransformHandler {
     @Override
     public HandlerResult handle(ComparisonJob comparisonJob,
                                 Map<String, Object> env,
-                                Map<String, Object> transformMap,
-                                SourceDataMapping sourceDataMapping) {
+                                Map<String, Object> transformMap) {
         LocalDateTime startTime = LocalDateTime.now();
         JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
         PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(jobEnv, transformMap);

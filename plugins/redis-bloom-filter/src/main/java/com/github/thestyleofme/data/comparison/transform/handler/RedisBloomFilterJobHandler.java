@@ -12,10 +12,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.thestyleofme.comparison.common.app.service.source.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
+import com.github.thestyleofme.comparison.common.app.service.transform.TableDataHandler;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
@@ -49,24 +50,27 @@ import org.springframework.util.StringUtils;
  * @author isaac 2020/10/22 15:33
  * @since 1.0.0
  */
-@TransformType(value = "BLOOM_FILTER", type = "REDIS")
+@TransformType(value = "REDIS_BLOOM_FILTER")
 @Component
 @Slf4j
 public class RedisBloomFilterJobHandler implements BaseTransformHandler {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final TableDataHandler tableDataHandler;
     private final ExecutorService executorService = ThreadPoolUtil.getExecutorService();
 
-    public RedisBloomFilterJobHandler(RedisTemplate<String, String> redisTemplate) {
+    public RedisBloomFilterJobHandler(RedisTemplate<String, String> redisTemplate,
+                                      TableDataHandler tableDataHandler) {
         this.redisTemplate = redisTemplate;
+        this.tableDataHandler = tableDataHandler;
     }
 
     @Override
     public HandlerResult handle(ComparisonJob comparisonJob,
                                 Map<String, Object> env,
-                                Map<String, Object> transformMap,
-                                SourceDataMapping sourceDataMapping) {
+                                Map<String, Object> transformMap) {
         LocalDateTime startTime = LocalDateTime.now();
+        SourceDataMapping sourceDataMapping = tableDataHandler.handle(comparisonJob, env);
         log.debug("use redis bloom filter to handle this job");
         Bloom bloom = createBloom(sourceDataMapping, transformMap);
         if (Objects.isNull(bloom)) {
