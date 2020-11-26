@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.infra.context;
+package com.github.thestyleofme.comparison.presto.handler.context;
 
 import static com.github.thestyleofme.plugin.core.infra.constants.BaseConstant.Symbol.*;
 
@@ -7,8 +7,8 @@ import java.io.StringReader;
 import java.sql.*;
 import java.util.*;
 
-import com.github.thestyleofme.comparison.common.domain.PrestoInfo;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.driver.core.infra.utils.CloseUtil;
 import com.github.thestyleofme.plugin.core.infra.constants.BaseConstant;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.github.thestyleofme.data.comparison.transform.handler;
+package com.github.thestyleofme.comparison.presto.handler;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -12,14 +12,14 @@ import com.github.thestyleofme.comparison.common.app.service.transform.BaseTrans
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
-import com.github.thestyleofme.comparison.common.domain.PrestoInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
-import com.github.thestyleofme.comparison.common.infra.context.JdbcHandler;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.common.infra.utils.PrestoUtils;
-import com.github.thestyleofme.comparison.common.infra.utils.SqlGeneratorUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
+import com.github.thestyleofme.comparison.presto.handler.context.JdbcHandler;
+import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
+import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
+import com.github.thestyleofme.comparison.presto.handler.utils.SqlGeneratorUtil;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;

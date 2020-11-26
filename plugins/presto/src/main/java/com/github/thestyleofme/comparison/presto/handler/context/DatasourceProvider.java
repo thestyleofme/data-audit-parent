@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.infra.context;
+package com.github.thestyleofme.comparison.presto.handler.context;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -15,7 +15,7 @@ import javax.sql.DataSource;
 
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.common.infra.utils.PrestoUtils;
+import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

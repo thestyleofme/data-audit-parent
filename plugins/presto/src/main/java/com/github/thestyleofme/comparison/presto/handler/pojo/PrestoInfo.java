@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.common.domain;
+package com.github.thestyleofme.comparison.presto.handler.pojo;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
