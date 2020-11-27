@@ -22,20 +22,32 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class JobEnv {
 
-    private String sourceDatasourceCode;
-    private String targetDatasourceCode;
-    private String sourceSchema;
-    private String targetSchema;
-    private String sourceTable;
-    private String targetTable;
-
-    private String sourcePrestoCatalog;
-    private String targetPrestoCatalog;
-
-    private String sourcePk;
-    private String targetPk;
-    private String sourceIndex;
-    private String targetIndex;
-    private List<Map<String,Object>> colMapping;
-
+    private SelectTableInfo source;
+    private SelectTableInfo target;
+    /**
+     * join on _a.id=_b.id
+     * "joinMapping": [
+     * {
+     * "sourceCol": "id",
+     * "targetCol": "id1"
+     * }
+     * ]
+     */
+    private List<Map<String, Object>> joinMapping;
+    /**
+     * "colMapping": [
+     * {
+     * "sourceCol": "id",
+     * "targetCol": "id1",
+     * "index": 0
+     * },
+     * {
+     * "sourceCol": "name",
+     * "targetCol": "name1",
+     * "selected": true,
+     * "index": 2
+     * }
+     * ]
+     */
+    private List<Map<String, Object>> colMapping;
 }
