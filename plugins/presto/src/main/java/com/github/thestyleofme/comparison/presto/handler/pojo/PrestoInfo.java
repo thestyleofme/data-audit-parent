@@ -1,6 +1,11 @@
 package com.github.thestyleofme.comparison.presto.handler.pojo;
 
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
+import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import lombok.*;
 
 /**
@@ -15,15 +20,18 @@ import lombok.*;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PrestoInfo {
 
-    private String clusterCode;
     private String dataSourceCode;
+    private String clusterCode;
     private String coordinatorUrl;
     private String username;
 
-    private String sourcePrestoCatalog;
-    private String targetPrestoCatalog;
-    private String sourceSchema;
-    private String targetSchema;
-    private String sourceTable;
-    private String targetTable;
+    private SelectTableInfo source;
+    private SelectTableInfo target;
+    private List<ColMapping> joinMapping;
+    private List<ColMapping> colMapping;
+
+    // presto database.catalog.tableName 表名
+
+    private String sourceTableName;
+    private String targetTableName;
 }

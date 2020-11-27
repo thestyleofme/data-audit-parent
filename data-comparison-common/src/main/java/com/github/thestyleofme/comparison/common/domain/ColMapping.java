@@ -24,5 +24,6 @@ public class ColMapping {
 
     private String sourceCol;
     private String targetCol;
+    private boolean selected;
     private Integer index;
 }

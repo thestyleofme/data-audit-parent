@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,13 +30,16 @@ public class HandlerResult {
     /**
      * 源端有但目标端无
      */
-    List<Map<String, Object>> sourceUniqueDataList = new CopyOnWriteArrayList<>();
+    private List<Map<String, Object>> sourceUniqueDataList = new CopyOnWriteArrayList<>();
     /**
      * 目标端有但源端无
      */
-    List<Map<String, Object>> targetUniqueDataList = new CopyOnWriteArrayList<>();
+    private List<Map<String, Object>> targetUniqueDataList = new CopyOnWriteArrayList<>();
+
     /**
      * 源端和目标端数据不一样，但主键或唯一性索引一样
      */
-    List<Map<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
+    private List<Map<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
+
+    private ResultStatistics resultStatistics;
 }
