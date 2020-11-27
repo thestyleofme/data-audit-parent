@@ -1,7 +1,7 @@
 package com.github.thestyleofme.comparison.common.domain;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -24,6 +24,6 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SourceDataMapping {
 
-    List<LinkedHashMap<String, Object>> sourceDataList;
-    List<LinkedHashMap<String, Object>> targetDataList;
+    List<Map<String, Object>> sourceDataList;
+    List<Map<String, Object>> targetDataList;
 }

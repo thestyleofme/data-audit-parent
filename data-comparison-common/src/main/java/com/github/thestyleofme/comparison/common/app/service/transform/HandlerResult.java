@@ -1,7 +1,7 @@
 package com.github.thestyleofme.comparison.common.app.service.transform;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,18 +28,13 @@ public class HandlerResult {
     /**
      * 源端有但目标端无
      */
-    List<LinkedHashMap<String, Object>> sourceUniqueDataList = new CopyOnWriteArrayList<>();
+    List<Map<String, Object>> sourceUniqueDataList = new CopyOnWriteArrayList<>();
     /**
      * 目标端有但源端无
      */
-    List<LinkedHashMap<String, Object>> targetUniqueDataList = new CopyOnWriteArrayList<>();
+    List<Map<String, Object>> targetUniqueDataList = new CopyOnWriteArrayList<>();
     /**
      * 源端和目标端数据不一样，但主键或唯一性索引一样
      */
-    List<LinkedHashMap<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
-    /**
-     * 源端和目标端都有的数据
-     * bloom filter 只能说可能存在 不能百分百保证
-     */
-    List<LinkedHashMap<String, Object>> sameDataList = new CopyOnWriteArrayList<>();
+    List<Map<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
 }

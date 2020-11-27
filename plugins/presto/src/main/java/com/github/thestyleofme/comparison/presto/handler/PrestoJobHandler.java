@@ -2,7 +2,6 @@ package com.github.thestyleofme.comparison.presto.handler;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -114,27 +113,21 @@ public class PrestoJobHandler implements BaseTransformHandler {
     }
 
     private void fillHandlerResult(HandlerResult handlerResult, JobEnv jobEnv, List<List<Map<String, Object>>> result) {
-        // 源端和目标端都有的数据
-        Optional.ofNullable(result.get(0)).ifPresent(list -> {
-            List<LinkedHashMap<String, Object>> sortedList =
-                    TransformUtils.sortListMap(jobEnv, list, ColMapping.SOURCE);
-            handlerResult.getSameDataList().addAll(sortedList);
-        });
         // 源端有但目标端无
         Optional.ofNullable(result.get(1)).ifPresent(list -> {
-            List<LinkedHashMap<String, Object>> sortedList =
+            List<Map<String, Object>> sortedList =
                     TransformUtils.sortListMap(jobEnv, list, ColMapping.SOURCE);
             handlerResult.getSourceUniqueDataList().addAll(sortedList);
         });
         // 目标端有但源端无
         Optional.ofNullable(result.get(2)).ifPresent(list -> {
-            List<LinkedHashMap<String, Object>> sortedList =
+            List<Map<String, Object>> sortedList =
                     TransformUtils.sortListMap(jobEnv, list, ColMapping.TARGET);
             handlerResult.getTargetUniqueDataList().addAll(sortedList);
         });
         // 源端和目标端数据不一样，但主键或唯一性索引一样
         Optional.ofNullable(result.get(3)).ifPresent(list -> {
-            List<LinkedHashMap<String, Object>> sortedList =
+            List<Map<String, Object>> sortedList =
                     TransformUtils.sortListMap(jobEnv, list, ColMapping.SOURCE);
             handlerResult.getPkOrIndexSameDataList().addAll(sortedList);
         });

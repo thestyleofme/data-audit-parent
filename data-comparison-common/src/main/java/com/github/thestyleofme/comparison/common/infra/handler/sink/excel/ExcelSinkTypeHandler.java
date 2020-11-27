@@ -62,7 +62,6 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
             doSourceUnique(excelWriter, sourceExcelHeader, handlerResult);
             doTargetUnique(excelWriter, targetExcelHeader, handlerResult);
             doPkOrIndexSame(excelWriter, sourceToTargetHeader, handlerResult);
-            doSame(excelWriter, sourceToTargetHeader, handlerResult);
         } finally {
             if (excelWriter != null) {
                 excelWriter.finish();
@@ -82,19 +81,6 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
                 throw new HandlerException("excel[{}] delete error", excelName);
             }
         }
-    }
-
-    private void doSame(ExcelWriter excelWriter, List<List<String>> sourceToTargetHeader, HandlerResult handlerResult) {
-        // 生成excel数据 List<List<Object>>
-        List<List<Object>> sameList = handlerResult.getSameDataList().stream()
-                .filter(Objects::nonNull)
-                .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
-                .collect(Collectors.toList());
-        // 开始写 多sheet页
-        WriteSheet writeSheet = EasyExcelFactory.writerSheet(
-                3, "源表目标表数据一样")
-                .head(sourceToTargetHeader).build();
-        excelWriter.write(sameList, writeSheet);
     }
 
     private void doPkOrIndexSame(ExcelWriter excelWriter, List<List<String>> sourceToTargetHeader, HandlerResult handlerResult) {

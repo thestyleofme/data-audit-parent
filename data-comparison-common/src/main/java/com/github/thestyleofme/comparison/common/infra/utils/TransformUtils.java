@@ -20,16 +20,16 @@ public class TransformUtils {
     /**
      * 按mapping映射顺序对 数据集list进行排序
      *
-     * @param jobEnv    JobEnv
+     * @param jobEnv   JobEnv
      * @param list     数据集合
      * @param position ColMapping.SOURCE/TARGET
      * @return 有序数据集
      */
-    public static List<LinkedHashMap<String, Object>> sortListMap(JobEnv jobEnv,
-                                                            List<Map<String, Object>> list,
-                                                            String position) {
+    public static List<Map<String, Object>> sortListMap(JobEnv jobEnv,
+                                                        List<Map<String, Object>> list,
+                                                        String position) {
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();
-        List<LinkedHashMap<String, Object>> result = new ArrayList<>(list.size());
+        List<Map<String, Object>> result = new ArrayList<>(list.size());
         if (CollectionUtils.isEmpty(colMapping)) {
             SortedMap<String, Object> sortedMap;
             LinkedHashMap<String, Object> linkedHashMap;

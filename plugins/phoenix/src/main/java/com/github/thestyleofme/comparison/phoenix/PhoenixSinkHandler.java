@@ -2,7 +2,10 @@ package com.github.thestyleofme.comparison.phoenix;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -85,16 +88,10 @@ public class PhoenixSinkHandler implements BaseSinkHandler {
                     sqlPrefix, handlerResult.getTargetUniqueDataList());
             return true;
         }));
-        // AB主键或唯一索引相同
+        // AB主键或唯一索引相同 其他字段值不同
         futures.add(executorService.submit(() -> {
             executeSql(dataSource, RowTypeEnum.UPDATED.getRawType(), jobName,
                     sqlPrefix, handlerResult.getPkOrIndexSameDataList());
-            return true;
-        }));
-        // AB相同数据
-        futures.add(executorService.submit(() -> {
-            executeSql(dataSource, RowTypeEnum.SAME.getRawType(), jobName,
-                    sqlPrefix, handlerResult.getSameDataList());
             return true;
         }));
         for (Future<?> future : futures) {
@@ -113,13 +110,13 @@ public class PhoenixSinkHandler implements BaseSinkHandler {
                             int rawType,
                             String jobName,
                             String sqlPrefix,
-                            List<LinkedHashMap<String, Object>> mapList) {
+                            List<Map<String, Object>> mapList) {
         LocalDateTime start = LocalDateTime.now();
         StringBuilder valueStringBuilder = new StringBuilder();
         String prefix = String.format("%d, '%s', ", rawType, jobName);
         List<String> list = new LinkedList<>();
         List<CompletableFuture<?>> futureList = new ArrayList<>();
-        for (LinkedHashMap<String, Object> map : mapList) {
+        for (Map<String, Object> map : mapList) {
             String collect = map.values().stream()
                     .map(o -> String.format("'%s'", CommonUtil.requireNonNullElse(o, "")))
                     .collect(Collectors.joining(", "));

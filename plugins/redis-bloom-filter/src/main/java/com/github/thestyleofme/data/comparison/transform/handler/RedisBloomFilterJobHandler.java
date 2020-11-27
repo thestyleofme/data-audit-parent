@@ -2,7 +2,6 @@ package com.github.thestyleofme.data.comparison.transform.handler;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -98,16 +97,16 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                                            int seed,
                                            String redisKey) {
         HandlerResult handlerResult = new HandlerResult();
-        List<LinkedHashMap<String, Object>> sourceDataList = sourceDataMapping.getSourceDataList();
+        List<Map<String, Object>> sourceDataList = sourceDataMapping.getSourceDataList();
         // 分批加多线程
         int batchSize = CommonUtil.calculateBatchSize(sourceDataList.size());
-        List<List<LinkedHashMap<String, Object>>> splitList = CommonUtil.splitList(sourceDataList, batchSize);
+        List<List<Map<String, Object>>> splitList = CommonUtil.splitList(sourceDataList, batchSize);
         CountDownLatch countDownLatch = new CountDownLatch(splitList.size());
-        for (List<LinkedHashMap<String, Object>> oneList : splitList) {
+        for (List<Map<String, Object>> oneList : splitList) {
             executorService.execute(() -> {
                 try {
                     LocalDateTime start = LocalDateTime.now();
-                    for (LinkedHashMap<String, Object> map : oneList) {
+                    for (Map<String, Object> map : oneList) {
                         String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
                         List<Integer> hashList = bloom.doHash(md5Str, seed);
                         // 只要有一个hash在redis中找不到 即肯定不存在
@@ -119,9 +118,6 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                             // 肯定不存在 需判断主键或唯一索引是否一样 存在误差 若能忽略可以使用
                             // 一般场景用于找pk或索引相同 判断数据是否一致
                             handlerNotExits(handlerResult, jobEnv, comparisonJob, map, sourceDataMapping);
-                        } else {
-                            // 只能说可能存在 不能百分百保证 尽可能降低误判率
-                            handlerResult.getSameDataList().add(map);
                         }
                     }
                     LocalDateTime end = LocalDateTime.now();
@@ -145,7 +141,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
     private void handlerNotExits(HandlerResult handlerResult,
                                  JobEnv jobEnv,
                                  ComparisonJob comparisonJob,
-                                 LinkedHashMap<String, Object> map,
+                                 Map<String, Object> map,
                                  SourceDataMapping sourceDataMapping) {
         String pkRedisKey = String.format(RedisBloomConstant.RedisKey.TARGET_PK,
                 comparisonJob.getTenantId(), comparisonJob.getJobCode());
@@ -197,18 +193,18 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
                                      int seed,
                                      String redisKey) {
         // 将target的数据set bit 就能准确找到source到target 未成功同步的数据
-        List<LinkedHashMap<String, Object>> list = sourceDataMapping.getTargetDataList();
+        List<Map<String, Object>> list = sourceDataMapping.getTargetDataList();
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         // 分批加多线程
         int batchSize = CommonUtil.calculateBatchSize(list.size());
-        List<List<LinkedHashMap<String, Object>>> splitList = CommonUtil.splitList(list, batchSize);
+        List<List<Map<String, Object>>> splitList = CommonUtil.splitList(list, batchSize);
         CountDownLatch countDownLatch = new CountDownLatch(splitList.size());
-        for (List<LinkedHashMap<String, Object>> oneList : splitList) {
+        for (List<Map<String, Object>> oneList : splitList) {
             executorService.execute(() -> {
                 try {
-                    for (LinkedHashMap<String, Object> map : oneList) {
+                    for (Map<String, Object> map : oneList) {
                         String md5Str = Md5Util.getUppercaseMd5(JsonUtil.toJson(map.values()));
                         List<Integer> hashList = bloom.doHash(md5Str, seed);
                         // 设置对应位置为1
@@ -232,7 +228,7 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
 
     private void handlerPkOrIndex(JobEnv jobEnv,
                                   String redisKey,
-                                  LinkedHashMap<String, Object> map) {
+                                  Map<String, Object> map) {
         String targetPk = jobEnv.getTargetPk();
         if (StringUtils.isEmpty(targetPk)) {
             // 主键不存在 还需判断唯一索引
@@ -264,12 +260,12 @@ public class RedisBloomFilterJobHandler implements BaseTransformHandler {
         if (Objects.isNull(sourceDataMapping)) {
             return null;
         }
-        List<LinkedHashMap<String, Object>> targetDataList = sourceDataMapping.getTargetDataList();
+        List<Map<String, Object>> targetDataList = sourceDataMapping.getTargetDataList();
         if (CollectionUtils.isEmpty(targetDataList)) {
             return null;
         }
         // bloom filter位数取值 源表目标表数据量大的
-        List<LinkedHashMap<String, Object>> sourceDataList = sourceDataMapping.getSourceDataList();
+        List<Map<String, Object>> sourceDataList = sourceDataMapping.getSourceDataList();
         int bound = Math.toIntExact(Math.max(targetDataList.size(),
                 CollectionUtils.isEmpty(sourceDataList) ? 0 : sourceDataList.size()));
         // 获取fpp

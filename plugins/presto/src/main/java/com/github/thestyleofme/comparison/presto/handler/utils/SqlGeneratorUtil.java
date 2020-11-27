@@ -68,8 +68,8 @@ public class SqlGeneratorUtil {
         .call and _a.address = _b.address and _a.education = _b.education and _a.state = _b.state;`
         */
         String equalWhere = colList.stream()
-                .map(mapping -> String.format(" and _a.%s = _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
-                .collect(Collectors.joining(" "));
+                .map(mapping -> String.format("_a.%s = _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
+                .collect(Collectors.joining(" and "));
         builder.append(String.format(PrestoConstant.SqlConstant.JOIN_SQL_PK, sourceTable, targetTable,
                 sourcePk, targetPk, equalWhere))
                 .append(PrestoConstant.SqlConstant.LINE_END);
@@ -92,8 +92,8 @@ public class SqlGeneratorUtil {
           or _a.education != _b.education or _a.state != _b.state or 1=2  ;`
          */
         String notEqualWhere = colList.stream()
-                .map(mapping -> String.format(" or _a.%s != _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
-                .collect(Collectors.joining(" "));
+                .map(mapping -> String.format("_a.%s != _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
+                .collect(Collectors.joining(" or "));
         builder.append(String.format(PrestoConstant.SqlConstant.JOIN_SQL_PK, sourceTable, targetTable, sourcePk, targetPk,
                 notEqualWhere))
                 .append(PrestoConstant.SqlConstant.LINE_END);
@@ -149,12 +149,12 @@ public class SqlGeneratorUtil {
         ArrayList<ColMapping> temp = new ArrayList<>(colMappingList);
         temp.removeAll(colList);
         String onCondition1 = temp.stream()
-                .map(col -> String.format(" and _a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
+                .collect(Collectors.joining(" and "));
         // 创建on语句 BA型
         String onCondition2 = temp.stream()
-                .map(col -> String.format("and _a.%s = _b.%s", col.getTargetCol(), col.getSourceCol()))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_a.%s = _b.%s", col.getTargetCol(), col.getSourceCol()))
+                .collect(Collectors.joining(" and "));
         /*
         AB都有的数据
         例：
@@ -163,8 +163,8 @@ public class SqlGeneratorUtil {
         and _a.education = _b.education and _a.state = _b.state;`
         */
         String equalWhere = colList.stream()
-                .map(col -> String.format("and _a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
+                .collect(Collectors.joining(" and "));
         builder.append(String.format(PrestoConstant.SqlConstant.ALL_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1, equalWhere))
                 .append(PrestoConstant.SqlConstant.LINE_END);
         /*
@@ -172,8 +172,8 @@ public class SqlGeneratorUtil {
          `select _a.* from mysql.hdsp_test.resume as _a left join mysql.hdsp_test.resume_bak  as _b ON _a.name = _b.name and _a.phone = _b.call where _b.name is null and _b.call is null;`
          */
         String targetColIsNull = targetIndexList.stream()
-                .map(col -> String.format(" and _b.%s is null", col))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_b.%s is null", col))
+                .collect(Collectors.joining(" and "));
         builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1,
                 targetColIsNull))
                 .append(PrestoConstant.SqlConstant.LINE_END);
@@ -182,8 +182,8 @@ public class SqlGeneratorUtil {
          `select _a.* from mysql.hdsp_test.resume_bak as _a left join mysql.hdsp_test.resume  as _b ON _a.name = _b.name and _a.call = _b.phone where _b.name is null and _b.phone is null;`
          */
         String sourceColIsNull = sourceIndexList.stream()
-                .map(col -> String.format(" and _b.%s is null", col))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_b.%s is null", col))
+                .collect(Collectors.joining(" and "));
         builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, targetTable, sourceTable, onCondition2,
                 sourceColIsNull))
                 .append(PrestoConstant.SqlConstant.LINE_END);
@@ -195,8 +195,8 @@ public class SqlGeneratorUtil {
           or _a.education != _b.education or _a.state != _b.state ;`
          */
         String notEqualWhere = colList.stream()
-                .map(col -> String.format("or _a.%s != _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" "));
+                .map(col -> String.format("_a.%s != _b.%s", col.getSourceCol(), col.getTargetCol()))
+                .collect(Collectors.joining(" or "));
         builder.append(String.format(PrestoConstant.SqlConstant.ANY_NOT_IN_SQL_INDEX, sourceTable, targetTable, onCondition1,
                 notEqualWhere))
                 .append(PrestoConstant.SqlConstant.LINE_END);

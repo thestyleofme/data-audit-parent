@@ -1,6 +1,5 @@
 package com.github.thestyleofme.comparison.common.app.service.transform;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -57,7 +56,7 @@ public class TableDataHandler {
         DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, sourceDatasourceCode);
         List<Map<String, Object>> sourceList = sourceDriverSession.tableQuery(sourceSchema, sourceTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = TransformUtils.sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
+        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
         sourceDataMapping.setSourceDataList(result);
     }
 
@@ -70,7 +69,7 @@ public class TableDataHandler {
         DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, targetDatasourceCode);
         List<Map<String, Object>> targetList = targetDriverSession.tableQuery(targetSchema, targetTable);
         // 排序
-        List<LinkedHashMap<String, Object>> result = TransformUtils.sortListMap(jobEnv, targetList, ColMapping.TARGET);
+        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv, targetList, ColMapping.TARGET);
         sourceDataMapping.setTargetDataList(result);
     }
 }
