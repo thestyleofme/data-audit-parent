@@ -50,4 +50,5 @@ public class JobEnv {
      * ]
      */
     private List<Map<String, Object>> colMapping;
+
 }

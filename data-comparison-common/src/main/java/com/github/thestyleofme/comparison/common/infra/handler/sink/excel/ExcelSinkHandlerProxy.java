@@ -7,7 +7,7 @@ import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerPro
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
-import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
+import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

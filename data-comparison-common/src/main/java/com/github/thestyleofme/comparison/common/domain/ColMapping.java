@@ -24,12 +24,6 @@ public class ColMapping {
 
     private String sourceCol;
     private String targetCol;
-    /**
-     * 默认不选中
-     */
-    private boolean selected = false;
-    /**
-     * 默认为 0
-     */
-    private Integer index = 0;
+    private boolean selected;
+    private int index;
 }

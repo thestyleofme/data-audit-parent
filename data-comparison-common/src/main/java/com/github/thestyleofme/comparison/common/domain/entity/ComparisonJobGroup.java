@@ -47,9 +47,13 @@ public class ComparisonJobGroup {
     @NotBlank
     @ApiModelProperty(value = "源库")
     private String sourceSchema;
+    @ApiModelProperty(value = "库下所有来源表的过滤条件")
+    private String sourceWhere;
     @NotBlank
     @ApiModelProperty(value = "目标库")
     private String targetSchema;
+    @ApiModelProperty(value = "库下所有目标表的过滤条件")
+    private String targetWhere;
 
     @ApiModelProperty(value = "租户ID")
     private Long tenantId;

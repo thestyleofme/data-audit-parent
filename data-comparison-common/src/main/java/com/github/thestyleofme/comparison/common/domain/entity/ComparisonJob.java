@@ -45,6 +45,8 @@ public class ComparisonJob {
     @NotBlank
     @ApiModelProperty(value = "数据稽核任务json配置文件")
     private String appConf;
+    @ApiModelProperty(value = "数据稽核结果统计")
+    private String resultStatistics;
     @ApiModelProperty(value = "任务执行开始时间")
     private LocalDateTime startTime;
     @ApiModelProperty(value = "任务状态")

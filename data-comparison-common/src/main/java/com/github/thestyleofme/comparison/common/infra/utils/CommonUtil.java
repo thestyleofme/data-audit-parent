@@ -16,7 +16,7 @@ import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
+import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -166,5 +166,4 @@ public class CommonUtil {
             throw new HandlerException(e);
         }
     }
-
 }

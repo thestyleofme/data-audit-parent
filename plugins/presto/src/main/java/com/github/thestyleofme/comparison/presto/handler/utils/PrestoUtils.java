@@ -10,9 +10,9 @@ import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
+import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**

@@ -1,7 +1,6 @@
 package com.github.thestyleofme.comparison.presto.handler.pojo;
 
 import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
@@ -34,4 +33,5 @@ public class PrestoInfo {
 
     private String sourceTableName;
     private String targetTableName;
+
 }

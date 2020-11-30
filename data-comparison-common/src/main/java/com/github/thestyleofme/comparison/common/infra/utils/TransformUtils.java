@@ -4,8 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
-import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
+import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**

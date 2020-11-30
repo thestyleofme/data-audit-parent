@@ -8,6 +8,7 @@
         <result column="job_desc" property="jobDesc" jdbcType="VARCHAR"/>
         <result column="job_mode" property="jobMode" jdbcType="VARCHAR"/>
         <result column="app_conf" property="appConf" jdbcType="VARCHAR"/>
+        <result column="result_statistics" property="resultStatistics" jdbcType="VARCHAR"/>
         <result column="start_time" property="startTime" jdbcType="TIMESTAMP"/>
         <result column="status" property="status" jdbcType="VARCHAR"/>
         <result column="execute_time" property="executeTime" jdbcType="VARCHAR"/>

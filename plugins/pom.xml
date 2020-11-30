@@ -21,7 +21,6 @@
 
     <modules>
         <module>presto</module>
-        <module>redis-bloom-filter</module>
         <module>phoenix</module>
     </modules>
 
