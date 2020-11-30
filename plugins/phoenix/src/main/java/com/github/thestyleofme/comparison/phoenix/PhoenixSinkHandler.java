@@ -27,7 +27,7 @@ import com.github.thestyleofme.comparison.phoenix.constant.RowTypeEnum;
 import com.github.thestyleofme.comparison.phoenix.context.PhoenixDatasourceHolder;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
 import com.github.thestyleofme.comparison.phoenix.utils.PhoenixHelper;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;

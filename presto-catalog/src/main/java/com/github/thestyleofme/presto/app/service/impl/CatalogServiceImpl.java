@@ -74,7 +74,6 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
         this.saveOrUpdate(catalog);
         // presto保存catalog
         String url = cluster.getCoordinatorUrl();
-        CommonUtil.genCatalogData(catalog);
         HttpEntity<String> requestEntity = new HttpEntity<>(CommonUtil.genCatalogData(catalog),
                 RestTemplateUtil.applicationJsonHeaders());
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(url + "/v1/catalog",

@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.handler.sink.excel.ExcelListenerUtil;
@@ -52,7 +53,8 @@ public class InsertExcelListener<T> extends BaseExcelListener<T> {
     @Override
     void doListAfter(T object) {
         List<Tuple<String, String>> tupleList = ExcelListenerUtil.rowToTupleList(object, excelHeader);
-        sqlList.add(driverSession.tableInsertSql(jobEnv.getTargetTable(), tupleList));
+        SelectTableInfo target = jobEnv.getTarget();
+        sqlList.add(driverSession.tableInsertSql(target.getTable(), tupleList));
         // 分批写到数据库 防止dataList太大 OOM
         if (sqlList.size() == BATCH_COUNT) {
             saveToTable(new ArrayList<>(sqlList));
@@ -63,7 +65,8 @@ public class InsertExcelListener<T> extends BaseExcelListener<T> {
     private void saveToTable(List<String> list) {
         CompletableFuture<Boolean> completableFuture = CompletableFuture.supplyAsync(() -> {
             if (driverSession.supportedBatch()) {
-                driverSession.executeBatch(jobEnv.getTargetSchema(), list);
+                SelectTableInfo target = jobEnv.getTarget();
+                driverSession.executeBatch(target.getSchema(), list);
             } else {
                 for (String sql : list) {
                     driverSession.executeOneUpdate(null, sql);

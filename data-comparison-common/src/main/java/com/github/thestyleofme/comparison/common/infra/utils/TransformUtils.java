@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -20,15 +20,14 @@ public class TransformUtils {
     /**
      * 按mapping映射顺序对 数据集list进行排序
      *
-     * @param jobEnv   JobEnv
+     * @param colMapping   colMapping
      * @param list     数据集合
      * @param position ColMapping.SOURCE/TARGET
      * @return 有序数据集
      */
-    public static List<Map<String, Object>> sortListMap(JobEnv jobEnv,
+    public static List<Map<String, Object>> sortListMap(List<Map<String, Object>> colMapping,
                                                         List<Map<String, Object>> list,
                                                         String position) {
-        List<Map<String, Object>> colMapping = jobEnv.getColMapping();
         List<Map<String, Object>> result = new ArrayList<>(list.size());
         if (CollectionUtils.isEmpty(colMapping)) {
             SortedMap<String, Object> sortedMap;

@@ -16,7 +16,7 @@ import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StringUtils;
@@ -131,7 +131,10 @@ public class CommonUtil {
 
     public static List<ColMapping> getColMappingList(ComparisonJob comparisonJob) {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+        JobEnv jobEnv = JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()), JobEnv.class);
+        return getColMappingList(jobEnv);
+    }
+    public static List<ColMapping> getColMappingList(JobEnv jobEnv){
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();
         return colMapping.stream()
                 .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
@@ -139,12 +142,19 @@ public class CommonUtil {
                 .collect(Collectors.toList());
     }
 
-    public static JobEnv getJobEnv(ComparisonJob comparisonJob) {
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        return BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+
+    public static List<ColMapping> getJoinMappingList(JobEnv jobEnv) {
+        return jobEnv.getJoinMapping().stream()
+                .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
+                .collect(Collectors.toList());
     }
 
-    public static void completableFutureAllOf(List<CompletableFuture<?>> completableFutureList){
+    public static JobEnv getJobEnv(ComparisonJob comparisonJob) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        return JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()),JobEnv.class);
+    }
+
+    public static void completableFutureAllOf(List<CompletableFuture<?>> completableFutureList) {
         CompletableFuture<Void> future = CompletableFuture.allOf(completableFutureList.toArray(new CompletableFuture[0]));
         try {
             future.get();

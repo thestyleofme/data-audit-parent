@@ -27,7 +27,7 @@ public class AppConf {
      * 优先级低 只有source/transform/sink里没有配置该参数时，才从env取
      */
     private Map<String, Object> env = new HashMap<>(16);
-    private Map<String, Map<String, Object>> source = new HashMap<>(16);
+    private Map<String, Object> preTransform = new HashMap<>(16);
     private Map<String, Map<String, Object>> transform = new HashMap<>(16);
     private Map<String, Map<String, Object>> sink = new HashMap<>(16);
 

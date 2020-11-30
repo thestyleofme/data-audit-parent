@@ -1,19 +1,16 @@
 package com.github.thestyleofme.comparison.presto.handler.utils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import static com.github.thestyleofme.comparison.presto.handler.constants.PrestoConstant.SqlConstant.*;
+
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.presto.handler.constants.PrestoConstant;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -31,175 +28,138 @@ public class SqlGeneratorUtil {
 
     }
 
-    public static String generateSql(PrestoInfo prestoInfo, JobEnv jobEnv) {
+    private static final String SOURCE = "$1";
+    private static final String TARGET = "$2";
+    private static final String SOURCE_NAME = "_a";
+    private static final String TARGET_NAME = "_b";
+    private static final String AND_LEFT = " and (";
+
+    public static String generateSql(PrestoInfo prestoInfo) {
         String sql;
-        String sourcePk = jobEnv.getSourcePk();
-        String targetPk = jobEnv.getTargetPk();
-        String sourceIndex = jobEnv.getSourceIndex();
-        String targetIndex = jobEnv.getTargetIndex();
-        // 如果有指定主键
-        if (!StringUtils.isEmpty(sourcePk) && !StringUtils.isEmpty(targetPk)) {
-            sql = createSqlByPk(sourcePk, targetPk, prestoInfo, jobEnv);
-        } else if (!StringUtils.isEmpty(sourceIndex) && !StringUtils.isEmpty(targetIndex)) {
-            sql = createSqlByIndex(sourceIndex, targetIndex, prestoInfo, jobEnv);
+        List<ColMapping> joinMappingList = prestoInfo.getJoinMapping();
+        // 如果有指定主键或唯一索引
+        if (!CollectionUtils.isEmpty(joinMappingList)) {
+            sql = createSqlByPkOrIndex(prestoInfo);
         } else {
             throw new HandlerException("hdsp.xadt.error.presto.not_support");
         }
         return sql;
     }
 
-    private static String createSqlByPk(String sourcePk,
-                                        String targetPk,
-                                        PrestoInfo prestoInfo,
-                                        JobEnv jobEnv) {
-        StringBuilder builder = new StringBuilder();
-        String sourceTable = getSourceTable(prestoInfo);
-        String targetTable = getTargetTable(prestoInfo);
-        List<ColMapping> colMappingList = getColMappingList(jobEnv);
-        // 获取除去主键外的所有列
+    public static String getTableName(SelectTableInfo tableInfo) {
+        return String.format(TABLE_FT, tableInfo.getCatalog(),
+                tableInfo.getSchema(), tableInfo.getTable());
+    }
+
+    private static String getBothWhereCondition(StringBuilder builder, String sourceGlobalWhere, String sourceWhere,
+                                                String targetGlobalWhere, String targetWhere) {
+        builder.setLength(0);
+        builder.append("where 1=1 ");
+        if (!StringUtils.isEmpty(sourceGlobalWhere)) {
+            builder.append(AND_LEFT).append(sourceGlobalWhere).append(")");
+        }
+        if (!StringUtils.isEmpty(targetGlobalWhere)) {
+            builder.append(AND_LEFT).append(targetGlobalWhere).append(")");
+        }
+        if (!StringUtils.isEmpty(sourceWhere)) {
+            builder.append(AND_LEFT).append(sourceWhere).append(")");
+        }
+        if (!StringUtils.isEmpty(targetWhere)) {
+            builder.append(AND_LEFT).append(targetWhere).append(")");
+        }
+        // 将 $1 $2 替换为_a _b
+        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
+        builder.setLength(0);
+        return result;
+    }
+
+    private static String getOneWhereCondition(StringBuilder builder, String globalWhere, String where) {
+        builder.setLength(0);
+        builder.append("where 1=1 ");
+        if (!StringUtils.isEmpty(globalWhere)) {
+            builder.append(AND_LEFT).append(globalWhere).append(")");
+        }
+        if (!StringUtils.isEmpty(where)) {
+            builder.append(AND_LEFT).append(where).append(")");
+        }
+        // 将 $1 $2 替换为_a _b
+        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
+        builder.setLength(0);
+        return result;
+    }
+
+    private static String createSqlByPkOrIndex(PrestoInfo prestoInfo) {
+        SelectTableInfo target = prestoInfo.getTarget();
+        SelectTableInfo source = prestoInfo.getSource();
+        String sourceTable = prestoInfo.getSourceTableName();
+        String targetTable = prestoInfo.getTargetTableName();
+
+        // 索引的列
+        List<ColMapping> joinMappingList = prestoInfo.getJoinMapping();
+        // 所有的列映射信息
+        List<ColMapping> colMappingList = prestoInfo.getColMapping();
+        // 需要对比的列
         List<ColMapping> colList = colMappingList.stream()
-                .filter(col -> !sourcePk.equalsIgnoreCase(col.getSourceCol()) || !targetPk.equalsIgnoreCase(col.getTargetCol()))
+                .filter(ColMapping::isSelected)
                 .collect(Collectors.toList());
+
+        StringBuilder builder = new StringBuilder();
+
+        // _a.id = _b.id and _a.x = _b.x
+        String onCondition = joinMappingList.stream().map(colMapping ->
+                String.format(" _a.%s = _b.%s ", colMapping.getSourceCol(), colMapping.getTargetCol()))
+                .collect(Collectors.joining(" and "));
+        String bothWhere = getBothWhereCondition(builder, source.getGlobalWhere(), source.getWhere(),
+                target.getGlobalWhere(), target.getWhere());
+        String sourceWhere = getOneWhereCondition(builder, source.getGlobalWhere(), source.getWhere());
+        String targetWhere = getOneWhereCondition(builder, target.getGlobalWhere(), target.getWhere());
         /*
         1. AB都有的数据
         例：
-        `select _a.* from mysql.hdsp_test.resume as _a join mysql.hdsp_test.resume_bak  as _b
-        ON _a.id = _b.id WHERE _a.name = _b.name and _a.sex = _b.sex and _a.phone = _b
-        .call and _a.address = _b.address and _a.education = _b.education and _a.state = _b.state;`
+        ``
         */
-        String equalWhere = colList.stream()
-                .map(mapping -> String.format("_a.%s = _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
-                .collect(Collectors.joining(" and "));
-        builder.append(String.format(PrestoConstant.SqlConstant.JOIN_SQL_PK, sourceTable, targetTable,
-                sourcePk, targetPk, equalWhere))
-                .append(PrestoConstant.SqlConstant.LINE_END);
+
+        String where1 = colList.stream()
+                .map(col -> String.format(" _a.%s = _b.%s ", col.getSourceCol(), col.getTargetCol()))
+                .collect(Collectors.joining("and", "and (", ")"));
+        String sql1 = String.format(BASE_SQL, "count(*) as count", sourceTable, JOIN, targetTable, onCondition);
+        builder.append(sql1).append(bothWhere).append(where1).append(";").append(LINE_END);
         /*
          2. A有B无
-         `select _a.* from mysql.hdsp_test.resume  as _a left join mysql.hdsp_test.resume_bak  as _b ON _a.id = _b.id WHERE _b.id is null;`
+         ``
          */
-        createUniqueDataSqlByPk(builder, sourceTable, targetTable, sourcePk, targetPk);
+        //"SELECT %s FROM %s as _a %s %s as _b on %s "
+        String sourceCol = colMappingList.stream()
+                .map(colMapping -> String.format("_a.%s", colMapping.getSourceCol()))
+                .collect(Collectors.joining(","));
+        String where2 = joinMappingList.stream()
+                .map(col -> String.format(" _b.%s is null ", col.getTargetCol()))
+                .collect(Collectors.joining("and", "and (", ")"));
+        String sql2 = String.format(BASE_SQL, sourceCol, sourceTable, LEFT_JOIN, targetTable, onCondition);
+        builder.append(sql2).append(sourceWhere).append(where2).append(";").append(LINE_END);
         /*
-         3. A无B有
-          `select _a.* from mysql.hdsp_test.resume_bak  as _a left join mysql.hdsp_test.resume  as _b ON _a.id = _b.id WHERE _b.id is null  ;`
+         3. B有A无
+         ``
          */
-        createUniqueDataSqlByPk(builder, targetTable, sourceTable, targetPk, sourcePk);
+        String targetCol = colMappingList.stream()
+                .map(colMapping -> String.format("_b.%s", colMapping.getTargetCol()))
+                .collect(Collectors.joining(","));
+        String where3 = joinMappingList.stream()
+                .map(col -> String.format(" _a.%s is null ", col.getSourceCol()))
+                .collect(Collectors.joining("or", " and (", ")"));
+        String sql3 = String.format(BASE_SQL, targetCol, sourceTable, RIGHT_JOIN, targetTable, onCondition);
+        builder.append(sql3).append(targetWhere).append(where3).append(";").append(LINE_END);
 
         /*
-          4. AB主键或唯一索引相同，部分字段不一样
-          `select _a.* from mysql.hdsp_test.resume  as _a left join mysql.hdsp_test.resume_bak  as _b
-          ON _a.id = _b.id
-          WHERE _a.name != _b.name or _a.sex != _b.sex or _a.phone != _b.call or _a.address != _b.address
-          or _a.education != _b.education or _a.state != _b.state or 1=2  ;`
+          4. AB唯一索引相同，部分字段不一样
+          ``
          */
-        String notEqualWhere = colList.stream()
-                .map(mapping -> String.format("_a.%s != _b.%s", mapping.getSourceCol(), mapping.getTargetCol()))
-                .collect(Collectors.joining(" or "));
-        builder.append(String.format(PrestoConstant.SqlConstant.JOIN_SQL_PK, sourceTable, targetTable, sourcePk, targetPk,
-                notEqualWhere))
-                .append(PrestoConstant.SqlConstant.LINE_END);
+        String where4 = colList.stream()
+                .map(col -> String.format(" _a.%s != _b.%s ", col.getSourceCol(), col.getTargetCol()))
+                .collect(Collectors.joining("or", " and (", ")"));
+        String sql4 = String.format(BASE_SQL, sourceCol, sourceTable, JOIN, targetTable, onCondition);
+        builder.append(sql4).append(bothWhere).append(where4).append(";").append(LINE_END);
 
-        log.debug("==> presto create sql by primary key: {}", builder.toString());
-        return builder.toString();
-    }
-
-    public static void createUniqueDataSqlByPk(StringBuilder builder, String tableA, String tableB, String pkA, String pkB) {
-        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_PK, tableA, tableB, pkA, pkB, pkB))
-                .append(PrestoConstant.SqlConstant.LINE_END);
-    }
-
-    private static List<ColMapping> getColMappingList(JobEnv jobEnv) {
-        // 获取列的映射关系
-        List<Map<String, Object>> colMapping = jobEnv.getColMapping();
-        return colMapping.stream()
-                .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
-                .collect(Collectors.toList());
-    }
-
-    private static String getSourceTable(PrestoInfo prestoInfo) {
-        return String.format(PrestoConstant.SqlConstant.TABLE_FT, prestoInfo.getSourcePrestoCatalog(),
-                prestoInfo.getSourceSchema(), prestoInfo.getSourceTable());
-    }
-
-    private static String getTargetTable(PrestoInfo prestoInfo) {
-        return String.format(PrestoConstant.SqlConstant.TABLE_FT, prestoInfo.getTargetPrestoCatalog(),
-                prestoInfo.getTargetSchema(), prestoInfo.getTargetTable());
-    }
-
-    private static String createSqlByIndex(String sourceIndex,
-                                           String targetIndex,
-                                           PrestoInfo prestoInfo,
-                                           JobEnv jobEnv) {
-        // 获取索引的列
-        List<String> sourceIndexList = new ArrayList<>(Arrays.asList(sourceIndex.split(StringPool.COMMA)));
-        List<String> targetIndexList = new ArrayList<>(Arrays.asList(targetIndex.split(StringPool.COMMA)));
-        if (sourceIndexList.size() != targetIndexList.size()) {
-            throw new HandlerException("hdsp.xadt.error.presto.index_length.not_equals");
-        }
-        StringBuilder builder = new StringBuilder();
-        String sourceTable = getSourceTable(prestoInfo);
-        String targetTable = getTargetTable(prestoInfo);
-        // 获取列的映射关系
-        List<ColMapping> colMappingList = getColMappingList(jobEnv);
-        // 获取除去索引外的所有列
-        List<ColMapping> colList = colMappingList.stream()
-                .filter(col -> !sourceIndexList.contains(col.getSourceCol()) || !targetIndexList.contains(col.getTargetCol()))
-                .collect(Collectors.toList());
-
-        // 创建on语句 AB型
-        ArrayList<ColMapping> temp = new ArrayList<>(colMappingList);
-        temp.removeAll(colList);
-        String onCondition1 = temp.stream()
-                .map(col -> String.format("_a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" and "));
-        // 创建on语句 BA型
-        String onCondition2 = temp.stream()
-                .map(col -> String.format("_a.%s = _b.%s", col.getTargetCol(), col.getSourceCol()))
-                .collect(Collectors.joining(" and "));
-        /*
-        AB都有的数据
-        例：
-        `select _a.* from mysql.hdsp_test.resume as _a join mysql.hdsp_test.resume_bak  as _b
-        ON _a.name = _b.name and _a.phone = _b.call WHERE _a.id = _b.id and _a.sex = _b.sex and _a.address = _b.address
-        and _a.education = _b.education and _a.state = _b.state;`
-        */
-        String equalWhere = colList.stream()
-                .map(col -> String.format("_a.%s = _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" and "));
-        builder.append(String.format(PrestoConstant.SqlConstant.ALL_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1, equalWhere))
-                .append(PrestoConstant.SqlConstant.LINE_END);
-        /*
-         A有B无
-         `select _a.* from mysql.hdsp_test.resume as _a left join mysql.hdsp_test.resume_bak  as _b ON _a.name = _b.name and _a.phone = _b.call where _b.name is null and _b.call is null;`
-         */
-        String targetColIsNull = targetIndexList.stream()
-                .map(col -> String.format("_b.%s is null", col))
-                .collect(Collectors.joining(" and "));
-        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, sourceTable, targetTable, onCondition1,
-                targetColIsNull))
-                .append(PrestoConstant.SqlConstant.LINE_END);
-        /*
-         B有A无
-         `select _a.* from mysql.hdsp_test.resume_bak as _a left join mysql.hdsp_test.resume  as _b ON _a.name = _b.name and _a.call = _b.phone where _b.name is null and _b.phone is null;`
-         */
-        String sourceColIsNull = sourceIndexList.stream()
-                .map(col -> String.format("_b.%s is null", col))
-                .collect(Collectors.joining(" and "));
-        builder.append(String.format(PrestoConstant.SqlConstant.LEFT_HAVE_SQL_INDEX, targetTable, sourceTable, onCondition2,
-                sourceColIsNull))
-                .append(PrestoConstant.SqlConstant.LINE_END);
-        /*
-          AB唯一索引相同，部分字段不一样
-          `select _a.* from mysql.hdsp_test.resume as _a left join mysql.hdsp_test.resume_bak  as _b
-          ON _a.name = _b.name and _a.phone = _b.call
-          WHERE _a.id != _b.id or _a.sex != _b.sex or _a.address != _b.address
-          or _a.education != _b.education or _a.state != _b.state ;`
-         */
-        String notEqualWhere = colList.stream()
-                .map(col -> String.format("_a.%s != _b.%s", col.getSourceCol(), col.getTargetCol()))
-                .collect(Collectors.joining(" or "));
-        builder.append(String.format(PrestoConstant.SqlConstant.ANY_NOT_IN_SQL_INDEX, sourceTable, targetTable, onCondition1,
-                notEqualWhere))
-                .append(PrestoConstant.SqlConstant.LINE_END);
         log.debug("==> presto create sql by index: {}", builder.toString());
         return builder.toString();
     }

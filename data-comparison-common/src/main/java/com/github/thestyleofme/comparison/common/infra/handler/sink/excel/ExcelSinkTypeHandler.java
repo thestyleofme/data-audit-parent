@@ -18,7 +18,7 @@ import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -35,7 +35,6 @@ import org.springframework.util.StringUtils;
 @SinkType("EXCEL")
 @Slf4j
 public class ExcelSinkTypeHandler implements BaseSinkHandler {
-
     @Override
     public void handle(ComparisonJob comparisonJob,
                        Map<String, Object> env,
@@ -48,7 +47,8 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         String fileOutputPath = excelInfo.getOutputPath();
         if (StringUtils.isEmpty(fileOutputPath)) {
             //when sinkType=EXCEL, fileOutputPath cannot be null
-            throw new HandlerException("hdsp.xadt.error.sink.fileOutputPath.is_null");
+            fileOutputPath = "C:/Users/housiqi/Desktop";
+//            throw new HandlerException("hdsp.xadt.error.sink.fileOutputPath.is_null");
         }
         String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);

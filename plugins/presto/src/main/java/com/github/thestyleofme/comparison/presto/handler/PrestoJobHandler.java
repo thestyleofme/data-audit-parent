@@ -9,21 +9,20 @@ import java.util.Optional;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
-import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
 import com.github.thestyleofme.comparison.presto.handler.context.JdbcHandler;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
 import com.github.thestyleofme.comparison.presto.handler.utils.SqlGeneratorUtil;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.presto.app.service.ClusterService;
 import com.github.thestyleofme.presto.domain.entity.Cluster;
+import com.github.thestyleofme.presto.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -60,9 +59,11 @@ public class PrestoJobHandler implements BaseTransformHandler {
                                 Map<String, Object> env,
                                 Map<String, Object> transformMap) {
         LocalDateTime startTime = LocalDateTime.now();
-        JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
+        String json = JsonUtil.toJson(env);
+        JobEnv jobEnv = JsonUtil.toObj(json, JobEnv.class);
         PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(jobEnv, transformMap);
         HandlerResult handlerResult = new HandlerResult();
+        handlerResult.setResultStatistics(new ResultStatistics());
 
         // 尝试获取 presto 的 dataSourceCode
         if (StringUtils.isEmpty(prestoInfo.getDataSourceCode()) && !StringUtils.isEmpty(prestoInfo.getClusterCode())) {
@@ -77,59 +78,69 @@ public class PrestoJobHandler implements BaseTransformHandler {
         }
         if (!StringUtils.isEmpty(prestoInfo.getDataSourceCode())) {
             // 走数据源
-            handleByDataSourceCode(handlerResult, prestoInfo, comparisonJob, jobEnv);
+            handleByDataSourceCode(comparisonJob.getTenantId(), handlerResult, prestoInfo);
         } else {
             // 走jdbc
-            handleByJdbc(handlerResult, prestoInfo, jobEnv);
+            handleByJdbc(handlerResult, prestoInfo);
         }
         LocalDateTime endTime = LocalDateTime.now();
         log.debug("job time cost :" + Duration.between(endTime, startTime));
         return handlerResult;
     }
 
-    private void handleByJdbc(HandlerResult handlerResult, PrestoInfo prestoInfo, JobEnv jobEnv) {
+    private void handleByJdbc(HandlerResult handlerResult, PrestoInfo prestoInfo) {
         // 生成sql
-        String sql = SqlGeneratorUtil.generateSql(prestoInfo, jobEnv);
+        String sql = SqlGeneratorUtil.generateSql(prestoInfo);
         // 执行sql
         List<List<Map<String, Object>>> list = jdbcHandler.executeBatchQuerySql(prestoInfo, sql);
         // 装载数据到handlerResult
-        this.fillHandlerResult(handlerResult, jobEnv, list);
+        this.fillHandlerResult(handlerResult, list, sql);
     }
 
-    private void handleByDataSourceCode(HandlerResult handlerResult,
-                                        PrestoInfo prestoInfo,
-                                        ComparisonJob comparisonJob,
-                                        JobEnv jobEnv) {
+    private void handleByDataSourceCode(Long tenantId, HandlerResult handlerResult, PrestoInfo prestoInfo) {
         // 生成sql
-        String sql = SqlGeneratorUtil.generateSql(prestoInfo, jobEnv);
+        String sql = SqlGeneratorUtil.generateSql(prestoInfo);
         // 执行sql
-        DriverSession driverSession = driverSessionService.getDriverSession(comparisonJob.getTenantId(), prestoInfo.getDataSourceCode());
+        DriverSession driverSession = driverSessionService.getDriverSession(tenantId, prestoInfo.getDataSourceCode());
         List<List<Map<String, Object>>> result = driverSession.executeAll(null, sql, true);
         if (CollectionUtils.isEmpty(result) || result.size() != FOUR) {
             throw new HandlerException("hdsp.xadt.error.presto.not_support");
         }
         // 装载数据到handlerResult
-        this.fillHandlerResult(handlerResult, jobEnv, result);
+        this.fillHandlerResult(handlerResult, result, sql);
     }
 
-    private void fillHandlerResult(HandlerResult handlerResult, JobEnv jobEnv, List<List<Map<String, Object>>> result) {
+    private void fillHandlerResult(HandlerResult handlerResult,
+                                   List<List<Map<String, Object>>> result, String sql) {
+        String[] sqls = sql.split("\n");
+        ResultStatistics statistics = handlerResult.getResultStatistics();
+        // 源端、目标端都有的数据量
+        Optional.ofNullable(result.get(0)).flatMap(list -> list.stream().findFirst()).ifPresent(map -> {
+            long size = 0L;
+            if (!CollectionUtils.isEmpty(map)) {
+                size = (long) map.get("count");
+            }
+            statistics.setSameCount(statistics.getSameCount() + size);
+            statistics.setSameCountSql(sqls[0]);
+        });
         // 源端有但目标端无
+        statistics.setInsertCountSql(sqls[1]);
         Optional.ofNullable(result.get(1)).ifPresent(list -> {
-            List<Map<String, Object>> sortedList =
-                    TransformUtils.sortListMap(jobEnv, list, ColMapping.SOURCE);
-            handlerResult.getSourceUniqueDataList().addAll(sortedList);
+            handlerResult.getSourceUniqueDataList().addAll(list);
+            statistics.setInsertCount(statistics.getInsertCount() + list.size());
         });
         // 目标端有但源端无
+        statistics.setInsertCountSql(sqls[2]);
+
         Optional.ofNullable(result.get(2)).ifPresent(list -> {
-            List<Map<String, Object>> sortedList =
-                    TransformUtils.sortListMap(jobEnv, list, ColMapping.TARGET);
-            handlerResult.getTargetUniqueDataList().addAll(sortedList);
+            handlerResult.getTargetUniqueDataList().addAll(list);
+            statistics.setDeleteCount(statistics.getDeleteCount() + list.size());
         });
         // 源端和目标端数据不一样，但主键或唯一性索引一样
+        statistics.setInsertCountSql(sqls[3]);
         Optional.ofNullable(result.get(3)).ifPresent(list -> {
-            List<Map<String, Object>> sortedList =
-                    TransformUtils.sortListMap(jobEnv, list, ColMapping.SOURCE);
-            handlerResult.getPkOrIndexSameDataList().addAll(sortedList);
+            handlerResult.getPkOrIndexSameDataList().addAll(list);
+            statistics.setUpdateCount(statistics.getUpdateCount() + list.size());
         });
     }
 

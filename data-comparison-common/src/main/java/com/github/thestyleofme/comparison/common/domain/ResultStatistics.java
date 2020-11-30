@@ -19,13 +19,13 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResultStatistics {
 
-    private Long insertCount;
+    private Long insertCount = 0L;
     private String insertCountSql;
-    private Long deleteCount;
+    private Long deleteCount = 0L;
     private String deleteCountSql;
-    private Long updateCount;
+    private Long updateCount = 0L;
     private String updateCountSql;
-    private Long sameCount;
+    private Long sameCount = 0L;
     private String sameCountSql;
 
 }

@@ -1,13 +1,18 @@
 package com.github.thestyleofme.comparison.presto.handler.utils;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import org.springframework.util.CollectionUtils;
 
 /**
@@ -25,19 +30,29 @@ public class PrestoUtils {
 
     public static final Pattern HTTP_PATTERN = Pattern.compile("http://(.*?):(.*?)");
 
+
     public static PrestoInfo getPrestoInfo(JobEnv jobEnv,
                                            Map<String, Object> transformMap) {
         if (CollectionUtils.isEmpty(transformMap)) {
             throw new HandlerException("hdsp.xadt.error.transform.is_null");
         }
-        // 优先使用transform中数据，其次从env中获取
+        // 先从transform中取数据，再从env中获取
         PrestoInfo prestoInfo = BeanUtils.map2Bean(transformMap, PrestoInfo.class);
-        prestoInfo.setSourcePrestoCatalog(CommonUtil.requireNonNullElse(prestoInfo.getSourcePrestoCatalog(), jobEnv.getSourcePrestoCatalog()));
-        prestoInfo.setSourceSchema(CommonUtil.requireNonNullElse(prestoInfo.getSourceSchema(), jobEnv.getSourceSchema()));
-        prestoInfo.setSourceTable(CommonUtil.requireNonNullElse(prestoInfo.getSourceTable(), jobEnv.getSourceTable()));
-        prestoInfo.setTargetPrestoCatalog(CommonUtil.requireNonNullElse(prestoInfo.getTargetPrestoCatalog(), jobEnv.getTargetPrestoCatalog()));
-        prestoInfo.setTargetSchema(CommonUtil.requireNonNullElse(prestoInfo.getTargetSchema(), jobEnv.getTargetSchema()));
-        prestoInfo.setTargetTable(CommonUtil.requireNonNullElse(prestoInfo.getTargetTable(), jobEnv.getTargetTable()));
+        List<ColMapping> joinMappingList = jobEnv.getJoinMapping().stream()
+                .map(mapping -> BeanUtils.map2Bean(mapping, ColMapping.class))
+                .sorted(Comparator.comparingInt(ColMapping::getIndex))
+                .collect(Collectors.toList());
+        List<ColMapping> colMappingList = CommonUtil.getColMappingList(jobEnv);
+        prestoInfo.setJoinMapping(joinMappingList);
+        prestoInfo.setColMapping(colMappingList);
+
+        SelectTableInfo source = jobEnv.getSource();
+        SelectTableInfo target = jobEnv.getTarget();
+        prestoInfo.setSource(source);
+        prestoInfo.setTarget(target);
+        // 构建presto 中表的名字
+        prestoInfo.setSourceTableName(SqlGeneratorUtil.getTableName(source));
+        prestoInfo.setTargetTableName(SqlGeneratorUtil.getTableName(target));
         return prestoInfo;
     }
 

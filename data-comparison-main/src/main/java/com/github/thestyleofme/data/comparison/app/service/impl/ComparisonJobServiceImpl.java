@@ -36,7 +36,7 @@ import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import com.github.thestyleofme.data.comparison.infra.context.JobHandlerContext;
 import com.github.thestyleofme.data.comparison.infra.converter.BaseComparisonJobConvert;
 import com.github.thestyleofme.data.comparison.infra.mapper.ComparisonJobMapper;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -130,7 +130,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             doSink(appConf, env, comparisonJob, handlerResult);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
         } catch (Exception e) {
-            log.error("doJob error:", e);
+            log.error("doJob error:{}",e.getLocalizedMessage(), e);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
             throw e;
         }
@@ -233,14 +233,14 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     private void doJobDeploy(ComparisonJob comparisonJob, DeployInfo deployInfo) {
         try {
-            // 必须数据稽核后才能补偿
-            if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
-                throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
-            }
-            // 检验任务是否正在执行 以及设置开始执行状态
-            if (isFilterJob(comparisonJob)) {
-                return;
-            }
+//            // 必须数据稽核后才能补偿
+//            if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
+//                throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
+//            }
+//            // 检验任务是否正在执行 以及设置开始执行状态
+//            if (isFilterJob(comparisonJob)) {
+//                return;
+//            }
             String deployType = Optional.ofNullable(deployInfo.getDeployType()).orElse(CommonConstant.Deploy.EXCEL);
             BaseDeployHandler deployHandler = jobHandlerContext.getDeployHandler(deployType.toUpperCase());
             deployHandler.handle(comparisonJob, deployInfo);
@@ -274,7 +274,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private void copyGroupInfoToJob(ComparisonJob comparisonJob, ComparisonJobGroup jobGroup) {
         // 将group中的信息写到job的全局参数env中 后续job执行或许用的上
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        JobEnv jobEnv = BeanUtils.map2Bean(appConf.getEnv(), JobEnv.class);
+        JobEnv jobEnv = CommonUtil.getJobEnv(comparisonJob);
         // 拷贝group信息到env
         org.springframework.beans.BeanUtils.copyProperties(jobGroup, jobEnv);
         appConf.setEnv(BeanUtils.bean2Map(jobEnv));

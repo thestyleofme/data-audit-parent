@@ -5,12 +5,14 @@ import java.util.Map;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.utils.TransformUtils;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
-import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
+import com.github.thestyleofme.comparison.common.infra.utils.BeanUtils;
+import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import org.springframework.stereotype.Component;
 
 /**
@@ -33,13 +35,15 @@ public class TableDataHandler {
     public SourceDataMapping handle(ComparisonJob comparisonJob,
                                     Map<String, Object> env) {
         Long tenantId = comparisonJob.getTenantId();
-        JobEnv jobEnv = BeanUtils.map2Bean(env, JobEnv.class);
-        String sourceDatasourceCode = jobEnv.getSourceDatasourceCode();
-        String sourceSchema = jobEnv.getSourceSchema();
-        String sourceTable = jobEnv.getSourceTable();
-        String targetDatasourceCode = jobEnv.getTargetDatasourceCode();
-        String targetSchema = jobEnv.getTargetSchema();
-        String targetTable = jobEnv.getTargetTable();
+        JobEnv jobEnv = JsonUtil.toObj(JsonUtil.toJson(env),JobEnv.class);
+        SelectTableInfo source = jobEnv.getSource();
+        SelectTableInfo target = jobEnv.getTarget();
+        String sourceDatasourceCode = source.getDataSourceCode();
+        String sourceSchema = source.getSchema();
+        String sourceTable = source.getTable();
+        String targetDatasourceCode = target.getDataSourceCode();
+        String targetSchema = target.getSchema();
+        String targetTable = target.getTable();
         // 封装ComparisonMapping
         SourceDataMapping sourceDataMapping = new SourceDataMapping();
         handleSource(jobEnv, sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);
@@ -56,7 +60,7 @@ public class TableDataHandler {
         DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, sourceDatasourceCode);
         List<Map<String, Object>> sourceList = sourceDriverSession.tableQuery(sourceSchema, sourceTable);
         // 排序
-        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv, sourceList, ColMapping.SOURCE);
+        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv.getColMapping(), sourceList, ColMapping.SOURCE);
         sourceDataMapping.setSourceDataList(result);
     }
 
@@ -69,7 +73,7 @@ public class TableDataHandler {
         DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, targetDatasourceCode);
         List<Map<String, Object>> targetList = targetDriverSession.tableQuery(targetSchema, targetTable);
         // 排序
-        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv, targetList, ColMapping.TARGET);
+        List<Map<String, Object>> result = TransformUtils.sortListMap(jobEnv.getColMapping(), targetList, ColMapping.TARGET);
         sourceDataMapping.setTargetDataList(result);
     }
 }

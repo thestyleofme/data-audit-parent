@@ -33,7 +33,8 @@ public class ExcelUtil {
         if (sinkMap.containsKey(CommonConstant.Sink.EXCEL)) {
             Object outputPath = sinkMap.get(CommonConstant.Sink.EXCEL).get("outputPath");
             if (outputPath == null) {
-                throw new HandlerException("hdsp.xadt.error.cannot.find.excel.path.from.sink");
+//                throw new HandlerException("hdsp.xadt.error.cannot.find.excel.path.from.sink");
+                outputPath = "C:/Users/housiqi/Desktop";
             }
             return String.format("%s/%d_%s.xlsx", outputPath,
                     comparisonJob.getTenantId(), comparisonJob.getJobCode());
@@ -66,13 +67,6 @@ public class ExcelUtil {
                 .collect(Collectors.toList());
     }
 
-    public static List<List<String>> getSourceToTargetHeader(List<ColMapping> colMappingList) {
-        return colMappingList.stream()
-                .map(colMapping -> Collections.singletonList(
-                        colMapping.getSourceCol().equals(colMapping.getTargetCol()) ? colMapping.getSourceCol() :
-                                String.format("%s -> %s", colMapping.getSourceCol(), colMapping.getTargetCol())))
-                .collect(Collectors.toList());
-    }
 
     public static List<List<String>> getSourceToTargetHeader(ComparisonJob comparisonJob) {
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
