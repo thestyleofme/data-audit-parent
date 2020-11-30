@@ -20,6 +20,7 @@ import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerExcepti
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -46,8 +47,8 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
         String fileOutputPath = excelInfo.getOutputPath();
         if (StringUtils.isEmpty(fileOutputPath)) {
-            // when sinkType=EXCEL, fileOutputPath cannot be null
-            fileOutputPath = ExcelSinkTypeHandler.class.getResource("/").getPath() + "/excel";
+            // when sinkType=EXCEL, fileOutputPath default path: {project}/excel/
+            fileOutputPath = ExcelUtil.getExcelPath();
         }
         String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);

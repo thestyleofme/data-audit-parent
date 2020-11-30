@@ -1,5 +1,7 @@
 package com.github.thestyleofme.comparison.common.infra.utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +14,7 @@ import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 /**
  * <p>
@@ -33,14 +36,24 @@ public class ExcelUtil {
         if (sinkMap.containsKey(CommonConstant.Sink.EXCEL)) {
             Object outputPath = sinkMap.get(CommonConstant.Sink.EXCEL).get("outputPath");
             if (outputPath == null) {
-                outputPath = ExcelUtil.class.getResource("/").getPath() + "/excel";
+                outputPath = getExcelPath();
             }
             return String.format("%s/%d_%s.xlsx", outputPath,
                     comparisonJob.getTenantId(), comparisonJob.getJobCode());
         }
         throw new HandlerException("hdsp.xadt.error.cannot.find.excel.path");
     }
-
+    public static String getExcelPath(){
+        File file = new File("excel");
+        if (!file.exists()) {
+            try {
+                FileUtils.forceMkdir(file);
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        return file.getAbsolutePath();
+    }
     public static List<List<String>> getTargetExcelHeader(List<ColMapping> colMappingList) {
         return colMappingList.stream()
                 .map(colMapping -> Collections.singletonList(colMapping.getTargetCol()))
