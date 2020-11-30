@@ -34,7 +34,7 @@ public class SqlGeneratorUtil {
     private static final String TARGET_NAME = "_b";
     private static final String AND_LEFT = " and (";
 
-    public static String generateSql(PrestoInfo prestoInfo) {
+    public static String generateAuditSql(PrestoInfo prestoInfo) {
         String sql;
         List<ColMapping> joinMappingList = prestoInfo.getJoinMapping();
         // 如果有指定主键或唯一索引

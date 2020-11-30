@@ -27,5 +27,9 @@ public class ResultStatistics {
     private String updateCountSql;
     private long sameCount;
     private String sameCountSql;
+    /**
+     * 预比对结果
+     */
+    private String preAuditResult;
 
 }

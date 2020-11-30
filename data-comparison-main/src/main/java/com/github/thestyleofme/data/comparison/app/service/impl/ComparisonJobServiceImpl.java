@@ -30,6 +30,7 @@ import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
+import com.github.thestyleofme.comparison.presto.handler.exceptions.SkipAuditException;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
@@ -129,6 +130,8 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             // sink
             doSink(appConf, env, comparisonJob, handlerResult);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
+        } catch (SkipAuditException e) {
+            // todo status稽核成功 errorMsg不需稽核 resultStatistics存预比对的结果
         } catch (Exception e) {
             log.error("doJob error: {}", HandlerUtil.getMessage(e), e);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
@@ -180,6 +183,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                                       Map<String, Object> env,
                                       ComparisonJob comparisonJob) {
         HandlerResult handlerResult = null;
+        Map<String, Object> preTransform = appConf.getPreTransform();
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
             String key = entry.getKey().toUpperCase();
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);
@@ -188,7 +192,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             if (transformHandlerProxy != null) {
                 transformHandler = transformHandlerProxy.proxy(transformHandler);
             }
-            handlerResult = transformHandler.handle(comparisonJob, env, entry.getValue());
+            handlerResult = transformHandler.handle(comparisonJob, env, preTransform, entry.getValue());
         }
         return handlerResult;
     }

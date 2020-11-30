@@ -15,6 +15,7 @@ import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.context.JdbcHandler;
+import com.github.thestyleofme.comparison.presto.handler.hook.BasePreTransformHook;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
 import com.github.thestyleofme.comparison.presto.handler.utils.SqlGeneratorUtil;
@@ -46,17 +47,22 @@ public class PrestoJobHandler implements BaseTransformHandler {
     private final ClusterService clusterService;
     private final JdbcHandler jdbcHandler;
 
+    private final List<BasePreTransformHook> basePreTransformHookList;
+
     public PrestoJobHandler(DriverSessionService driverSessionService,
                             ClusterService clusterService,
-                            JdbcHandler jdbcHandler) {
+                            JdbcHandler jdbcHandler,
+                            List<BasePreTransformHook> basePreTransformHookList) {
         this.driverSessionService = driverSessionService;
         this.clusterService = clusterService;
         this.jdbcHandler = jdbcHandler;
+        this.basePreTransformHookList = basePreTransformHookList;
     }
 
     @Override
     public HandlerResult handle(ComparisonJob comparisonJob,
                                 Map<String, Object> env,
+                                Map<String, Object> preTransform,
                                 Map<String, Object> transformMap) {
         LocalDateTime startTime = LocalDateTime.now();
         String json = JsonUtil.toJson(env);
@@ -76,30 +82,33 @@ public class PrestoJobHandler implements BaseTransformHandler {
                         }
                     });
         }
+        // preTransform
+        // todo 拼sql执行 skipCondition是否都满足 满足则跳过即抛一个指定异常，交由上游处理
+        // throw new SkipAuditException("hdsp.xadt.error.pre.transform.skip.conditions.match");
+        // 判断preTransformType是否为空 空即是取DEFAULT 反之
+        // basePreTransformHookList.stream().filter("")
+        String auditSql = SqlGeneratorUtil.generateAuditSql(prestoInfo);
         if (!StringUtils.isEmpty(prestoInfo.getDataSourceCode())) {
             // 走数据源
-            handleByDataSourceCode(comparisonJob.getTenantId(), handlerResult, prestoInfo);
+            handleByDataSourceCode(comparisonJob.getTenantId(), handlerResult, prestoInfo, auditSql);
         } else {
             // 走jdbc
-            handleByJdbc(handlerResult, prestoInfo);
+            handleByJdbc(handlerResult, prestoInfo, auditSql);
         }
         LocalDateTime endTime = LocalDateTime.now();
         log.debug("job time cost :" + Duration.between(endTime, startTime));
         return handlerResult;
     }
 
-    private void handleByJdbc(HandlerResult handlerResult, PrestoInfo prestoInfo) {
-        // 生成sql
-        String sql = SqlGeneratorUtil.generateSql(prestoInfo);
+    private void handleByJdbc(HandlerResult handlerResult, PrestoInfo prestoInfo, String sql) {
         // 执行sql
         List<List<Map<String, Object>>> list = jdbcHandler.executeBatchQuerySql(prestoInfo, sql);
         // 装载数据到handlerResult
         this.fillHandlerResult(handlerResult, list, sql);
     }
 
-    private void handleByDataSourceCode(Long tenantId, HandlerResult handlerResult, PrestoInfo prestoInfo) {
-        // 生成sql
-        String sql = SqlGeneratorUtil.generateSql(prestoInfo);
+    private void handleByDataSourceCode(Long tenantId, HandlerResult handlerResult,
+                                        PrestoInfo prestoInfo, String sql) {
         // 执行sql
         DriverSession driverSession = driverSessionService.getDriverSession(tenantId, prestoInfo.getDataSourceCode());
         List<List<Map<String, Object>>> result = driverSession.executeAll(null, sql, true);
