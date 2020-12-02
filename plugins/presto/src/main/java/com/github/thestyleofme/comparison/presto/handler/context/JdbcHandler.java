@@ -7,6 +7,7 @@ import java.io.StringReader;
 import java.sql.*;
 import java.util.*;
 
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.driver.core.infra.utils.CloseUtil;
@@ -30,24 +31,6 @@ public class JdbcHandler {
     private static final String ORACLE_TIMESTAMP = "oracle.sql.TIMESTAMP";
     private static final String ORACLE_DATE = "oracle.sql.DATE";
     private static final String ORACLE_TIMESTAMP_TZ = "oracle.sql.TIMESTAMPTZ";
-
-    public void executeBatchUpdateSql(String username, String url, String text) {
-        try (Connection connection = DatasourceProvider.getOrCreate(username, url).getConnection();
-             Statement st = connection.createStatement()) {
-            List<String> sqlList = sqlExtract2List(text);
-            // 执行
-            for (String sql : sqlList) {
-                sql = sql.trim();
-                // 去掉sql后面的分号
-                if (sql.endsWith(SEMICOLON)) {
-                    sql = sql.substring(0, sql.lastIndexOf(BaseConstant.Symbol.SEMICOLON));
-                }
-                st.executeUpdate(sql);
-            }
-        } catch (SQLException e) {
-            throw new HandlerException("hdsp.xadt.error.sql.execute", e);
-        }
-    }
 
     private List<String> sqlExtract2List(String text) {
         // 多条SQL拆分转换成一条
@@ -112,8 +95,8 @@ public class JdbcHandler {
             }
             return result;
         } catch (SQLException e) {
-            log.error("error now sql:[{}]", nowSql);
-            throw new HandlerException("hdsp.xadt.error.presto.jdbc", e);
+            log.error("error now sql:[{}]", nowSql, e);
+            throw new HandlerException(ErrorCode.PRESTO_JDBC_EXECUTE_ERROR);
         } finally {
             CloseUtil.close(resultSet, statement, connection);
         }

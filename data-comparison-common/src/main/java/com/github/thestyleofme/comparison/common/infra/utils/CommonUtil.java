@@ -15,6 +15,7 @@ import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
@@ -47,7 +48,7 @@ public class CommonUtil {
 
     public static <T> T requireNonNullElse(T obj, T defaultObj) {
         return (obj != null) ? obj : Optional.ofNullable(defaultObj)
-                .orElseThrow(() -> new HandlerException("hdsp.xadt.error.both.null"));
+                .orElseThrow(() -> new HandlerException(ErrorCode.BATH_PROPERTIES_IS_NULL));
     }
 
     @SafeVarargs
@@ -124,7 +125,7 @@ public class CommonUtil {
                 Files.delete(file.toPath());
                 log.debug("the file[{}] successfully deleted", path);
             } catch (IOException e) {
-                throw new HandlerException("file[%s] delete error", path);
+                throw new HandlerException(ErrorCode.EXCEL_DELETE_ERROR, path);
             }
         }
     }

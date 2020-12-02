@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobGroupDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
@@ -54,7 +55,7 @@ public class ComparisonJobGroupServiceImpl extends ServiceImpl<ComparisonJobGrou
         ComparisonJobGroup jobGroup = getOne(new QueryWrapper<>(ComparisonJobGroup.builder()
                 .tenantId(tenantId).groupCode(groupCode).build()));
         if (jobGroup == null) {
-            throw new HandlerException("hdsp.xadt.error.comparison.job.group[%s].not_exist", groupCode);
+            throw new HandlerException(ErrorCode.JOB_GROUP_CODE_NOT_EXIST, groupCode);
         }
         return jobGroup;
     }

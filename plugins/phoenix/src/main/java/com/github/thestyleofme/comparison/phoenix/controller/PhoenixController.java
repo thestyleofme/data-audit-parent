@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
@@ -57,7 +58,7 @@ public class PhoenixController {
         if (matcher.matches()) {
             queryServerAddress = matcher.group(1);
         } else {
-            throw new HandlerException("hdsp.xadt.error.job.phoenix.jdbcUrl");
+            throw new HandlerException(ErrorCode.JOB_PHOENIX_JDBC_URL_NOT_FOUND);
         }
         PhoenixDataxReaderInfo phoenixDataxReaderInfo = PhoenixDataxReaderInfo.builder()
                 .queryServerAddress(queryServerAddress)

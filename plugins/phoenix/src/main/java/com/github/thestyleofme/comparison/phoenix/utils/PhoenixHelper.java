@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.sql.DataSource;
 
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.phoenix.constant.PhoenixConstant;
 import lombok.extern.slf4j.Slf4j;
@@ -40,8 +41,8 @@ public class PhoenixHelper {
             // 创序列作为表的主键
             statement.execute(PhoenixConstant.CREATE_SEQUENCE_SQL);
         } catch (SQLException e) {
-            log.error("hdsp.xadt.error.phoenix.create.schema.table.sequence", e);
-            throw new HandlerException("hdsp.xadt.error.phoenix.create.schema.table.sequence");
+            log.error("hdsp.xadt.err.phoenix.create.schema.table.sequence", e);
+            throw new HandlerException(ErrorCode.PHOENIX_CREATE_ERROR);
         }
     }
 
@@ -54,8 +55,8 @@ public class PhoenixHelper {
             statement.executeBatch();
             statement.clearBatch();
         } catch (SQLException e) {
-            log.error("hdsp.xadt.error.phoenix.execute.sql", e);
-            throw new HandlerException("hdsp.xadt.error.phoenix.execute.sql");
+            log.error("hdsp.xadt.err.phoenix.execute.sql", e);
+            throw new HandlerException(ErrorCode.PHOENIX_EXECUTE_ERROR);
         }
     }
 

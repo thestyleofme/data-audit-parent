@@ -15,6 +15,7 @@ public class CommonConstant {
 
     public static final String CONTACT = "%s_%s";
     public static final String AUDIT = "AUDIT";
+    public static final String PRE_AUDIT = "PRE_AUDIT";
     public static final String DEPLOY = "DEPLOY";
     public static final String FAILED_FORMAT = "%s_FAILED";
     public static final String DEFAULT_PRESTO_USERNAME = "PRESTO";

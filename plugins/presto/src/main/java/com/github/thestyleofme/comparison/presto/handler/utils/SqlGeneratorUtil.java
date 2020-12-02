@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -41,9 +42,13 @@ public class SqlGeneratorUtil {
         if (!CollectionUtils.isEmpty(joinMappingList)) {
             sql = createSqlByPkOrIndex(prestoInfo);
         } else {
-            throw new HandlerException("hdsp.xadt.error.presto.not_support");
+            throw new HandlerException(ErrorCode.PRESTO_NOT_SUPPORT);
         }
         return sql;
+    }
+
+    public static String generatePreAuditSql(String table, String condition) {
+        return String.format("select %s as _cdt from %s as _a;", condition, table);
     }
 
     public static String getTableName(SelectTableInfo tableInfo) {
@@ -116,7 +121,12 @@ public class SqlGeneratorUtil {
         /*
         1. AB都有的数据
         例：
-        ``
+        `SELECT count(*) as count FROM devmysql.test_28729.source_t1  as _a
+        JOIN devmysql.test_28729.target_t1  as _b
+        on  _a.id = _b.id1  and  _a.name = _b.name1
+        where 1=1  and (0 = 0) and (1 = 1) and (_a.id<700)
+        and (_b.id1<550)and ( _a.sex = _b.sex1 and _a.name = _b.name1 and _a.phone = _b.phone1 and _a.address = _b.address1
+        and _a.education = _b.education1 and _a.state = _b.state1 );`
         */
 
         String where1 = colList.stream()
@@ -126,7 +136,10 @@ public class SqlGeneratorUtil {
         builder.append(sql1).append(bothWhere).append(where1).append(";").append(LINE_END);
         /*
          2. A有B无
-         ``
+         `SELECT _a.id,_a.sex,_a.name,_a.phone,_a.address,_a.education,_a.state
+         FROM devmysql.test_28729.source_t1  as _a LEFT JOIN devmysql.test_28729.target_t1  as _b
+         on  _a.id = _b.id1  and  _a.name = _b.name1  where 1=1  and (0 = 0) and (_a.id<700)
+         and ( _b.id1 is null and _b.name1 is null );`
          */
         //"SELECT %s FROM %s as _a %s %s as _b on %s "
         String sourceCol = colMappingList.stream()
@@ -139,7 +152,10 @@ public class SqlGeneratorUtil {
         builder.append(sql2).append(sourceWhere).append(where2).append(";").append(LINE_END);
         /*
          3. B有A无
-         ``
+         `SELECT _b.id1,_b.sex1,_b.name1,_b.phone1,_b.address1,_b.education1,_b.state1
+         FROM devmysql.test_28729.source_t1  as _a RIGHT JOIN devmysql.test_28729.target_t1  as _b
+         on  _a.id = _b.id1  and  _a.name = _b.name1  where 1=1  and (1 = 1) and (_b.id1<550)
+         and ( _a.id is null or _a.name is null );`
          */
         String targetCol = colMappingList.stream()
                 .map(colMapping -> String.format("_b.%s", colMapping.getTargetCol()))
@@ -152,7 +168,11 @@ public class SqlGeneratorUtil {
 
         /*
           4. AB唯一索引相同，部分字段不一样
-          ``
+         `SELECT _a.id,_a.sex,_a.name,_a.phone,_a.address,_a.education,_a.state
+         FROM devmysql.test_28729.source_t1  as _a JOIN devmysql.test_28729.target_t1  as _b
+         on  _a.id = _b.id1  and  _a.name = _b.name1  where 1=1  and (0 = 0) and (1 = 1)
+         and (_a.id<700) and (_b.id1<550) and ( _a.sex != _b.sex1 or _a.name != _b.name1 or _a.phone != _b.phone1
+         or _a.address != _b.address1 or _a.education != _b.education1 or _a.state != _b.state1 );`
          */
         String where4 = colList.stream()
                 .map(col -> String.format(" _a.%s != _b.%s ", col.getSourceCol(), col.getTargetCol()))

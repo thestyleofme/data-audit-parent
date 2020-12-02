@@ -8,6 +8,7 @@ import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandle
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,7 +38,7 @@ public class JobHandlerContext {
     public void register(String transformType, BaseTransformHandler baseTransformHandler) {
         if (TRANSFORM_HANDLER_MAP.containsKey(transformType)) {
             log.error("transformType {} exists", transformType);
-            throw new HandlerException("error.comparison.job.handler.transformType.exist");
+            throw new HandlerException(ErrorCode.HANDLER_TRANSFORM_TYPE_EXIST, transformType);
         }
         TRANSFORM_HANDLER_MAP.put(transformType, baseTransformHandler);
     }
@@ -45,7 +46,7 @@ public class JobHandlerContext {
     public void register(String transformType, TransformHandlerProxy baseTransformHandler) {
         if (TRANSFORM_HANDLER_PROXY_MAP.containsKey(transformType)) {
             log.error("TransformHandlerProxy {} exists", transformType);
-            throw new HandlerException("error.comparison.job.handler.TransformHandlerProxy.exist");
+            throw new HandlerException(ErrorCode.HANDLER_PROXY_IS_EXIST, transformType);
         }
         TRANSFORM_HANDLER_PROXY_MAP.put(transformType, baseTransformHandler);
     }
@@ -53,7 +54,7 @@ public class JobHandlerContext {
     public BaseTransformHandler getTransformHandler(String transformType) {
         BaseTransformHandler baseTransformHandler = TRANSFORM_HANDLER_MAP.get(transformType.toUpperCase());
         if (baseTransformHandler == null) {
-            throw new HandlerException("error.comparison.job.handler.transformType[%s].not.exist", transformType);
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_NOT_EXIST, transformType);
         }
         return baseTransformHandler;
     }
@@ -69,7 +70,7 @@ public class JobHandlerContext {
     public void register(String sinkType, BaseSinkHandler baseSinkHandler) {
         if (SINK_HANDLER_MAP.containsKey(sinkType)) {
             log.error("sinkType {} exists", sinkType);
-            throw new HandlerException("error.comparison.job.handler.sinkType.exist");
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_IS_EXIST, sinkType);
         }
         SINK_HANDLER_MAP.put(sinkType, baseSinkHandler);
     }
@@ -77,7 +78,7 @@ public class JobHandlerContext {
     public void register(String sinkType, SinkHandlerProxy sinkHandlerProxy) {
         if (SINK_HANDLER_PROXY_MAP.containsKey(sinkType)) {
             log.error("SinkHandlerProxy {} exists", sinkType);
-            throw new HandlerException("error.comparison.job.handler.SinkHandlerProxy.exist");
+            throw new HandlerException(ErrorCode.HANDLER_PROXY_IS_EXIST, sinkType);
         }
         SINK_HANDLER_PROXY_MAP.put(sinkType, sinkHandlerProxy);
     }
@@ -85,7 +86,7 @@ public class JobHandlerContext {
     public BaseSinkHandler getSinkHandler(String outputType) {
         BaseSinkHandler baseSinkHandler = SINK_HANDLER_MAP.get(outputType.toUpperCase());
         if (baseSinkHandler == null) {
-            throw new HandlerException("error.comparison.job.handler.sinkType.not.exist");
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_NOT_EXIST, outputType);
         }
         return baseSinkHandler;
     }
@@ -101,7 +102,7 @@ public class JobHandlerContext {
     public void register(String deployType, BaseDeployHandler deployHandler) {
         if (DEPLOY_HANDLER_MAP.containsKey(deployType)) {
             log.error("deployType {} exists", deployType);
-            throw new HandlerException("hdsp.xadt.error.deploy.handler.deployType.exist");
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_IS_EXIST, deployType);
         }
         DEPLOY_HANDLER_MAP.put(deployType, deployHandler);
     }
@@ -109,7 +110,7 @@ public class JobHandlerContext {
     public BaseDeployHandler getDeployHandler(String deployType) {
         BaseDeployHandler deployHandler = DEPLOY_HANDLER_MAP.get(deployType.toUpperCase());
         if (deployHandler == null) {
-            throw new HandlerException("hdsp.xadt.error.deploy.handler.deployType.not_exist");
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_NOT_EXIST, deployType);
         }
         return deployHandler;
     }

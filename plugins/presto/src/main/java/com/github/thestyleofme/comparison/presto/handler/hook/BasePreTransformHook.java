@@ -2,6 +2,8 @@ package com.github.thestyleofme.comparison.presto.handler.hook;
 
 import java.util.List;
 
+import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
+import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.comparison.presto.handler.pojo.SkipCondition;
 
 /**
@@ -15,24 +17,29 @@ import com.github.thestyleofme.comparison.presto.handler.pojo.SkipCondition;
 public abstract class BasePreTransformHook implements PreTransformHook {
 
     @Override
-    public boolean skip(List<SkipCondition> skipConditionList) {
-        List<String> sqlList = generateSqlByCondition(skipConditionList);
-        return execSqlAndComputeSkip(sqlList);
+    public boolean skip(Long tenantId, PrestoInfo prestoInfo, List<SkipCondition> skipConditionList,
+                        HandlerResult handlerResult) {
+        List<String> sqlList = generateSqlByCondition(prestoInfo, skipConditionList);
+        return execSqlAndComputeSkip(tenantId, prestoInfo, sqlList, handlerResult);
     }
 
     /**
      * 执行sql并计算是否跳过
      *
-     * @param sqlList List<String>
+     * @param tenantId      租户id
+     * @param prestoInfo    PrestoInfo
+     * @param sqlList       List<String>
+     * @param handlerResult HandlerResult
      * @return boolean
      */
-    protected abstract boolean execSqlAndComputeSkip(List<String> sqlList);
+    protected abstract boolean execSqlAndComputeSkip(Long tenantId, PrestoInfo prestoInfo, List<String> sqlList, HandlerResult handlerResult);
 
     /**
      * 生成预比对sql集合
      *
+     * @param prestoInfo        PrestoInfo
      * @param skipConditionList List<SkipCondition>
      * @return List<String>
      */
-    protected abstract List<String> generateSqlByCondition(List<SkipCondition> skipConditionList);
+    protected abstract List<String> generateSqlByCondition(PrestoInfo prestoInfo, List<SkipCondition> skipConditionList);
 }

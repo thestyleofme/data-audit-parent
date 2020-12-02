@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
@@ -34,7 +35,7 @@ public class PrestoUtils {
     public static PrestoInfo getPrestoInfo(JobEnv jobEnv,
                                            Map<String, Object> transformMap) {
         if (CollectionUtils.isEmpty(transformMap)) {
-            throw new HandlerException("hdsp.xadt.error.transform.is_null");
+            throw new HandlerException(ErrorCode.TRANSFORM_IS_NULL);
         }
         // 先从transform中取数据，再从env中获取
         PrestoInfo prestoInfo = BeanUtils.map2Bean(transformMap, PrestoInfo.class);

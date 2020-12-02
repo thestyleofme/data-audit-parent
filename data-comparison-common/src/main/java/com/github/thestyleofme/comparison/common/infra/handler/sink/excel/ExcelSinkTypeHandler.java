@@ -16,11 +16,11 @@ import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandle
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -42,7 +42,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
                        Map<String, Object> sinkMap,
                        HandlerResult handlerResult) {
         if (Objects.isNull(handlerResult)) {
-            throw new HandlerException("hdsp.xadt.error.handlerResult.is_null");
+            throw new HandlerException(ErrorCode.HANDLER_RESULT_IS_NULL);
         }
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
         String fileOutputPath = excelInfo.getOutputPath();
@@ -78,7 +78,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
                 Files.delete(file.toPath());
                 log.debug("the excel[{}] successfully deleted", excelName);
             } catch (IOException e) {
-                throw new HandlerException("excel[{}] delete error", excelName);
+                throw new HandlerException(ErrorCode.EXCEL_DELETE_ERROR, excelName);
             }
         }
     }

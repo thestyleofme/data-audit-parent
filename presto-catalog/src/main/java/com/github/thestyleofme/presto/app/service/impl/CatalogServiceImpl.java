@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.presto.api.dto.CatalogDTO;
 import com.github.thestyleofme.presto.app.service.CatalogService;
 import com.github.thestyleofme.presto.app.service.ClusterService;
@@ -79,7 +80,7 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(url + "/v1/catalog",
                 requestEntity, String.class);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new CatalogException("presto save catalog error, " + responseEntity.getBody());
+            throw new CatalogException(ErrorCode.PRESTO_SAVE_CATALOG_ERROR, responseEntity.getBody());
         }
         return BaseCatalogConvert.INSTANCE.entityToDTO(catalog);
     }
@@ -103,7 +104,7 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
         ResponseEntity<String> responseEntity = restTemplate.exchange(cluster.getCoordinatorUrl() + "/v1/catalog/{1}",
                 HttpMethod.DELETE, requestEntity, String.class, catalogName);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new CatalogException("presto delete catalog error, " + responseEntity.getBody());
+            throw new CatalogException(ErrorCode.PRESTO_DELETE_CATALOG_ERROR, responseEntity.getBody());
         }
     }
 }

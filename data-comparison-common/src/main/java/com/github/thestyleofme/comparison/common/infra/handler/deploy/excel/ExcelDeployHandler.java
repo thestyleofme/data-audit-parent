@@ -12,6 +12,7 @@ import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.excel.InsertExcelListener;
 import com.github.thestyleofme.comparison.common.infra.excel.UpdateExcelListener;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
@@ -43,7 +44,7 @@ public class ExcelDeployHandler implements BaseDeployHandler {
     @Override
     public void handle(ComparisonJob comparisonJob, DeployInfo deployInfo) {
         if (StringUtils.isEmpty(deployInfo.getTargetDataSourceCode())) {
-            throw new HandlerException("hdsp.xadt.error.deploy.excel.datasource.not_found");
+            throw new HandlerException(ErrorCode.DEPLOY_EXCEL_DATASOURCE_NOT_FOUND);
         }
         String excelPath = ExcelUtil.getExcelPath(comparisonJob);
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);

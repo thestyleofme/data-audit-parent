@@ -11,6 +11,7 @@ import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,7 @@ public class ExcelUtil {
             return String.format("%s/%d_%s.xlsx", outputPath,
                     comparisonJob.getTenantId(), comparisonJob.getJobCode());
         }
-        throw new HandlerException("hdsp.xadt.error.cannot.find.excel.path");
+        throw new HandlerException(ErrorCode.EXCEL_PATH_NOT_FOUND);
     }
     public static String getExcelPath(){
         File file = new File("excel");

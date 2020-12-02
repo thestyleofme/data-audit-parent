@@ -21,5 +21,6 @@ public enum JobStatusEnum {
     AUDIT_SUCCESS,
     AUDIT_FAILED,
     DEPLOY_SUCCESS,
-    DEPLOY_FAILED;
+    DEPLOY_FAILED,
+    PRE_AUDIT_SUCCESS;
 }

@@ -2,6 +2,8 @@ package com.github.thestyleofme.comparison.presto.handler.hook;
 
 import java.util.List;
 
+import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
+import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.comparison.presto.handler.pojo.SkipCondition;
 
 /**
@@ -24,8 +26,12 @@ public interface PreTransformHook {
     /**
      * 是否跳过具体的稽核
      *
+     * @param tenantId          租户id
+     * @param prestoInfo        PrestoInfo
      * @param skipConditionList List<SkipCondition>
+     * @param handlerResult     处理的结果数据
      * @return true/false
      */
-    boolean skip(List<SkipCondition> skipConditionList);
+    boolean skip(Long tenantId, PrestoInfo prestoInfo, List<SkipCondition> skipConditionList,
+                 HandlerResult handlerResult);
 }

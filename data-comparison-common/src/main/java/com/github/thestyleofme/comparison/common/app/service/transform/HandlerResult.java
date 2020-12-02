@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
 import lombok.AllArgsConstructor;
@@ -41,5 +40,5 @@ public class HandlerResult {
      */
     private List<Map<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
 
-    private ResultStatistics resultStatistics;
+    private ResultStatistics resultStatistics = new ResultStatistics();
 }

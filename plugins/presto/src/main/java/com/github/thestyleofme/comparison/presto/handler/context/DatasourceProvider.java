@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import javax.sql.DataSource;
 
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -78,6 +79,6 @@ public class DatasourceProvider {
             String port = matcher.group(2);
             return String.format(JDBC_URL_FT, ip, port);
         }
-        throw new HandlerException("hdsp.xadt.error.presto.analysis_url");
+        throw new HandlerException(ErrorCode.PRESTO_ANALYSIS_URL_ERROR);
     }
 }

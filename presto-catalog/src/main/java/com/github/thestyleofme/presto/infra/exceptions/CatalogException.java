@@ -20,6 +20,10 @@ public class CatalogException extends RuntimeException {
         super(message, cause);
     }
 
+    public CatalogException(String message, Object... params) {
+        super(String.format(message, params));
+    }
+
     public CatalogException(Throwable cause) {
         super(cause);
     }

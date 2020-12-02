@@ -26,6 +26,7 @@ import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
@@ -90,7 +91,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
-        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.error.both.jobCode.groupCode.is_null",
+        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.err.both.jobCode.groupCode.is_null",
                 groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
@@ -116,27 +117,47 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     private void doJob(ComparisonJob comparisonJob) {
+        HandlerResult handlerResult = null;
         try {
             // 检验任务是否正在执行 以及设置开始执行状态
             if (isFilterJob(comparisonJob)) {
                 return;
             }
+            handlerResult = new HandlerResult();
             // 配置文件
             AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
             // env
             Map<String, Object> env = appConf.getEnv();
             // transform
-            HandlerResult handlerResult = doTransform(appConf, env, comparisonJob);
+            doTransform(appConf, env, comparisonJob, handlerResult);
             // sink
             doSink(appConf, env, comparisonJob, handlerResult);
-            updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null);
+            // 保存统计数据和更新任务状态
+            afterAll(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_SUCCESS.name(), null, handlerResult);
         } catch (SkipAuditException e) {
-            // todo status稽核成功 errorMsg不需稽核 resultStatistics存预比对的结果
+            //status稽核成功 errorMsg不需稽核 resultStatistics存预比对的结果
+            log.info("skip transform");
+            afterAll(CommonConstant.PRE_AUDIT, comparisonJob, JobStatusEnum.PRE_AUDIT_SUCCESS.name(), "不需要进行数据稽核",
+                    handlerResult);
         } catch (Exception e) {
             log.error("doJob error: {}", HandlerUtil.getMessage(e), e);
             updateJobStatus(CommonConstant.AUDIT, comparisonJob, JobStatusEnum.AUDIT_FAILED.name(), HandlerUtil.getMessage(e));
             throw e;
         }
+    }
+
+    private void afterAll(String process,
+                          ComparisonJob comparisonJob,
+                          String status,
+                          String errorMag,
+                          HandlerResult handlerResult) {
+        Optional.ofNullable(handlerResult).map(HandlerResult::getResultStatistics)
+                .ifPresent(statistics -> {
+                    String json = JsonUtil.toJson(statistics);
+                    comparisonJob.setResultStatistics(json);
+                });
+        updateJobStatus(process, comparisonJob, status, errorMag);
+        log.info("{} process end", process);
     }
 
     private void updateJobStatus(String process,
@@ -179,10 +200,9 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         }
     }
 
-    private HandlerResult doTransform(AppConf appConf,
-                                      Map<String, Object> env,
-                                      ComparisonJob comparisonJob) {
-        HandlerResult handlerResult = null;
+    private void doTransform(AppConf appConf,
+                             Map<String, Object> env,
+                             ComparisonJob comparisonJob, HandlerResult handlerResult) {
         Map<String, Object> preTransform = appConf.getPreTransform();
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
             String key = entry.getKey().toUpperCase();
@@ -192,9 +212,8 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             if (transformHandlerProxy != null) {
                 transformHandler = transformHandlerProxy.proxy(transformHandler);
             }
-            handlerResult = transformHandler.handle(comparisonJob, env, preTransform, entry.getValue());
+            transformHandler.handle(comparisonJob, env, preTransform, entry.getValue(), handlerResult);
         }
-        return handlerResult;
     }
 
     private boolean isFilterJob(ComparisonJob comparisonJob) {
@@ -220,7 +239,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     public void deploy(DeployInfo deployInfo) {
         String groupCode = deployInfo.getGroupCode();
         String jobCode = deployInfo.getJobCode();
-        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.error.both.jobCode.groupCode.is_null",
+        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.err.both.jobCode.groupCode.is_null",
                 groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
@@ -239,7 +258,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         try {
             // 必须数据稽核后才能补偿
             if (!JobStatusEnum.AUDIT_SUCCESS.name().equalsIgnoreCase(comparisonJob.getStatus())) {
-                throw new HandlerException("hdsp.xadt.error.deploy.status_not_success", comparisonJob.getStatus());
+                throw new HandlerException(ErrorCode.DEPLOY_STATUS_NOT_SUCCESS, comparisonJob.getStatus());
             }
             // 检验任务是否正在执行 以及设置开始执行状态
             if (isFilterJob(comparisonJob)) {

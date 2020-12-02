@@ -11,6 +11,7 @@ import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.handler.sink.excel.ExcelListenerUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
@@ -102,7 +103,7 @@ public class UpdateExcelListener<T> extends BaseExcelListener<T> {
                     .map(kv -> String.format("%s='%s'", kv.getFirst(), kv.getSecond()))
                     .collect(Collectors.joining(" and "));
         } else {
-            throw new HandlerException("hdsp.xadt.error.deploy.condition.not_support");
+            throw new HandlerException(ErrorCode.DEPLOY_JOIN_CONDITION_IS_NULL);
         }
         return condition;
     }
