@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.phoenix.constant;
+package com.github.thestyleofme.comparison.common.infra.constants;
 
 /**
  * <p>

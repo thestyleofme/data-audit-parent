@@ -18,12 +18,12 @@ import com.github.thestyleofme.comparison.common.app.service.transform.HandlerRe
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
+import com.github.thestyleofme.comparison.common.infra.constants.RowTypeEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.ThreadPoolUtil;
 import com.github.thestyleofme.comparison.phoenix.constant.PhoenixConstant;
-import com.github.thestyleofme.comparison.phoenix.constant.RowTypeEnum;
 import com.github.thestyleofme.comparison.phoenix.context.PhoenixDatasourceHolder;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
 import com.github.thestyleofme.comparison.phoenix.utils.PhoenixHelper;
