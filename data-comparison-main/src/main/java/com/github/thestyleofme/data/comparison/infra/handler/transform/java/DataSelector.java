@@ -87,7 +87,7 @@ public class DataSelector {
             result.addDiff(map, paramNameList, RowTypeEnum.INSERT.name());
         } else {
             // AB某些字段数据不一致
-            result.addDiff(map, paramNameList, RowTypeEnum.UPDATED.name());
+            result.addDiff(map, paramNameList, RowTypeEnum.DIFFERENT.name());
         }
     }
 

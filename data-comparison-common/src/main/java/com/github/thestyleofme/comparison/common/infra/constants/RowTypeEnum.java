@@ -23,9 +23,13 @@ public enum RowTypeEnum {
      */
     UPDATED(2),
     /**
+     * AB部分数据一致，无主键或唯一索引
+     */
+    DIFFERENT(3),
+    /**
      * 相同数据
      */
-    SAME(3),
+    SAME(4),
     ;
 
     private final int rawType;

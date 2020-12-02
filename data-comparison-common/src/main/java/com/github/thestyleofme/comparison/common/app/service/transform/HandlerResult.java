@@ -40,5 +40,10 @@ public class HandlerResult {
      */
     private List<Map<String, Object>> pkOrIndexSameDataList = new CopyOnWriteArrayList<>();
 
+    /**
+     * 源端和目标端部分数据不一样
+     */
+    private List<Map<String, Object>> differentDataList = new CopyOnWriteArrayList<>();
+
     private ResultStatistics resultStatistics = new ResultStatistics();
 }
