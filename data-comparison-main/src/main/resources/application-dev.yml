@@ -12,6 +12,8 @@ management:
       enabled: true
 
 spring:
+  messages:
+    basename: messages.messages
   application:
     name: ${SPRING_APPLICATION_NAME:data-comparison}
   datasource:

@@ -75,4 +75,5 @@ public class ComparisonJobController {
         comparisonJobService.removeById(jobId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+
 }

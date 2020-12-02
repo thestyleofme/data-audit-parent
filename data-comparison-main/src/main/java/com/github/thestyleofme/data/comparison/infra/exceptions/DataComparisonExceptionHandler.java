@@ -2,6 +2,7 @@ package com.github.thestyleofme.data.comparison.infra.exceptions;
 
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
+import com.github.thestyleofme.data.comparison.infra.utils.LocaleUtil;
 import com.github.thestyleofme.driver.core.domain.entity.Err;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
@@ -25,13 +26,13 @@ public class DataComparisonExceptionHandler {
     @ExceptionHandler(HandlerException.class)
     public Err handleHandlerException(HandlerException e) {
         log.error("HandlerException", e);
-        return Err.of(HandlerUtil.getMessage(e));
+        return Err.of(LocaleUtil.getMessage(e.getCode(), e.getParams()));
     }
 
     @ExceptionHandler(Exception.class)
     public Err handleException(Exception e) {
         log.error("Exception", e);
-        return Err.of(HandlerUtil.getMessage(e));
+        return Err.of(LocaleUtil.getMessage(HandlerUtil.getMessage(e)));
     }
 
 }
