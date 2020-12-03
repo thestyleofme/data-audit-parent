@@ -1,46 +1,41 @@
 {
   "env": {
     "source": {
-      "catalog": "devmysql",
-      "dataSourceCode": "devmysql",
-      "schema": "test_28729",
-      "table": "source_t1",
-      "where": "$1.id<700",
+      "dataSourceCode": "hdsp_mysql5",
+      "schema": "hdsp_test",
+      "table": "resume",
+      "where": "$1.id<30000",
       "globalWhere": "0 = 0"
     },
     "target": {
-      "catalog": "devmysql",
-      "dataSourceCode": "devmysql",
-      "schema": "test_28729",
-      "table": "target_t1",
-      "where": "$2.id1<550",
+      "dataSourceCode": "hdsp_mysql5",
+      "schema": "hdsp_test",
+      "table": "resume_bak",
+      "where": "$2.id<30000",
       "globalWhere": "1 = 1"
     },
     "indexMapping": [
       {
         "sourceCol": "id",
-        "targetCol": "id1"
-      },
-      {
-        "sourceCol": "name",
-        "targetCol": "name1"
+        "targetCol": "id"
       }
     ],
     "colMapping": [
       {
         "sourceCol": "id",
-        "targetCol": "id1",
+        "targetCol": "id",
+        "selected": true,
         "index": 0
       },
       {
         "sourceCol": "name",
-        "targetCol": "name1",
+        "targetCol": "name",
         "selected": true,
         "index": 2
       },
       {
         "sourceCol": "sex",
-        "targetCol": "sex1",
+        "targetCol": "sex",
         "selected": true,
         "index": 1
       },
@@ -52,19 +47,19 @@
       },
       {
         "sourceCol": "address",
-        "targetCol": "address1",
+        "targetCol": "address",
         "selected": true,
         "index": 4
       },
       {
         "sourceCol": "education",
-        "targetCol": "education1",
+        "targetCol": "education",
         "selected": true,
         "index": 5
       },
       {
         "sourceCol": "state",
-        "targetCol": "state1",
+        "targetCol": "state",
         "selected": true,
         "index": 6
       }
@@ -80,14 +75,14 @@
       },
       {
         "source": "sum(id)",
-        "target": "sum(id1)",
+        "target": "sum(id)",
         "operation": ">"
       }
     ]
   },
   "transform": {
-    "presto": {
-      "dataSourceCode": "hdsp_presto"
+    "java": {
+
     }
   },
   "sink": {
