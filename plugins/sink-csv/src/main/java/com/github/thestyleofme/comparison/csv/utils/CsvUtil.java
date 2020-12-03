@@ -7,6 +7,7 @@ package com.github.thestyleofme.comparison.csv.utils;
  * @since 1.0.0
  */
 public class CsvUtil {
+
     private CsvUtil() {
     }
 

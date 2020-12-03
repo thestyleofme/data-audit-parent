@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
@@ -36,9 +35,6 @@ import org.springframework.util.StringUtils;
 @SinkType("CSV")
 @Slf4j
 public class CsvSinkHandler implements BaseSinkHandler {
-    private static final String INSERT = "insert";
-    private static final String DELETE = "delete";
-    private static final String UPDATE = "update";
 
     @Override
     public void handle(ComparisonJob comparisonJob,
@@ -108,21 +104,17 @@ public class CsvSinkHandler implements BaseSinkHandler {
     }
 
     private void doWrite(String path, List<String[]> data) {
-        ICSVWriter writer = null;
+        CSVWriterBuilder builder;
         try {
-            CSVWriterBuilder builder = new CSVWriterBuilder(new FileWriter(path));
-            writer = builder.withSeparator('\u0001').build();
-            writer.writeAll(data);
+            builder = new CSVWriterBuilder(new FileWriter(path));
         } catch (IOException e) {
             throw new HandlerException(ErrorCode.CSV_PATH_NOT_FOUND, path);
-        } finally {
-            if (Objects.nonNull(writer)) {
-                try {
-                    writer.close();
-                } catch (IOException e) {
-                    log.warn("{}文件关闭失败！", path);
-                }
-            }
+        }
+        try (ICSVWriter writer = builder.withSeparator('\u0001').build()) {
+            writer.writeAll(data);
+        } catch (IOException e) {
+            // ignore
+            log.warn("ICSVWriter IOException",e);
         }
     }
 

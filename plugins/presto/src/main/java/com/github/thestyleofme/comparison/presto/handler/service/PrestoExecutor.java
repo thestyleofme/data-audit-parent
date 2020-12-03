@@ -21,9 +21,9 @@ import org.springframework.util.StringUtils;
  */
 @Service
 public class PrestoExecutor {
+
     private final JdbcHandler jdbcHandler;
     private final DriverSessionService driverSessionService;
-
 
     public PrestoExecutor(JdbcHandler jdbcHandler, DriverSessionService driverSessionService) {
         this.jdbcHandler = jdbcHandler;

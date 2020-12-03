@@ -40,10 +40,6 @@ public final class ErrorCode {
      */
     public static final String TRANSFORM_IS_NULL = "hdsp.xadt.err.transform.is_null";
     /**
-     * handlerResult为null
-     */
-    public static final String HANDLER_RESULT_IS_NULL = "hdsp.xadt.err.handlerResult.is_null";
-    /**
      * 两个属性值都为null
      */
     public static final String BATH_PROPERTIES_IS_NULL = "hdsp.xadt.err.both.null";
@@ -118,7 +114,10 @@ public final class ErrorCode {
      */
     public static final String HANDLER_TYPE_IS_EXIST = "hdsp.xadt.err.comparison.job.handler.type.is_exist";
 
-    //============================ csv ==================================//
+    //===============================================================================
+    //  csv
+    //===============================================================================
+    
     /**
      * 未找到csv文件路径[{0}],或写入失败
      */

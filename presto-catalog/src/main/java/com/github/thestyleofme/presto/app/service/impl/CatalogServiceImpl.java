@@ -80,7 +80,8 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(url + "/v1/catalog",
                 requestEntity, String.class);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new CatalogException(ErrorCode.PRESTO_SAVE_CATALOG_ERROR, responseEntity.getBody());
+            log.error(ErrorCode.PRESTO_SAVE_CATALOG_ERROR + ", " + requestEntity.getBody());
+            throw new CatalogException(ErrorCode.PRESTO_SAVE_CATALOG_ERROR);
         }
         return BaseCatalogConvert.INSTANCE.entityToDTO(catalog);
     }
@@ -104,7 +105,8 @@ public class CatalogServiceImpl extends ServiceImpl<CatalogMapper, Catalog> impl
         ResponseEntity<String> responseEntity = restTemplate.exchange(cluster.getCoordinatorUrl() + "/v1/catalog/{1}",
                 HttpMethod.DELETE, requestEntity, String.class, catalogName);
         if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-            throw new CatalogException(ErrorCode.PRESTO_DELETE_CATALOG_ERROR, responseEntity.getBody());
+            log.error(ErrorCode.PRESTO_DELETE_CATALOG_ERROR+", "+requestEntity.getBody());
+            throw new CatalogException(ErrorCode.PRESTO_DELETE_CATALOG_ERROR);
         }
     }
 }

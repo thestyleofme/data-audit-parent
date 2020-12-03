@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class DefaultPreTransformHook extends BasePreTransformHook {
+
     private final PrestoExecutor prestoExecutor;
 
     public DefaultPreTransformHook(PrestoExecutor prestoExecutor) {
@@ -57,10 +58,13 @@ public class DefaultPreTransformHook extends BasePreTransformHook {
     protected List<String> generateSqlByCondition(PrestoInfo prestoInfo, List<SkipCondition> skipConditionList) {
         String sourceTableName = prestoInfo.getSourceTableName();
         String targetTableName = prestoInfo.getTargetTableName();
-        //`select count(*) as _result
-        // from (select count(*)as _cdt1 from target_t1) as _a
-        // ,(select count(*) as _cdt2 from source_t1) as _b
-        //where _a._cdt1 = _b._cdt2;`
+        /*
+         SELECT count(*) AS _result
+         FROM ( SELECT count(*) AS _cdt1 FROM target_t1 ) AS _a,
+         ( SELECT count(*) AS _cdt2 FROM source_t1 ) AS _b
+         WHERE
+	        _a._cdt1 = _b._cdt2
+         */
         return skipConditionList.stream().map(skipCondition ->
                 String.format("select count(*) as _result from (select %s as _cdt1 from %s) as _a," +
                                 "(select %s as _cdt2 from %s) as _b where _a._cdt1 %s _b._cdt2;",

@@ -41,9 +41,6 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
                        Map<String, Object> env,
                        Map<String, Object> sinkMap,
                        HandlerResult handlerResult) {
-        if (Objects.isNull(handlerResult)) {
-            throw new HandlerException(ErrorCode.HANDLER_RESULT_IS_NULL);
-        }
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
         String fileOutputPath = excelInfo.getOutputPath();
         if (StringUtils.isEmpty(fileOutputPath)) {

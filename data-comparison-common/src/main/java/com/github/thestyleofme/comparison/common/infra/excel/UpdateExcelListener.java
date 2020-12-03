@@ -31,10 +31,10 @@ import org.springframework.util.CollectionUtils;
  */
 @Slf4j
 public class UpdateExcelListener<T> extends BaseExcelListener<T> {
+
     private final List<String> sqlList = new LinkedList<>();
     private final List<CompletableFuture<?>> completableFutureList = new LinkedList<>();
     private final List<ColMapping> colMappingList;
-    private final JobEnv jobEnv;
     private final SelectTableInfo target;
     private final DriverSession driverSession;
     private final List<ColMapping> joinMappingList;
@@ -45,9 +45,9 @@ public class UpdateExcelListener<T> extends BaseExcelListener<T> {
                                String targetDataSourceCode,
                                List<ColMapping> colMappingList,
                                DriverSessionService driverSessionService) {
-        this.jobEnv = CommonUtil.getJobEnv(comparisonJob);
+        JobEnv jobEnv = CommonUtil.getJobEnv(comparisonJob);
         this.target = jobEnv.getTarget();
-        this.joinMappingList = CommonUtil.getJoinMappingList(this.jobEnv);
+        this.joinMappingList = CommonUtil.getJoinMappingList(jobEnv);
         this.colMappingList = colMappingList;
         this.driverSession = driverSessionService.getDriverSession(comparisonJob.getTenantId(), targetDataSourceCode);
     }

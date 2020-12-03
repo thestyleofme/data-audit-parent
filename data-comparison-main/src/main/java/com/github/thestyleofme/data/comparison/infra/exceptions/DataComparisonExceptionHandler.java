@@ -1,6 +1,6 @@
 package com.github.thestyleofme.data.comparison.infra.exceptions;
 
-import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.exceptions.BaseException;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.data.comparison.infra.utils.LocaleUtil;
 import com.github.thestyleofme.driver.core.domain.entity.Err;
@@ -23,9 +23,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class DataComparisonExceptionHandler {
 
-    @ExceptionHandler(HandlerException.class)
-    public Err handleHandlerException(HandlerException e) {
-        log.error("HandlerException", e);
+    @ExceptionHandler(BaseException.class)
+    public Err handleBaseException(BaseException e) {
+        log.error("BaseException", e);
         return Err.of(LocaleUtil.getMessage(e.getCode(), e.getParams()));
     }
 

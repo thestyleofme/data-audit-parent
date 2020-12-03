@@ -114,7 +114,7 @@ public class PrestoJobHandler implements BaseTransformHandler {
 
     private void fillHandlerResult(HandlerResult handlerResult,
                                    List<List<Map<String, Object>>> result, String sql) {
-        String[] sqls = sql.split("\n");
+        String[] sqlList = sql.split("\n");
         ResultStatistics statistics = handlerResult.getResultStatistics();
         //1. 源端、目标端都有的数据量
         Optional.ofNullable(result.get(0)).flatMap(list -> list.stream().findFirst()).ifPresent(map -> {
@@ -123,29 +123,29 @@ public class PrestoJobHandler implements BaseTransformHandler {
                 size = (long) map.get("count");
             }
             statistics.setSameCount(statistics.getSameCount() + size);
-            statistics.setSameCountSql(sqls[0]);
+            statistics.setSameCountSql(sqlList[0]);
         });
         //2. 源端有但目标端无
-        statistics.setInsertCountSql(sqls[1]);
+        statistics.setInsertCountSql(sqlList[1]);
         Optional.ofNullable(result.get(1)).ifPresent(list -> {
             handlerResult.getSourceUniqueDataList().addAll(list);
             statistics.setInsertCount(statistics.getInsertCount() + list.size());
-            statistics.setInsertCountSql(sqls[1]);
+            statistics.setInsertCountSql(sqlList[1]);
         });
         //3. 目标端有但源端无
-        statistics.setInsertCountSql(sqls[2]);
+        statistics.setInsertCountSql(sqlList[2]);
 
         Optional.ofNullable(result.get(2)).ifPresent(list -> {
             handlerResult.getTargetUniqueDataList().addAll(list);
             statistics.setDeleteCount(statistics.getDeleteCount() + list.size());
-            statistics.setDeleteCountSql(sqls[2]);
+            statistics.setDeleteCountSql(sqlList[2]);
         });
         //4. 源端和目标端数据不一样，但主键或唯一性索引一样
-        statistics.setInsertCountSql(sqls[3]);
+        statistics.setInsertCountSql(sqlList[3]);
         Optional.ofNullable(result.get(3)).ifPresent(list -> {
             handlerResult.getPkOrIndexSameDataList().addAll(list);
             statistics.setUpdateCount(statistics.getUpdateCount() + list.size());
-            statistics.setUpdateCountSql(sqls[3]);
+            statistics.setUpdateCountSql(sqlList[3]);
         });
     }
 

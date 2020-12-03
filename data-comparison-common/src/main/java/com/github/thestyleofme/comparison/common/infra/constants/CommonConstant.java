@@ -27,6 +27,7 @@ public class CommonConstant {
         }
 
         public static final String EXCEL = "excel";
+        public static final String CSV = "csv";
     }
 
     public static class Deploy {

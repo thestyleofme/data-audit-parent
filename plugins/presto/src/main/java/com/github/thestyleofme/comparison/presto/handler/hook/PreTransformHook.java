@@ -29,9 +29,10 @@ public interface PreTransformHook {
      * @param tenantId          租户id
      * @param prestoInfo        PrestoInfo
      * @param skipConditionList List<SkipCondition>
-     * @param handlerResult     处理的结果数据
+     * @param handlerResult     存储预比对结果
      * @return true/false
      */
-    boolean skip(Long tenantId, PrestoInfo prestoInfo, List<SkipCondition> skipConditionList,
+    boolean skip(Long tenantId, PrestoInfo prestoInfo,
+                 List<SkipCondition> skipConditionList,
                  HandlerResult handlerResult);
 }

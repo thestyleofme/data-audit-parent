@@ -69,6 +69,7 @@ public class ExcelDeployHandler implements BaseDeployHandler {
                                     comparisonJob, deployInfo.getTargetDataSourceCode(), colMappingList,
                                     driverSessionService))
                             .build();
+            // todo 删除 怎么搞？待设计
             excelReader.read(readSheet1, readSheet2);
         } finally {
             if (excelReader != null) {

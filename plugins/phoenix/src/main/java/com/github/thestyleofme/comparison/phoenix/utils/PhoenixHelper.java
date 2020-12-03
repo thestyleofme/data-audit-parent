@@ -41,7 +41,7 @@ public class PhoenixHelper {
             // 创序列作为表的主键
             statement.execute(PhoenixConstant.CREATE_SEQUENCE_SQL);
         } catch (SQLException e) {
-            log.error("hdsp.xadt.err.phoenix.create.schema.table.sequence", e);
+            log.error(ErrorCode.PHOENIX_CREATE_ERROR, e);
             throw new HandlerException(ErrorCode.PHOENIX_CREATE_ERROR);
         }
     }
@@ -55,7 +55,7 @@ public class PhoenixHelper {
             statement.executeBatch();
             statement.clearBatch();
         } catch (SQLException e) {
-            log.error("hdsp.xadt.err.phoenix.execute.sql", e);
+            log.error(ErrorCode.PHOENIX_EXECUTE_ERROR, e);
             throw new HandlerException(ErrorCode.PHOENIX_EXECUTE_ERROR);
         }
     }

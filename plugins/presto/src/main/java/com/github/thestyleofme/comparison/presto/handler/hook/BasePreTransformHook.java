@@ -17,7 +17,8 @@ import com.github.thestyleofme.comparison.presto.handler.pojo.SkipCondition;
 public abstract class BasePreTransformHook implements PreTransformHook {
 
     @Override
-    public boolean skip(Long tenantId, PrestoInfo prestoInfo, List<SkipCondition> skipConditionList,
+    public boolean skip(Long tenantId, PrestoInfo prestoInfo,
+                        List<SkipCondition> skipConditionList,
                         HandlerResult handlerResult) {
         List<String> sqlList = generateSqlByCondition(prestoInfo, skipConditionList);
         return execSqlAndComputeSkip(tenantId, prestoInfo, sqlList, handlerResult);
