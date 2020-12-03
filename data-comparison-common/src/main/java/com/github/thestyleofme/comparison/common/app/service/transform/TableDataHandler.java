@@ -41,8 +41,9 @@ public class TableDataHandler {
         String targetDatasourceCode = target.getDataSourceCode();
         String targetSchema = target.getSchema();
         String targetTable = target.getTable();
-        // 封装ComparisonMapping
+        // 封装SourceDataMapping
         SourceDataMapping sourceDataMapping = new SourceDataMapping();
+        // todo 考虑where
         handleSource(sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);
         handleTarget(sourceDataMapping, tenantId, targetDatasourceCode, targetSchema, targetTable);
         return sourceDataMapping;

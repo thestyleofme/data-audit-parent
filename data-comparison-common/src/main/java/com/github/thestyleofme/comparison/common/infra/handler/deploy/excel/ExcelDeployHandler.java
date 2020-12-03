@@ -47,11 +47,12 @@ public class ExcelDeployHandler implements BaseDeployHandler {
             throw new HandlerException(ErrorCode.DEPLOY_EXCEL_DATASOURCE_NOT_FOUND);
         }
         String excelPath = ExcelUtil.getExcelPath(comparisonJob);
+        String excelName = String.format("%s/%d_%s.xlsx", excelPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
         List<List<String>> targetExcelHeader = ExcelUtil.getTargetExcelHeader(colMappingList);
         ExcelReader excelReader = null;
         try {
-            excelReader = EasyExcelFactory.read(excelPath).build();
+            excelReader = EasyExcelFactory.read(excelName).build();
             // A有B无
             ReadSheet readSheet1 =
                     EasyExcelFactory.readSheet(0)

@@ -24,6 +24,8 @@ import lombok.Setter;
 public class SelectCollectorImpl implements Collector<Map<String, Object>, SelectCollectorImpl.Result, SelectCollectorImpl.Result> {
 
     private final List<String> keys;
+    private final List<String> indexList;
+    private final boolean flag;
 
     @Override
     public Supplier<Result> supplier() {
@@ -32,7 +34,7 @@ public class SelectCollectorImpl implements Collector<Map<String, Object>, Selec
 
     @Override
     public BiConsumer<Result, Map<String, Object>> accumulator() {
-        return (result, map) -> result.addValue(map, this.keys);
+        return (result, map) -> result.addValue(map, this.keys, this.indexList, this.flag);
     }
 
     @Override
@@ -54,6 +56,7 @@ public class SelectCollectorImpl implements Collector<Map<String, Object>, Selec
     @Setter(value = AccessLevel.PRIVATE)
     static class Result {
         private Set<String> valueSet = new HashSet<>();
+        private List<Map<String, Object>> indexValueList = new LinkedList<>();
         private Map<String, Set<Object>> valueMap = new HashMap<>();
 
         public String getFirstValue() {
@@ -61,29 +64,38 @@ public class SelectCollectorImpl implements Collector<Map<String, Object>, Selec
             return first.orElse(null);
         }
 
-        private void addValue(Map<String, Object> map, List<String> keys) {
-            addValue(this, map, keys);
+        private void addValue(Map<String, Object> map, List<String> keys, List<String> indexList, boolean flag) {
+            addValue(this, map, keys, indexList, flag);
         }
 
-        public static Result init(Map<String, Object> map, List<String> keys) {
+        public static Result init(Map<String, Object> map, List<String> keys, List<String> indexList, boolean flag) {
             Result result = new Result();
-            addValue(result, map, keys);
+            addValue(result, map, keys, indexList, flag);
             return result;
         }
 
-        private static void addValue(Result result, Map<String, Object> map, List<String> keys) {
+        private static void addValue(Result result, Map<String, Object> map,
+                                     List<String> keys,
+                                     List<String> indexList,
+                                     boolean flag) {
             List<String> valueList = new ArrayList<>();
+            Map<String, Object> indexMap = new HashMap<>();
             for (String key : keys) {
-                Object value = map.get(key);
+                String col = SelectorUtil.getKey(key, flag);
+                Object value = map.get(col);
+                if (indexList.contains(col)) {
+                    indexMap.put(col, value);
+                }
                 valueList.add(String.valueOf(value));
                 Set<Object> objectSet = result.getValueMap().get(key);
                 if (objectSet == null) {
                     objectSet = new TreeSet<>();
                 }
-                objectSet.add(value);
+                objectSet.add(String.valueOf(value));
                 result.getValueMap().put(key, objectSet);
             }
             String valueStr = String.join("-", valueList);
+            result.getIndexValueList().add(indexMap);
             result.getValueSet().add(valueStr);
         }
 

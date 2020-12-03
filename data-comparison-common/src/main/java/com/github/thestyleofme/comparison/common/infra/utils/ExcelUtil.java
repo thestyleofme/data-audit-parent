@@ -36,8 +36,7 @@ public class ExcelUtil {
             if (outputPath == null) {
                 outputPath = CommonUtil.createDirPath("excel");
             }
-            return String.format("%s/%d_%s.xlsx", outputPath,
-                    comparisonJob.getTenantId(), comparisonJob.getJobCode());
+            return String.valueOf(outputPath);
         }
         throw new HandlerException(ErrorCode.EXCEL_PATH_NOT_FOUND);
     }

@@ -25,7 +25,7 @@ public class JavaTransformTest {
         DataSelector.Result result = DataSelector.init(paramName)
                 .addMain(list1())
                 .addSub(list2())
-                .select();
+                .select(Collections.emptyList());
         Assert.assertFalse(CollectionUtils.isEmpty(result.getDiffList()));
     }
 

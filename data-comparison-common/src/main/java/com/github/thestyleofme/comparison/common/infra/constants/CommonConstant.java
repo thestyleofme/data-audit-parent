@@ -13,7 +13,8 @@ public class CommonConstant {
     private CommonConstant() {
     }
 
-    public static final String CONTACT = "%s_%s";
+
+    public static final String ARROW_CONCAT = " -> ";
     public static final String AUDIT = "AUDIT";
     public static final String PRE_AUDIT = "PRE_AUDIT";
     public static final String DEPLOY = "DEPLOY";
