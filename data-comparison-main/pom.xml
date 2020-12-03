@@ -33,6 +33,11 @@
             <artifactId>phoenix</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.thestyleofme</groupId>
+            <artifactId>sink-csv</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
         <!--presto-->
         <dependency>
             <groupId>com.github.thestyleofme</groupId>

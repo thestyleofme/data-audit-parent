@@ -20,6 +20,7 @@ import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerExcepti
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -145,7 +146,7 @@ public class CommonUtil {
 
 
     public static List<ColMapping> getJoinMappingList(JobEnv jobEnv) {
-        return jobEnv.getJoinMapping().stream()
+        return jobEnv.getIndexMapping().stream()
                 .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
                 .collect(Collectors.toList());
     }
@@ -166,5 +167,23 @@ public class CommonUtil {
                 ExecutionException e) {
             throw new HandlerException(e);
         }
+    }
+
+    /**
+     * 在项目路径下创建文件夹
+     *
+     * @param dirEndName 文件夹名称
+     * @return 文件夹绝对路径
+     */
+    public static String createDirPath(String dirEndName) {
+        File file = new File(dirEndName);
+        if (!file.exists()) {
+            try {
+                FileUtils.forceMkdir(file);
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        return file.getAbsolutePath();
     }
 }

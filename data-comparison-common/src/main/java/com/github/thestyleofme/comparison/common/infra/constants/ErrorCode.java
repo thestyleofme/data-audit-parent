@@ -118,5 +118,10 @@ public final class ErrorCode {
      */
     public static final String HANDLER_TYPE_IS_EXIST = "hdsp.xadt.err.comparison.job.handler.type.is_exist";
 
+    //============================ csv ==================================//
+    /**
+     * 未找到csv文件路径[{0}],或写入失败
+     */
+    public static final String CSV_PATH_NOT_FOUND = "hdsp.xadt.err.csv.path.not_found";
 
 }

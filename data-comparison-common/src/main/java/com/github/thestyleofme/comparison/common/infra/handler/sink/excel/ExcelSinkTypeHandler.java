@@ -48,7 +48,7 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
         String fileOutputPath = excelInfo.getOutputPath();
         if (StringUtils.isEmpty(fileOutputPath)) {
             // when sinkType=EXCEL, fileOutputPath default path: {project}/excel/
-            fileOutputPath = ExcelUtil.getExcelPath();
+            fileOutputPath = ExcelUtil.getExcelPath(comparisonJob);
         }
         String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);

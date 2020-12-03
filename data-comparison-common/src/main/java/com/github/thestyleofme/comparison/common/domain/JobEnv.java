@@ -26,14 +26,14 @@ public class JobEnv {
     private SelectTableInfo target;
     /**
      * join on _a.id=_b.id
-     * "joinMapping": [
+     * "indexMapping": [
      * {
      * "sourceCol": "id",
      * "targetCol": "id1"
      * }
      * ]
      */
-    private List<Map<String, Object>> joinMapping;
+    private List<Map<String, Object>> indexMapping;
     /**
      * "colMapping": [
      * {

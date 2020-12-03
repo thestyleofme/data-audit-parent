@@ -151,13 +151,14 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                           String status,
                           String errorMag,
                           HandlerResult handlerResult) {
+        comparisonJob.setResultStatistics(null);
         Optional.ofNullable(handlerResult).map(HandlerResult::getResultStatistics)
                 .ifPresent(statistics -> {
                     String json = JsonUtil.toJson(statistics);
                     comparisonJob.setResultStatistics(json);
                 });
         updateJobStatus(process, comparisonJob, status, errorMag);
-        log.info("{} process end", process);
+        log.info("{} process success", process);
     }
 
     private void updateJobStatus(String process,

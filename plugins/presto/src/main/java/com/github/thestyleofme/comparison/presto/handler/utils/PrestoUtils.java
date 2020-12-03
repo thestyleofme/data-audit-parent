@@ -39,7 +39,7 @@ public class PrestoUtils {
         }
         // 先从transform中取数据，再从env中获取
         PrestoInfo prestoInfo = BeanUtils.map2Bean(transformMap, PrestoInfo.class);
-        List<ColMapping> joinMappingList = jobEnv.getJoinMapping().stream()
+        List<ColMapping> joinMappingList = jobEnv.getIndexMapping().stream()
                 .map(mapping -> BeanUtils.map2Bean(mapping, ColMapping.class))
                 .sorted(Comparator.comparingInt(ColMapping::getIndex))
                 .collect(Collectors.toList());
