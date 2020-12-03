@@ -1,0 +1,97 @@
+{
+  "env": {
+    "source": {
+      "catalog": "devmysql",
+      "dataSourceCode": "devmysql",
+      "schema": "test_28729",
+      "table": "source_t1",
+      "where": "$1.id<700",
+      "globalWhere": "0 = 0"
+    },
+    "target": {
+      "catalog": "devmysql",
+      "dataSourceCode": "devmysql",
+      "schema": "test_28729",
+      "table": "target_t1",
+      "where": "$2.id1<550",
+      "globalWhere": "1 = 1"
+    },
+    "indexMapping": [
+      {
+        "sourceCol": "id",
+        "targetCol": "id1"
+      },
+      {
+        "sourceCol": "name",
+        "targetCol": "name1"
+      }
+    ],
+    "colMapping": [
+      {
+        "sourceCol": "id",
+        "targetCol": "id1",
+        "index": 0
+      },
+      {
+        "sourceCol": "name",
+        "targetCol": "name1",
+        "selected": true,
+        "index": 2
+      },
+      {
+        "sourceCol": "sex",
+        "targetCol": "sex1",
+        "selected": true,
+        "index": 1
+      },
+      {
+        "sourceCol": "phone",
+        "targetCol": "phone1",
+        "selected": true,
+        "index": 3
+      },
+      {
+        "sourceCol": "address",
+        "targetCol": "address1",
+        "selected": true,
+        "index": 4
+      },
+      {
+        "sourceCol": "education",
+        "targetCol": "education1",
+        "selected": true,
+        "index": 5
+      },
+      {
+        "sourceCol": "state",
+        "targetCol": "state1",
+        "selected": true,
+        "index": 6
+      }
+    ]
+  },
+  "preTransform": {
+    "preTransformType": "DEFAULT",
+    "skipCondition": [
+      {
+        "source": "count(*)",
+        "target": "count(*)",
+        "operation": "="
+      },
+      {
+        "source": "sum(id)",
+        "target": "sum(id1)",
+        "operation": ">"
+      }
+    ]
+  },
+  "transform": {
+    "presto": {
+      "dataSourceCode": "hdsp_presto"
+    }
+  },
+  "sink": {
+    "excel": {
+    }
+  }
+}

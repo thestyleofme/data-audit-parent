@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -14,6 +15,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
@@ -25,6 +27,7 @@ import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
@@ -91,7 +94,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
-        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.err.both.jobCode.groupCode.is_null",
+        CommonUtil.requireAllNonNullElseThrow(ErrorCode.JOB_GROUP_CODE_NOT_EXIST"hdsp.xadt.err.both.jobCode.groupCode.is_null",
                 groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
@@ -305,4 +308,18 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         comparisonJob.setAppConf(JsonUtil.toJson(appConf));
     }
 
+    @Override
+    public Reader getDataxReader(Long tenantId, ComparisonJob comparisonJob, Integer syncType) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        Map<String, Map<String, Object>> sinkMaps = appConf.getSink();
+        Map.Entry<String, Map<String, Object>> oneSink = null;
+        for (Map.Entry<String, Map<String, Object>> entry : sinkMaps.entrySet()) {
+            oneSink = entry;
+        }
+        if (Objects.nonNull(oneSink)) {
+            BaseDataxReaderGenerator dataxReaderGenerator = jobHandlerContext.getDataxReaderGenerator(oneSink.getKey());
+            return dataxReaderGenerator.generate(tenantId, comparisonJob, oneSink.getValue(), syncType);
+        }
+        throw new HandlerException(ErrorCode.DATAX_TYPE_NOT_FOUND);
+    }
 }

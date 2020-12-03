@@ -1,13 +1,18 @@
 package com.github.thestyleofme.comparison.csv;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import com.github.thestyleofme.comparison.csv.pojo.DataxCsvReader;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import com.opencsv.CSVReader;
@@ -17,6 +22,7 @@ import com.opencsv.ICSVWriter;
 import com.opencsv.exceptions.CsvException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.springframework.util.StringUtils;
 
 /**
  * <p></p>
@@ -26,7 +32,6 @@ import org.junit.Test;
  */
 @Slf4j
 public class CsvTest {
-    public static String[] TYPE = new String[0];
 
     @Test
     public void writerTest() throws IOException {
@@ -38,26 +43,25 @@ public class CsvTest {
                         .toArray(String[]::new))
                 .collect(Collectors.toList());
 
-        CSVWriterBuilder builder = new CSVWriterBuilder(new FileWriter("C:/Users/housiqi/Desktop/test.csv"));
+        CSVWriterBuilder builder = new CSVWriterBuilder(new FileWriter("src/test/resources/test.csv"));
         ICSVWriter icsvWriter = builder.withSeparator(',').build();
-        String[] strings = {"id1", "name1", "t\",\"est1"};
+        String[] strings = {"id1", "name1", "test1"};
         csvList.add(strings);
         icsvWriter.writeAll(csvList);
         icsvWriter.close();
+        assertTrue(icsvWriter.checkError());
     }
 
-    @Test
-    public void testOther() {
-    }
 
     @Test
     public void readerTest() throws IOException, CsvException {
-        CSVReaderBuilder builder = new CSVReaderBuilder(new FileReader("C:/Users/housiqi/Desktop/test.csv"));
+        CSVReaderBuilder builder = new CSVReaderBuilder(new FileReader("src/test/resources/test.csv"));
         CSVReader reader = builder.build();
         List<String[]> strings = reader.readAll();
         for (String[] col : strings) {
-            System.out.println(col);
+            System.out.println(Arrays.toString(col));
         }
+        assertFalse(strings.isEmpty());
     }
 
     @Test
@@ -69,7 +73,9 @@ public class CsvTest {
                 .encoding("utf-8")
                 .fieldDelimiter("\u0001")
                 .build());
-        String json = JsonUtil.toJson(reader);
+        Reader testReader = reader;
+        String json = JsonUtil.toJson(testReader);
         System.out.println(json);
+        assertFalse(StringUtils.isEmpty(json));
     }
 }

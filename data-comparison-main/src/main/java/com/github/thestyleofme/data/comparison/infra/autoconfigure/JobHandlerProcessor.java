@@ -2,11 +2,13 @@ package com.github.thestyleofme.data.comparison.infra.autoconfigure;
 
 import java.util.Optional;
 
+import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
+import com.github.thestyleofme.comparison.common.infra.annotation.DataxReaderType;
 import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
@@ -38,6 +40,7 @@ public class JobHandlerProcessor implements BeanPostProcessor {
         doTransform(bean, clazz);
         doSink(bean, clazz);
         doDeploy(bean, clazz);
+        doDatax(bean, clazz);
         return bean;
     }
 
@@ -73,6 +76,17 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 value -> {
                     if (bean instanceof BaseDeployHandler) {
                         jobHandlerContext.register(value.toUpperCase(), (BaseDeployHandler) bean);
+                    }
+                }
+        );
+    }
+
+    private void doDatax(Object bean, Class<?> clazz) {
+        DataxReaderType dataxReaderType = clazz.getAnnotation(DataxReaderType.class);
+        Optional.ofNullable(dataxReaderType).map(DataxReaderType::value).ifPresent(
+                value -> {
+                    if (bean instanceof BaseDataxReaderGenerator) {
+                        jobHandlerContext.register(value.toUpperCase(), (BaseDataxReaderGenerator) bean);
                     }
                 }
         );
