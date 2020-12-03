@@ -42,7 +42,7 @@ public final class ErrorCode {
     /**
      * 两个属性值都为null
      */
-    public static final String BATH_PROPERTIES_IS_NULL = "hdsp.xadt.err.both.null";
+    public static final String BOTH_PROPERTIES_IS_NULL = "hdsp.xadt.err.both.null";
     /**
      * preTransform实体类未找到
      */

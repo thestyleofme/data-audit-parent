@@ -49,7 +49,7 @@ public class CommonUtil {
 
     public static <T> T requireNonNullElse(T obj, T defaultObj) {
         return (obj != null) ? obj : Optional.ofNullable(defaultObj)
-                .orElseThrow(() -> new HandlerException(ErrorCode.BATH_PROPERTIES_IS_NULL));
+                .orElseThrow(() -> new HandlerException(ErrorCode.BOTH_PROPERTIES_IS_NULL));
     }
 
     @SafeVarargs
