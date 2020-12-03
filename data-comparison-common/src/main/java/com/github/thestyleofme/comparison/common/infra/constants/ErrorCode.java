@@ -44,6 +44,10 @@ public final class ErrorCode {
      */
     public static final String BOTH_PROPERTIES_IS_NULL = "hdsp.xadt.err.both.null";
     /**
+     * jobCode和groupCode都为null
+     */
+    public static final String BOTH_JOB_AND_GROUP_CODE_IS_NULL = "hdsp.xadt.err.both.jobCode.groupCode.is_null";
+    /**
      * preTransform实体类未找到
      */
     public static final String PRE_TRANSFORM_CLASS_NOT_FOUND = "hdsp.xadt.err.preTransform.class.not_found";

@@ -94,7 +94,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void execute(Long tenantId, String jobCode, String groupCode) {
-        CommonUtil.requireAllNonNullElseThrow(ErrorCode.BOTH_PROPERTIES_IS_NULL, groupCode, jobCode);
+        CommonUtil.requireAllNonNullElseThrow(ErrorCode.BOTH_JOB_AND_GROUP_CODE_IS_NULL, groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
             if (!StringUtils.isEmpty(groupCode)) {
@@ -242,7 +242,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     public void deploy(DeployInfo deployInfo) {
         String groupCode = deployInfo.getGroupCode();
         String jobCode = deployInfo.getJobCode();
-        CommonUtil.requireAllNonNullElseThrow("hdsp.xadt.err.both.jobCode.groupCode.is_null",
+        CommonUtil.requireAllNonNullElseThrow(ErrorCode.BOTH_JOB_AND_GROUP_CODE_IS_NULL,
                 groupCode, jobCode);
         CompletableFuture.supplyAsync(() -> {
             // 要么执行组下的任务，要么执行某一个job 两者取其一
