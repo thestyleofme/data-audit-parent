@@ -1,4 +1,4 @@
-package com.github.thestyleofme.comparison.phoenix.controller;
+package com.github.thestyleofme.comparison.phoenix.generator;
 
 import java.util.Collections;
 import java.util.List;
@@ -7,44 +7,38 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
+import com.github.thestyleofme.comparison.common.infra.annotation.DataxReaderType;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
 import com.github.thestyleofme.comparison.phoenix.pojo.PhoenixDataxReader;
 import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
-import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Component;
 
 /**
- * <p>
- * description
- * </p>
+ * <p></p>
  *
- * @author isaac 2020/11/25 15:55
+ * @author hsq 2020/12/03 16:15
  * @since 1.0.0
  */
-@RestController("phoenixController.v1")
-@RequestMapping("/v1/{organizationId}/phoenix")
-@Slf4j
-public class PhoenixController {
-
+@DataxReaderType("PHOENIX")
+@Component
+public class DataxPhoenixReaderGenerator implements BaseDataxReaderGenerator {
     public static final Pattern PHOENIX_JDBC_PATTERN = Pattern.compile("jdbc:phoenix:thin:url=(.*?)");
     public static final String PHOENIX_SERIALIZATION = ";serialization=";
 
-    @ApiOperation(value = "生成phoenix datax reader")
-    @PostMapping("/datax-reader")
-    public PhoenixDataxReader getDataxPhoenixReader(@PathVariable(name = "organizationId") Long tenantId,
-                                                    @RequestBody ComparisonJob comparisonJob,
-                                                    @RequestParam(value = "rowType", required = false, defaultValue = "0") Integer rowType) {
+    @Override
+    public Reader generate(Long tenantId, ComparisonJob comparisonJob, Map<String, Object> sinkMap, Integer syncType) {
         // 生成phoenix查询sql
         String jobName = comparisonJob.getJobCode();
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
-        String sql = genPhoenixQuerySql(colMappingList, jobName, rowType);
+        String sql = genPhoenixQuerySql(colMappingList, jobName, syncType);
         // 封装datax phoenix reader
         return genDataxPhoenixReader(comparisonJob, sql);
     }

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import io.swagger.annotations.ApiOperation;
@@ -58,6 +59,15 @@ public class ComparisonJobController {
         deployInfo.setTenantId(tenantId);
         comparisonJobService.deploy(deployInfo);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    @ApiOperation(value = "生成datax reader")
+    @PostMapping("/datax-reader")
+    public ResponseEntity<Reader> getDataxReader(@PathVariable(name = "organizationId") Long tenantId,
+                                                 @RequestBody ComparisonJob comparisonJob,
+                                                 @RequestParam(value = "syncType", required = false, defaultValue = "0") Integer syncType) {
+        Reader reader = comparisonJobService.getDataxReader(tenantId, comparisonJob, syncType);
+        return ResponseEntity.ok(reader);
     }
 
     @ApiOperation(value = "保存数据稽核任务")

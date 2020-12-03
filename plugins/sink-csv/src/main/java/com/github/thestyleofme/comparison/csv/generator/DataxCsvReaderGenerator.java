@@ -1,42 +1,32 @@
-package com.github.thestyleofme.comparison.csv.controller;
+package com.github.thestyleofme.comparison.csv.generator;
 
 import java.util.*;
 
-import com.github.thestyleofme.comparison.common.domain.AppConf;
+import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
+import com.github.thestyleofme.comparison.common.infra.annotation.DataxReaderType;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.csv.pojo.CsvInfo;
 import com.github.thestyleofme.comparison.csv.pojo.DataxCsvReader;
 import com.github.thestyleofme.comparison.csv.utils.CsvUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
-import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
-import io.swagger.annotations.ApiOperation;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Component;
 
 /**
  * <p></p>
  *
- * @author hsq 2020/12/02 17:47
+ * @author hsq 2020/12/03 15:16
  * @since 1.0.0
  */
-@RestController("csvSinkController.v1")
-@RequestMapping("/v1/{organizationId}/csv")
-@Slf4j
-public class CsvSinkController {
-    @ApiOperation(value = "生成csv datax reader")
-    @PostMapping("/datax-reader")
-    public DataxCsvReader getDataxCsvReader(@PathVariable(name = "organizationId") Long tenantId,
-                                            @RequestBody ComparisonJob comparisonJob,
-                                            @RequestParam(value = "type", required = false, defaultValue = "0") Integer type) {
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        CsvInfo csvInfo = null;
-        for (Map.Entry<String, Map<String, Object>> entry : appConf.getSink().entrySet()) {
-            if ("csv".equalsIgnoreCase(entry.getKey())) {
-                csvInfo = BeanUtils.map2Bean(entry.getValue(), CsvInfo.class);
-            }
-        }
+@DataxReaderType("CSV")
+@Component
+public class DataxCsvReaderGenerator implements BaseDataxReaderGenerator {
+
+    @Override
+    public Reader generate(Long tenantId, ComparisonJob comparisonJob, Map<String, Object> sinkMap, Integer syncType) {
+        CsvInfo csvInfo = BeanUtils.map2Bean(sinkMap, CsvInfo.class);
         DataxCsvReader dataxCsvReader = new DataxCsvReader();
         if (Objects.nonNull(csvInfo)) {
             // 封装datax csv reader
@@ -47,8 +37,8 @@ public class CsvSinkController {
                 column.add(DataxCsvReader.Column.builder().index(i).build());
             }
             String dir = Optional.ofNullable(csvInfo.getPath())
-                    .orElseGet(() -> String.format("csv/%s_%s", comparisonJob.getTenantId(), jobCode));
-            String path = CsvUtil.getCsvPath(dir, comparisonJob.getTenantId(), jobCode, type);
+                    .orElseGet(() -> CommonUtil.createDirPath(String.format("csv/%s_%s", comparisonJob.getTenantId(), jobCode)));
+            String path = CsvUtil.getCsvPath(dir, comparisonJob.getTenantId(), jobCode, syncType);
             DataxCsvReader.Parameter parameter = DataxCsvReader.Parameter.builder()
                     .fieldDelimiter("\u0001")
                     .encoding("utf-8")

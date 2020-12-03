@@ -3,6 +3,7 @@ package com.github.thestyleofme.data.comparison.infra.context;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
@@ -30,6 +31,7 @@ public class JobHandlerContext {
     private static final Map<String, BaseSinkHandler> SINK_HANDLER_MAP = new HashMap<>();
     private static final Map<String, SinkHandlerProxy> SINK_HANDLER_PROXY_MAP = new HashMap<>();
     private static final Map<String, BaseDeployHandler> DEPLOY_HANDLER_MAP = new HashMap<>();
+    private static final Map<String, BaseDataxReaderGenerator> DATAX_READER_GENERATOR_MAP = new HashMap<>();
 
     //===============================================================================
     //  TransformType
@@ -113,5 +115,25 @@ public class JobHandlerContext {
             throw new HandlerException(ErrorCode.HANDLER_TYPE_NOT_EXIST, deployType);
         }
         return deployHandler;
+    }
+
+    //===============================================================================
+    //  DataxReaderType
+    //===============================================================================
+
+    public void register(String readerType, BaseDataxReaderGenerator dataxReaderGenerator) {
+        if (DATAX_READER_GENERATOR_MAP.containsKey(readerType)) {
+            log.error("DataxReaderType {} exists", readerType);
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_IS_EXIST, readerType);
+        }
+        DATAX_READER_GENERATOR_MAP.put(readerType, dataxReaderGenerator);
+    }
+
+    public BaseDataxReaderGenerator getDataxReaderGenerator(String readerType) {
+        BaseDataxReaderGenerator dataxReaderGenerator = DATAX_READER_GENERATOR_MAP.get(readerType.toUpperCase());
+        if (dataxReaderGenerator == null) {
+            throw new HandlerException(ErrorCode.HANDLER_TYPE_NOT_EXIST, readerType);
+        }
+        return dataxReaderGenerator;
     }
 }

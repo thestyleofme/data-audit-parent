@@ -3,6 +3,7 @@ package com.github.thestyleofme.comparison.phoenix.pojo;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import lombok.*;
 
 /**
@@ -19,7 +20,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PhoenixDataxReaderInfo {
+public class PhoenixDataxReader implements Reader {
 
     /**
      * "reader": {

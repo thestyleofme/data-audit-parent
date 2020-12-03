@@ -124,4 +124,10 @@ public final class ErrorCode {
      */
     public static final String CSV_PATH_NOT_FOUND = "hdsp.xadt.err.csv.path.not_found";
 
+    //============================ datax ===============================//
+    /**
+     * sink中未匹配到datax reader 类型
+     */
+    public static final String DATAX_TYPE_NOT_FOUND = "hdsp.xadt.err.datax.reader_type.not_found";
+
 }
