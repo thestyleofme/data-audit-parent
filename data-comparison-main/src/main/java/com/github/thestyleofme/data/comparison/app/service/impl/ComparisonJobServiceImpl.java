@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -46,6 +45,7 @@ import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -311,14 +311,18 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     public Reader getDataxReader(Long tenantId, ComparisonJob comparisonJob, Integer syncType) {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         Map<String, Map<String, Object>> sinkMaps = appConf.getSink();
-        Map.Entry<String, Map<String, Object>> oneSink = null;
-        for (Map.Entry<String, Map<String, Object>> entry : sinkMaps.entrySet()) {
-            oneSink = entry;
+        if (CollectionUtils.isEmpty(sinkMaps)) {
+            throw new HandlerException(ErrorCode.DATAX_TYPE_NOT_FOUND);
         }
-        if (Objects.nonNull(oneSink)) {
-            BaseDataxReaderGenerator dataxReaderGenerator = jobHandlerContext.getDataxReaderGenerator(oneSink.getKey());
-            return dataxReaderGenerator.generate(tenantId, comparisonJob, oneSink.getValue(), syncType);
+        Optional<Map.Entry<String, Map<String, Object>>> first = sinkMaps.entrySet().stream()
+                // excel不可使用datax 目前只有phoenix和csv可使用
+                .filter(entry -> !entry.getKey().equalsIgnoreCase(CommonConstant.Sink.EXCEL))
+                .findFirst();
+        if (!first.isPresent()) {
+            throw new HandlerException(ErrorCode.DATAX_TYPE_NOT_FOUND);
         }
-        throw new HandlerException(ErrorCode.DATAX_TYPE_NOT_FOUND);
+        Map.Entry<String, Map<String, Object>> entry = first.get();
+        BaseDataxReaderGenerator dataxReaderGenerator = jobHandlerContext.getDataxReaderGenerator(entry.getKey());
+        return dataxReaderGenerator.generate(tenantId, comparisonJob, entry.getValue(), syncType);
     }
 }

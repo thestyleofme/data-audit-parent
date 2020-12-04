@@ -8,7 +8,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
-import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.Reader;
@@ -18,7 +17,6 @@ import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerExcepti
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
 import com.github.thestyleofme.comparison.phoenix.pojo.PhoenixDataxReader;
-import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,6 +28,7 @@ import org.springframework.stereotype.Component;
 @DataxReaderType("PHOENIX")
 @Component
 public class DataxPhoenixReaderGenerator implements BaseDataxReaderGenerator {
+
     public static final Pattern PHOENIX_JDBC_PATTERN = Pattern.compile("jdbc:phoenix:thin:url=(.*?)");
     public static final String PHOENIX_SERIALIZATION = ";serialization=";
 
@@ -40,13 +39,11 @@ public class DataxPhoenixReaderGenerator implements BaseDataxReaderGenerator {
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
         String sql = genPhoenixQuerySql(colMappingList, jobName, syncType);
         // 封装datax phoenix reader
-        return genDataxPhoenixReader(comparisonJob, sql);
+        return genDataxPhoenixReader(sinkMap, sql);
     }
 
-    private PhoenixDataxReader genDataxPhoenixReader(ComparisonJob comparisonJob, String sql) {
-        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        Map<String, Object> phoenixMap = appConf.getSink().get("phoenix");
-        String jdbcUrl = (String) phoenixMap.get(DatasourceInfo.FIELD_JDBC_URL);
+    private PhoenixDataxReader genDataxPhoenixReader(Map<String, Object> sinkMap, String sql) {
+        String jdbcUrl = (String) sinkMap.get(DatasourceInfo.FIELD_JDBC_URL);
         Matcher matcher = PHOENIX_JDBC_PATTERN.matcher(jdbcUrl);
         String queryServerAddress;
         if (matcher.matches()) {
@@ -55,12 +52,14 @@ public class DataxPhoenixReaderGenerator implements BaseDataxReaderGenerator {
             throw new HandlerException(ErrorCode.JOB_PHOENIX_JDBC_URL_NOT_FOUND);
         }
         PhoenixDataxReader phoenixDataxReader = PhoenixDataxReader.builder()
-                .queryServerAddress(queryServerAddress)
-                .querySql(Collections.singletonList(sql))
+                .parameter(PhoenixDataxReader.Parameter.builder()
+                        .queryServerAddress(queryServerAddress)
+                        .querySql(Collections.singletonList(sql))
+                        .build())
                 .build();
         if (queryServerAddress.contains(PHOENIX_SERIALIZATION)) {
             String serialization = queryServerAddress.substring(queryServerAddress.indexOf(PHOENIX_SERIALIZATION) + PHOENIX_SERIALIZATION.length() + 1);
-            phoenixDataxReader.setSerialization(serialization);
+            phoenixDataxReader.getParameter().setSerialization(serialization);
         }
         return phoenixDataxReader;
     }

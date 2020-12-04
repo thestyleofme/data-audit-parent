@@ -35,7 +35,7 @@
         </dependency>
         <dependency>
             <groupId>com.github.thestyleofme</groupId>
-            <artifactId>sink-csv</artifactId>
+            <artifactId>csv</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
         <!--presto-->

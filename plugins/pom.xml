@@ -22,7 +22,7 @@
     <modules>
         <module>presto</module>
         <module>phoenix</module>
-        <module>sink-csv</module>
+        <module>csv</module>
     </modules>
 
 </project>
