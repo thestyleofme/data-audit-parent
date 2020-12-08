@@ -11,6 +11,11 @@ public final class ErrorCode {
     private ErrorCode() {
     }
 
+
+    /**
+     * job任务[{0}]未找到
+     */
+    public static final String JOB_NOT_FOUND = "hdsp.xadt.err.job.not_found";
     /**
      * 未找到excel文件路径
      */

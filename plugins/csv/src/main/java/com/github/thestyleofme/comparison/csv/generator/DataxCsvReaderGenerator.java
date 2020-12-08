@@ -1,6 +1,9 @@
 package com.github.thestyleofme.comparison.csv.generator;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
@@ -36,9 +39,7 @@ public class DataxCsvReaderGenerator implements BaseDataxReaderGenerator {
             for (int i = 0; i < colMappingList.size(); i++) {
                 column.add(DataxCsvReader.Column.builder().index(i).build());
             }
-            String dir = Optional.ofNullable(csvInfo.getPath())
-                    .orElseGet(() -> CommonUtil.createDirPath(String.format("csv/%s_%s", comparisonJob.getTenantId(), jobCode)));
-            String path = CsvUtil.getCsvPath(dir, comparisonJob.getTenantId(), jobCode, syncType);
+            String path = CsvUtil.getCsvPath(csvInfo, comparisonJob.getTenantId(), jobCode, syncType);
             DataxCsvReader.Parameter parameter = DataxCsvReader.Parameter.builder()
                     .fieldDelimiter("\u0001")
                     .encoding("utf-8")

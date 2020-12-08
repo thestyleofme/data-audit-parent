@@ -1,13 +1,18 @@
 package com.github.thestyleofme.data.comparison.app.service.impl;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotBlank;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -32,9 +37,13 @@ import com.github.thestyleofme.comparison.common.domain.entity.SkipCondition;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
+import com.github.thestyleofme.comparison.common.infra.constants.RowTypeEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
+import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
+import com.github.thestyleofme.comparison.csv.pojo.CsvInfo;
+import com.github.thestyleofme.comparison.csv.utils.CsvUtil;
 import com.github.thestyleofme.comparison.presto.handler.exceptions.SkipAuditException;
 import com.github.thestyleofme.data.comparison.api.dto.ComparisonJobDTO;
 import com.github.thestyleofme.data.comparison.app.service.ComparisonJobGroupService;
@@ -351,5 +360,67 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             log.info("skip transform");
             throw new SkipAuditException(ErrorCode.PRE_TRANSFORM_SKIP_INFO);
         }
+    }
+
+    @Override
+    public void download(Long tenantId, Long jobId, HttpServletResponse response) {
+        ComparisonJob comparisonJob = getOne(new QueryWrapper<>(ComparisonJob.builder()
+                .tenantId(tenantId).jobId(jobId).build()));
+        if (Objects.isNull(comparisonJob)) {
+            throw new HandlerException(ErrorCode.JOB_NOT_FOUND, jobId);
+        }
+        byte[] buf = new byte[1024];
+        // 获取输出流
+        try (BufferedOutputStream bos = new BufferedOutputStream(response.getOutputStream());
+             ZipOutputStream out = new ZipOutputStream(bos)) {
+            response.reset(); // 重点突出
+            // 不同类型的文件对应不同的MIME类型
+            response.setContentType("application/octet-stream");
+            response.setCharacterEncoding("utf-8");
+            response.setHeader("Content-disposition", "attachment;filename=" + comparisonJob.getJobCode() + ".zip");
+            File[] files = getFiles(tenantId, comparisonJob);
+            for (File file : files) {
+                try (FileInputStream in = new FileInputStream(file)) {
+                    // 给列表中的文件单独命名
+                    out.putNextEntry(new ZipEntry(file.getName()));
+                    int len;
+                    while ((len = in.read(buf)) > 0) {
+                        out.write(buf, 0, len);
+                    }
+                    out.closeEntry();
+                }
+            }
+            log.info("zip压缩完成");
+        } catch (Exception e) {
+            log.error("数据压缩出错", e);
+            throw new HandlerException("hdsp.xadt.err.zip");
+        }
+    }
+
+    private File[] getFiles(Long tenantId, ComparisonJob comparisonJob) {
+        AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
+        Map<String, Map<String, Object>> sink = appConf.getSink();
+        List<File> fileList = new ArrayList<>();
+        @NotBlank String jobCode = comparisonJob.getJobCode();
+        for (Map.Entry<String, Map<String, Object>> entry : sink.entrySet()) {
+            String key = entry.getKey();
+            Map<String, Object> value = entry.getValue();
+            if (CommonConstant.Sink.CSV.equalsIgnoreCase(key)) {
+                CsvInfo csvInfo = BeanUtils.map2Bean(value, CsvInfo.class);
+                String insertPath = CsvUtil.getCsvPath(csvInfo, tenantId, jobCode,
+                        RowTypeEnum.INSERT.getRawType());
+                String deletePath = CsvUtil.getCsvPath(csvInfo, tenantId, jobCode, RowTypeEnum.DELETED.getRawType());
+                String updatePath = CsvUtil.getCsvPath(csvInfo, tenantId, jobCode, RowTypeEnum.UPDATED.getRawType());
+                fileList.add(new File(insertPath));
+                fileList.add(new File(deletePath));
+                fileList.add(new File(updatePath));
+            }
+            if (CommonConstant.Sink.EXCEL.equalsIgnoreCase(key)) {
+                String excelDir = ExcelUtil.getExcelPath(comparisonJob);
+                String excelPath = String.format("%s/%d_%s.xlsx", excelDir, tenantId, jobCode);
+                fileList.add(new File(excelPath));
+            }
+        }
+        return fileList.toArray(new File[0]);
     }
 }

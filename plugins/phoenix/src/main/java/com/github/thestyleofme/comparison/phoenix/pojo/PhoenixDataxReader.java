@@ -31,7 +31,6 @@ public class PhoenixDataxReader implements Reader {
     private String name ="hbase20xsqlreader";
     private Parameter parameter;
 
-    @NoArgsConstructor
     @Data
     @Builder
     public static class Parameter {

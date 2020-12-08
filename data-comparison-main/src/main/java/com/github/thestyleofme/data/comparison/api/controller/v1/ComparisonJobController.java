@@ -1,5 +1,7 @@
 package com.github.thestyleofme.data.comparison.api.controller.v1;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +13,7 @@ import com.github.thestyleofme.data.comparison.app.service.ComparisonJobService;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,6 +71,14 @@ public class ComparisonJobController {
                                                  @RequestParam(value = "syncType", required = false, defaultValue = "0") Integer syncType) {
         Reader reader = comparisonJobService.getDataxReader(tenantId, comparisonJob, syncType);
         return ResponseEntity.ok(reader);
+    }
+
+    @ApiOperation(value = "下载稽核结果文件", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/download")
+    public void getDataxReader(@PathVariable(name = "organizationId") Long tenantId,
+                               @RequestParam(value = "jobId") Long jobId,
+                               HttpServletResponse response) {
+        comparisonJobService.download(tenantId, jobId, response);
     }
 
     @ApiOperation(value = "保存数据稽核任务")

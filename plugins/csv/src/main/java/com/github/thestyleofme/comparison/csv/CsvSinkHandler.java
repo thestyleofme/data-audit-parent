@@ -65,7 +65,7 @@ public class CsvSinkHandler implements BaseSinkHandler {
                                   List<ColMapping> colMappingList,
                                   CsvInfo csvInfo,
                                   List<Map<String, Object>> dataList) {
-        String path = CsvUtil.getCsvPath(csvInfo.getPath(), comparisonJob.getTenantId(), comparisonJob.getJobCode(),
+        String path = CsvUtil.getCsvPath(csvInfo, comparisonJob.getTenantId(), comparisonJob.getJobCode(),
                 RowTypeEnum.INSERT.getRawType());
         List<String[]> csvDataList = fillCsvList(colMappingList, dataList);
         doWrite(path, csvDataList);
@@ -75,7 +75,7 @@ public class CsvSinkHandler implements BaseSinkHandler {
                                   List<ColMapping> colMappingList,
                                   CsvInfo csvInfo,
                                   List<Map<String, Object>> dataList) {
-        String path = CsvUtil.getCsvPath(csvInfo.getPath(), comparisonJob.getTenantId(), comparisonJob.getJobCode(), RowTypeEnum.DELETED.getRawType());
+        String path = CsvUtil.getCsvPath(csvInfo, comparisonJob.getTenantId(), comparisonJob.getJobCode(), RowTypeEnum.DELETED.getRawType());
         List<String[]> csvDataList = fillCsvList(colMappingList, dataList);
         doWrite(path, csvDataList);
     }
@@ -84,7 +84,7 @@ public class CsvSinkHandler implements BaseSinkHandler {
                                   List<ColMapping> colMappingList,
                                   CsvInfo csvInfo,
                                   List<Map<String, Object>> dataList) {
-        String path = CsvUtil.getCsvPath(csvInfo.getPath(), comparisonJob.getTenantId(), comparisonJob.getJobCode(),
+        String path = CsvUtil.getCsvPath(csvInfo, comparisonJob.getTenantId(), comparisonJob.getJobCode(),
                 RowTypeEnum.UPDATED.getRawType());
         List<String[]> csvDataList = fillCsvList(colMappingList, dataList);
         doWrite(path, csvDataList);

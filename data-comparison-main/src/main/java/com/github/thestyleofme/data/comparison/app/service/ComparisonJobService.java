@@ -1,5 +1,7 @@
 package com.github.thestyleofme.data.comparison.app.service;
 
+import javax.servlet.http.HttpServletResponse;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -60,4 +62,13 @@ public interface ComparisonJobService extends IService<ComparisonJob> {
      * @return datax reader的内容
      */
     Reader getDataxReader(Long tenantId, ComparisonJob comparisonJob, Integer syncType);
+
+    /**
+     * 下载稽核结果文件
+     *
+     * @param tenantId 租户id
+     * @param jobId    jobId
+     * @param response 返回zip文件
+     */
+    void download(Long tenantId, Long jobId, HttpServletResponse response);
 }
