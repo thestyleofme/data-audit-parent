@@ -48,13 +48,20 @@ public class JavaTransformHandler implements BaseTransformHandler {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         JobEnv jobEnv = JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()), JobEnv.class);
         List<ColMapping> colMappingList = CommonUtil.getColMappingList(jobEnv);
+        List<Map<String, Object>> indexMapping = jobEnv.getIndexMapping();
         List<String> paramNameList = colMappingList.stream()
-                .filter(ColMapping::isSelected)
+                // indexMapping列默认被选择去做比对
+                .filter(colMapping -> {
+                    boolean anyMatch = indexMapping.stream()
+                            .anyMatch(map -> map.containsValue(colMapping.getSourceCol()) ||
+                                    map.containsValue(colMapping.getTargetCol()));
+                    return colMapping.isSelected() || anyMatch;
+                })
                 .map(colMapping ->
                         colMapping.getSourceCol().equals(colMapping.getTargetCol()) ? colMapping.getSourceCol() :
                                 String.format("%s -> %s", colMapping.getSourceCol(), colMapping.getTargetCol()))
                 .collect(Collectors.toList());
-        List<Map<String, Object>> indexMapping = jobEnv.getIndexMapping();
+
         SourceDataMapping sourceDataMapping = tableDataHandler.handle(comparisonJob, env);
         DataSelector.Result result = DataSelector.init(paramNameList)
                 .addMain(sourceDataMapping.getSourceDataList())

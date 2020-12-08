@@ -19,41 +19,33 @@ public class SqlUtils {
     private static final String TARGET_NAME = "_b";
     private static final String AND_LEFT = " and (";
 
-    public static String getBothWhereCondition(StringBuilder builder, String sourceGlobalWhere, String sourceWhere,
+
+
+    public static String getBothWhereCondition(String sourceGlobalWhere, String sourceWhere,
                                                String targetGlobalWhere, String targetWhere) {
-        builder.setLength(0);
+        StringBuilder builder = new StringBuilder();
         builder.append("where 1=1 ");
-        if (!StringUtils.isEmpty(sourceGlobalWhere)) {
-            builder.append(AND_LEFT).append(sourceGlobalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(targetGlobalWhere)) {
-            builder.append(AND_LEFT).append(targetGlobalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(sourceWhere)) {
-            builder.append(AND_LEFT).append(sourceWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(targetWhere)) {
-            builder.append(AND_LEFT).append(targetWhere).append(")");
-        }
+        append(sourceGlobalWhere, builder);
+        append(targetGlobalWhere,builder);
+        append(sourceWhere,builder);
+        append(targetWhere,builder);
         // 将 $1 $2 替换为_a _b
-        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
-        builder.setLength(0);
-        return result;
+        return builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
     }
 
-    public static String getOneWhereCondition(StringBuilder builder, String globalWhere, String where) {
-        builder.setLength(0);
+    private static void append(String content, StringBuilder builder) {
+        if (!StringUtils.isEmpty(content)) {
+            builder.append(AND_LEFT).append(content).append(")");
+        }
+    }
+
+    public static String getOneWhereCondition(String globalWhere, String where) {
+        StringBuilder builder = new StringBuilder();
         builder.append("where 1=1 ");
-        if (!StringUtils.isEmpty(globalWhere)) {
-            builder.append(AND_LEFT).append(globalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(where)) {
-            builder.append(AND_LEFT).append(where).append(")");
-        }
+        append(globalWhere, builder);
+        append(where,builder);
         // 将 $1 $2 替换为_a _b
-        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
-        builder.setLength(0);
-        return result;
+        return builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
     }
 
 }

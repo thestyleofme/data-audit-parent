@@ -39,13 +39,12 @@ public class TableDataHandler {
         Long tenantId = comparisonJob.getTenantId();
         ComparisonInfo comparisonInfo = CommonUtil.getComparisonInfo(env);
         List<ColMapping> colMapping = comparisonInfo.getColMapping();
-        StringBuilder builder = new StringBuilder();
         // source
         SelectTableInfo source = comparisonInfo.getSource();
         String sourceTableName = comparisonInfo.getSourceTableName();
         String sourceDatasourceCode = source.getDataSourceCode();
         String sourceSchema = source.getSchema();
-        String sourceWhere = SqlUtils.getOneWhereCondition(builder, source.getGlobalWhere(), source.getWhere());
+        String sourceWhere = SqlUtils.getOneWhereCondition(source.getGlobalWhere(), source.getWhere());
         String sourceCol = colMapping.stream()
                 .map(mapping -> String.format("_a.%s", mapping.getSourceCol()))
                 .collect(Collectors.joining(","));
@@ -54,7 +53,7 @@ public class TableDataHandler {
         String targetTableName = comparisonInfo.getTargetTableName();
         String targetDatasourceCode = target.getDataSourceCode();
         String targetSchema = target.getSchema();
-        String targetWhere = SqlUtils.getOneWhereCondition(builder, target.getGlobalWhere(), target.getWhere());
+        String targetWhere = SqlUtils.getOneWhereCondition(target.getGlobalWhere(), target.getWhere());
         String targetCol = colMapping.stream()
                 .map(mapping -> String.format("_b.%s", mapping.getTargetCol()))
                 .collect(Collectors.joining(","));

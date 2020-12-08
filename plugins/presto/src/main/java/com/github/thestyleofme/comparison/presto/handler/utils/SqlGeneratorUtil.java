@@ -68,10 +68,10 @@ public class SqlGeneratorUtil {
         String onCondition = joinMappingList.stream().map(colMapping ->
                 String.format(" _a.%s = _b.%s ", colMapping.getSourceCol(), colMapping.getTargetCol()))
                 .collect(Collectors.joining(" and "));
-        String bothWhere = getBothWhereCondition(builder, source.getGlobalWhere(), source.getWhere(),
+        String bothWhere = getBothWhereCondition(source.getGlobalWhere(), source.getWhere(),
                 target.getGlobalWhere(), target.getWhere());
-        String sourceWhere = getOneWhereCondition(builder, source.getGlobalWhere(), source.getWhere());
-        String targetWhere = getOneWhereCondition(builder, target.getGlobalWhere(), target.getWhere());
+        String sourceWhere = getOneWhereCondition(source.getGlobalWhere(), source.getWhere());
+        String targetWhere = getOneWhereCondition(target.getGlobalWhere(), target.getWhere());
         /*
         1. AB都有的数据
         例：
