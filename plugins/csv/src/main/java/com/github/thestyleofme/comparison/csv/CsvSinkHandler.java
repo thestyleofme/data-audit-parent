@@ -11,12 +11,14 @@ import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandle
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.RowTypeEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.csv.pojo.CsvInfo;
+import com.github.thestyleofme.comparison.csv.pojo.DataxCsvReader;
 import com.github.thestyleofme.comparison.csv.utils.CsvUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import com.opencsv.CSVWriterBuilder;
@@ -50,6 +52,27 @@ public class CsvSinkHandler implements BaseSinkHandler {
         }
         // 将数据写入csv
         writeToCsv(comparisonJob, csvInfo, handlerResult);
+    }
+
+    @Override
+    public Reader dataxReader(ComparisonJob comparisonJob, Map<String, Object> sinkMap, Integer syncType) {
+        CsvInfo csvInfo = BeanUtils.map2Bean(sinkMap, CsvInfo.class);
+        DataxCsvReader dataxCsvReader = new DataxCsvReader();
+        // 封装datax csv reader
+        String jobCode = comparisonJob.getJobCode();
+        List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
+        List<DataxCsvReader.Column> column = new ArrayList<>();
+        for (int i = 0; i < colMappingList.size(); i++) {
+            column.add(DataxCsvReader.Column.builder().index(i).build());
+        }
+        String path = CsvUtil.getCsvPath(csvInfo, comparisonJob.getTenantId(), jobCode, syncType);
+        dataxCsvReader.setParameter(DataxCsvReader.Parameter.builder()
+                .fieldDelimiter("\u0001")
+                .encoding("utf-8")
+                .path(new String[]{path})
+                .column(column)
+                .build());
+        return dataxCsvReader;
     }
 
     private void writeToCsv(ComparisonJob comparisonJob,
@@ -114,7 +137,7 @@ public class CsvSinkHandler implements BaseSinkHandler {
             writer.writeAll(data);
         } catch (IOException e) {
             // ignore
-            log.warn("ICSVWriter IOException",e);
+            log.warn("ICSVWriter IOException", e);
         }
     }
 

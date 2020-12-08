@@ -37,6 +37,16 @@ public abstract class BasePreTransformHook implements PreTransformHook {
     protected abstract DataInfo prepareDataInfo(Long tenantId, AppConf appConf);
 
     /**
+     * 生成预比对sql集合
+     *
+     * @param dataInfo          两个数据源的基本信息，如ComparisonInfo或PrestoInfo
+     * @param skipConditionList List<SkipCondition>
+     * @return List<String>
+     */
+    protected abstract List<String> generateSqlByCondition(DataInfo dataInfo,
+                                                           List<SkipCondition> skipConditionList);
+
+    /**
      * 执行sql并计算是否跳过
      *
      * @param tenantId      租户id
@@ -50,13 +60,4 @@ public abstract class BasePreTransformHook implements PreTransformHook {
                                                      List<String> sqlList,
                                                      HandlerResult handlerResult);
 
-    /**
-     * 生成预比对sql集合
-     *
-     * @param dataInfo          两个数据源的基本信息，如ComparisonInfo或PrestoInfo
-     * @param skipConditionList List<SkipCondition>
-     * @return List<String>
-     */
-    protected abstract List<String> generateSqlByCondition(DataInfo dataInfo,
-                                                           List<SkipCondition> skipConditionList);
 }

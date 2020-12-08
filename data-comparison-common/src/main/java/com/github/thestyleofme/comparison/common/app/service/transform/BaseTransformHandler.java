@@ -27,4 +27,13 @@ public interface BaseTransformHandler {
                 Map<String, Object> env,
                 Map<String, Object> transformMap,
                 HandlerResult handlerResult);
+
+    /**
+     * 对BaseTransformHandler创建代理
+     *
+     * @return BaseTransformHandler
+     */
+    default BaseTransformHandler proxy() {
+        return this;
+    }
 }

@@ -2,14 +2,13 @@ package com.github.thestyleofme.comparison.phoenix;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
@@ -17,7 +16,9 @@ import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandle
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.domain.entity.Reader;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.RowTypeEnum;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
@@ -26,6 +27,7 @@ import com.github.thestyleofme.comparison.common.infra.utils.ThreadPoolUtil;
 import com.github.thestyleofme.comparison.phoenix.constant.PhoenixConstant;
 import com.github.thestyleofme.comparison.phoenix.context.PhoenixDatasourceHolder;
 import com.github.thestyleofme.comparison.phoenix.pojo.DatasourceInfo;
+import com.github.thestyleofme.comparison.phoenix.pojo.DataxPhoenixReader;
 import com.github.thestyleofme.comparison.phoenix.utils.PhoenixHelper;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,8 @@ import org.springframework.util.CollectionUtils;
 public class PhoenixSinkHandler implements BaseSinkHandler {
 
     private final ExecutorService executorService = ThreadPoolUtil.getExecutorService();
+    public static final Pattern PHOENIX_JDBC_PATTERN = Pattern.compile("jdbc:phoenix:thin:url=(.*?)");
+    public static final String PHOENIX_SERIALIZATION = ";serialization=";
 
     @Override
     public void handle(ComparisonJob comparisonJob,
@@ -138,4 +142,51 @@ public class PhoenixSinkHandler implements BaseSinkHandler {
         CommonUtil.completableFutureAllOf(futureList);
         log.debug("execute sql cost: {}", HandlerUtil.timestamp2String(Duration.between(start, LocalDateTime.now()).toMillis()));
     }
+
+    @Override
+    public Reader dataxReader(ComparisonJob comparisonJob, Map<String, Object> sinkMap, Integer syncType) {
+        // 生成phoenix查询sql
+        String jobName = comparisonJob.getJobCode();
+        List<ColMapping> colMappingList = CommonUtil.getColMappingList(comparisonJob);
+        String sql = genPhoenixQuerySql(colMappingList, jobName, syncType);
+        // 封装datax phoenix reader
+        return genDataxPhoenixReader(sinkMap, sql);
+    }
+
+    private DataxPhoenixReader genDataxPhoenixReader(Map<String, Object> sinkMap, String sql) {
+        String jdbcUrl = (String) sinkMap.get(DatasourceInfo.FIELD_JDBC_URL);
+        Matcher matcher = PHOENIX_JDBC_PATTERN.matcher(jdbcUrl);
+        String queryServerAddress;
+        if (matcher.matches()) {
+            queryServerAddress = matcher.group(1);
+        } else {
+            throw new HandlerException(ErrorCode.JOB_PHOENIX_JDBC_URL_NOT_FOUND);
+        }
+        DataxPhoenixReader dataxPhoenixReader = new DataxPhoenixReader();
+        dataxPhoenixReader.setParameter(DataxPhoenixReader.Parameter.builder()
+                .queryServerAddress(queryServerAddress)
+                .querySql(Collections.singletonList(sql))
+                .build());
+        if (queryServerAddress.contains(PHOENIX_SERIALIZATION)) {
+            String serialization = queryServerAddress.substring(queryServerAddress.indexOf(PHOENIX_SERIALIZATION) + PHOENIX_SERIALIZATION.length() + 1);
+            dataxPhoenixReader.getParameter().setSerialization(serialization);
+        }
+        return dataxPhoenixReader;
+    }
+
+    private String genPhoenixQuerySql(List<ColMapping> colMappingList, String jobName, Integer rowType) {
+        String selectColumns = colMappingList.stream()
+                .map(colMapping -> String.format("\"0\".\"%s\"", colMapping.getSourceCol()))
+                .collect(Collectors.joining(", "));
+        StringBuilder stringBuilder = new StringBuilder("SELECT ");
+        stringBuilder.append(selectColumns).append(" FROM data_audit.audit_result(");
+        String fromColumns = colMappingList.stream()
+                .map(colMapping -> String.format("\"0\".\"%s\" VARCHAR", colMapping.getSourceCol()))
+                .collect(Collectors.joining(", "));
+        stringBuilder.append(fromColumns).append(")");
+        stringBuilder.append("WHERE \"-1\".job_name='").append(jobName).append("' ");
+        stringBuilder.append("AND \"-1\".row_type=").append(rowType);
+        return stringBuilder.toString();
+    }
+
 }

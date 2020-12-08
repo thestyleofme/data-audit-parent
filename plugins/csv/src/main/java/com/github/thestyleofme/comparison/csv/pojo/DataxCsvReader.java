@@ -13,14 +13,18 @@ import lombok.*;
  * @since 1.0.0
  */
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = false)
-@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DataxCsvReader implements Reader {
-    private String name;
+public class DataxCsvReader extends Reader {
+
+    public static final String DATAX_READER_NAME = "txtfilereader";
+
     private Parameter parameter;
+
+    public DataxCsvReader() {
+        this.setName(DATAX_READER_NAME);
+    }
 
     @Data
     @NoArgsConstructor

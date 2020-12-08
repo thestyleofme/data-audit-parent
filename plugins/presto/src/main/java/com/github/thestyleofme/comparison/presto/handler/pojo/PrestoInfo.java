@@ -25,6 +25,7 @@ public class PrestoInfo implements DataInfo {
     private String coordinatorUrl;
     private String username;
 
+
     private SelectTableInfo source;
     private SelectTableInfo target;
     private List<ColMapping> indexMapping;

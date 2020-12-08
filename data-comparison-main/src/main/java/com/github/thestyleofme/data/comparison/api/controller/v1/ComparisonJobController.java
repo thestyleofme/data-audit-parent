@@ -69,7 +69,8 @@ public class ComparisonJobController {
     public ResponseEntity<Reader> getDataxReader(@PathVariable(name = "organizationId") Long tenantId,
                                                  @RequestBody ComparisonJob comparisonJob,
                                                  @RequestParam(value = "syncType", required = false, defaultValue = "0") Integer syncType) {
-        Reader reader = comparisonJobService.getDataxReader(tenantId, comparisonJob, syncType);
+        comparisonJob.setTenantId(tenantId);
+        Reader reader = comparisonJobService.getDataxReader(comparisonJob, syncType);
         return ResponseEntity.ok(reader);
     }
 

@@ -19,6 +19,7 @@ import lombok.*;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ComparisonInfo implements DataInfo {
+
     private SelectTableInfo source;
     private SelectTableInfo target;
     private List<ColMapping> indexMapping;

@@ -7,4 +7,5 @@ package com.github.thestyleofme.comparison.common.domain.entity;
  * @since 1.0.0
  */
 public interface DataInfo {
+
 }

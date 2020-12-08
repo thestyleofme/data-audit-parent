@@ -18,6 +18,7 @@ import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
+import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -36,18 +37,15 @@ import org.springframework.util.StringUtils;
 @SinkType("EXCEL")
 @Slf4j
 public class ExcelSinkTypeHandler implements BaseSinkHandler {
+
     @Override
     public void handle(ComparisonJob comparisonJob,
                        Map<String, Object> env,
                        Map<String, Object> sinkMap,
                        HandlerResult handlerResult) {
         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
-        String fileOutputPath = excelInfo.getOutputPath();
-        if (StringUtils.isEmpty(fileOutputPath)) {
-            // when sinkType=EXCEL, fileOutputPath default path: {project}/excel/
-            fileOutputPath = ExcelUtil.getExcelPath(comparisonJob);
-        }
-        String excelName = String.format("%s/%d_%s.xlsx", fileOutputPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
+        String excelPath = getExcelPath(excelInfo, comparisonJob);
+        String excelName = String.format("%s/%d_%s.xlsx", excelPath, comparisonJob.getTenantId(), comparisonJob.getJobCode());
         checkExcelFile(excelName);
         List<List<String>> sourceExcelHeader = ExcelUtil.getSourceExcelHeader(comparisonJob);
         List<List<String>> sourceToTargetHeader = ExcelUtil.getSourceToTargetHeader(comparisonJob);
@@ -66,6 +64,37 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
             }
         }
         log.debug("output to excel[{}] end", excelName);
+    }
+
+    private String getExcelPath(ExcelInfo excelInfo, ComparisonJob comparisonJob) {
+        String fileOutputPath = excelInfo.getOutputPath();
+        if (StringUtils.isEmpty(fileOutputPath)) {
+            // when sinkType=EXCEL, fileOutputPath default path: {project}/excel/
+            fileOutputPath = ExcelUtil.getExcelPath(comparisonJob);
+        }
+        return fileOutputPath;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public BaseSinkHandler proxy() {
+        return CommonUtil.createProxy(
+                this.getClass().getClassLoader(),
+                BaseSinkHandler.class,
+                (proxy, method, args) -> {
+                    try {
+                        return method.invoke(this, args);
+                    } catch (Exception e) {
+                        // 抛异常需要将文件删除
+                        Map<String, Object> sinkMap = (Map<String, Object>) args[2];
+                        ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
+                        ComparisonJob comparisonJob = (ComparisonJob) args[0];
+                        String excelPath = getExcelPath(excelInfo, comparisonJob);
+                        CommonUtil.deleteFile(comparisonJob, excelPath);
+                        throw e;
+                    }
+                }
+        );
     }
 
     private void checkExcelFile(String excelName) {

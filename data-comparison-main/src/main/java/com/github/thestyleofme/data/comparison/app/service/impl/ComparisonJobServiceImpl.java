@@ -19,14 +19,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.pretransform.BasePreTransformHook;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
-import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
-import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.DeployInfo;
 import com.github.thestyleofme.comparison.common.domain.JobEnv;
@@ -210,10 +207,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             String key = entry.getKey().toUpperCase();
             BaseSinkHandler baseSinkHandler = jobHandlerContext.getSinkHandler(key);
             // 可对BaseSinkHandler创建代理
-            SinkHandlerProxy sinkHandlerProxy = jobHandlerContext.getSinkHandlerProxy(key);
-            if (sinkHandlerProxy != null) {
-                baseSinkHandler = sinkHandlerProxy.proxy(baseSinkHandler);
-            }
+            baseSinkHandler = baseSinkHandler.proxy();
             baseSinkHandler.handle(comparisonJob, env, entry.getValue(), handlerResult);
         }
     }
@@ -225,10 +219,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             String key = entry.getKey().toUpperCase();
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);
             // 可对BaseTransformHandler创建代理
-            TransformHandlerProxy transformHandlerProxy = jobHandlerContext.getTransformHandlerProxy(key);
-            if (transformHandlerProxy != null) {
-                transformHandler = transformHandlerProxy.proxy(transformHandler);
-            }
+            transformHandler = transformHandler.proxy();
             transformHandler.handle(comparisonJob, env, entry.getValue(), handlerResult);
         }
     }
@@ -322,7 +313,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     }
 
     @Override
-    public Reader getDataxReader(Long tenantId, ComparisonJob comparisonJob, Integer syncType) {
+    public Reader getDataxReader(ComparisonJob comparisonJob, Integer syncType) {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
         Map<String, Map<String, Object>> sinkMaps = appConf.getSink();
         if (CollectionUtils.isEmpty(sinkMaps)) {
@@ -336,8 +327,8 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             throw new HandlerException(ErrorCode.DATAX_TYPE_NOT_FOUND);
         }
         Map.Entry<String, Map<String, Object>> entry = first.get();
-        BaseDataxReaderGenerator dataxReaderGenerator = jobHandlerContext.getDataxReaderGenerator(entry.getKey());
-        return dataxReaderGenerator.generate(tenantId, comparisonJob, entry.getValue(), syncType);
+        BaseSinkHandler sinkHandler = jobHandlerContext.getSinkHandler(entry.getKey());
+        return sinkHandler.dataxReader(comparisonJob, entry.getValue(), syncType);
     }
 
     private void doPreTransform(Long tenantId, AppConf appConf, HandlerResult handlerResult) {
@@ -355,7 +346,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                 .findFirst()
                 .orElseThrow(() -> new HandlerException(ErrorCode.PRE_TRANSFORM_CLASS_NOT_FOUND));
         List<SkipCondition> skipConditionList = JsonUtil.toArray(JsonUtil.toJson(preTransform.get("skipCondition")), SkipCondition.class);
-        //拼sql执行 skipCondition是否都满足 满足则跳过即抛一个指定异常，交由上游处理
+        // 拼sql执行 skipCondition是否都满足 满足则跳过即抛一个指定异常，交由上游处理
         if (preTransformHook.skip(tenantId, appConf, skipConditionList, handlerResult)) {
             log.info("skip transform");
             throw new SkipAuditException(ErrorCode.PRE_TRANSFORM_SKIP_INFO);

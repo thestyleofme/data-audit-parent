@@ -41,7 +41,7 @@ CREATE TABLE `xadt_comparison_job`  (
                                         `last_update_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
                                         PRIMARY KEY (`job_id`) USING BTREE,
                                         INDEX `xadt_comparison_job_u1`(`group_code`, `tenant_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for xadt_comparison_job_group
@@ -65,6 +65,48 @@ CREATE TABLE `xadt_comparison_job_group`  (
                                               `last_update_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
                                               PRIMARY KEY (`group_id`) USING BTREE,
                                               INDEX `xadt_job_group_u1`(`group_code`, `tenant_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for xadt_presto_catalog
+-- ----------------------------
+DROP TABLE IF EXISTS `xadt_presto_catalog`;
+CREATE TABLE `xadt_presto_catalog`  (
+                                        `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                        `cluster_code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT '对应presto_cluster表cluster_code',
+                                        `catalog_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+                                        `connector_name` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+                                        `properties` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'json字符串',
+                                        `tenant_id` bigint(20) NULL DEFAULT 0 COMMENT '租户ID',
+                                        `object_version_number` bigint(20) NOT NULL DEFAULT 1 COMMENT '版本号',
+                                        `creation_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+                                        `created_by` int(11) NOT NULL DEFAULT -1,
+                                        `last_updated_by` int(11) NOT NULL DEFAULT -1,
+                                        `last_update_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+                                        PRIMARY KEY (`id`) USING BTREE,
+                                        INDEX `xadt_presto_catalog_u1`(`cluster_code`, `catalog_name`, `tenant_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for xadt_presto_cluster
+-- ----------------------------
+DROP TABLE IF EXISTS `xadt_presto_cluster`;
+CREATE TABLE `xadt_presto_cluster`  (
+                                        `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                        `cluster_code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+                                        `datasource_code` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '最好与数据源表对应，即该cluster与presto数据源映射',
+                                        `cluster_desc` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL,
+                                        `coordinator_url` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+                                        `username` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT 'presto' COMMENT '默认presto',
+                                        `enabled_flag` tinyint(1) NULL DEFAULT 1,
+                                        `tenant_id` bigint(20) NULL DEFAULT 0 COMMENT '租户ID',
+                                        `object_version_number` bigint(20) NOT NULL DEFAULT 1 COMMENT '版本号',
+                                        `creation_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+                                        `created_by` int(11) NOT NULL DEFAULT -1,
+                                        `last_updated_by` int(11) NOT NULL DEFAULT -1,
+                                        `last_update_date` datetime(0) NOT NULL DEFAULT CURRENT_TIMESTAMP(0),
+                                        PRIMARY KEY (`id`) USING BTREE,
+                                        INDEX `xadt_presto_cluster_u1`(`cluster_code`, `tenant_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;

@@ -51,24 +51,6 @@ public class PrestoPreTransformHook extends BasePreTransformHook {
     }
 
     @Override
-    protected boolean execSqlAndComputeSkip(Long tenantId, DataInfo dataInfo, List<String> sqlList,
-                                            HandlerResult handlerResult) {
-        PrestoInfo prestoInfo = (PrestoInfo) dataInfo;
-        String sql = String.join("\n", sqlList);
-        List<List<Map<String, Object>>> result = prestoExecutor.executeSql(tenantId, prestoInfo, sql);
-        List<Boolean> values = result.stream().map(list ->
-                Optional.ofNullable(list.get(0))
-                        .map(map -> (long) map.get("_result") == 1L)
-                        .orElseThrow(() -> new HandlerException(ErrorCode.PRE_TRANSFORM_RESULT_NOT_FOUND)))
-                .collect(Collectors.toList());
-        // 封装预处理结果
-        ResultStatistics statistics = handlerResult.getResultStatistics();
-        statistics.setPreAuditResult(JsonUtil.toJson(values));
-        return values.stream().allMatch(Boolean.TRUE::equals);
-    }
-
-
-    @Override
     protected List<String> generateSqlByCondition(DataInfo dataInfo,
                                                   List<SkipCondition> skipConditionList) {
         PrestoInfo prestoInfo = (PrestoInfo) dataInfo;
@@ -87,6 +69,23 @@ public class PrestoPreTransformHook extends BasePreTransformHook {
                         skipCondition.getSource(), sourceTableName, skipCondition.getTarget(), targetTableName,
                         skipCondition.getOperation()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    protected boolean execSqlAndComputeSkip(Long tenantId, DataInfo dataInfo, List<String> sqlList,
+                                            HandlerResult handlerResult) {
+        PrestoInfo prestoInfo = (PrestoInfo) dataInfo;
+        String sql = String.join("\n", sqlList);
+        List<List<Map<String, Object>>> result = prestoExecutor.executeSql(tenantId, prestoInfo, sql);
+        List<Boolean> values = result.stream().map(list ->
+                Optional.ofNullable(list.get(0))
+                        .map(map -> (long) map.get("_result") == 1L)
+                        .orElseThrow(() -> new HandlerException(ErrorCode.PRE_TRANSFORM_RESULT_NOT_FOUND)))
+                .collect(Collectors.toList());
+        // 封装预处理结果
+        ResultStatistics statistics = handlerResult.getResultStatistics();
+        statistics.setPreAuditResult(JsonUtil.toJson(values));
+        return values.stream().allMatch(Boolean.TRUE::equals);
     }
 
 }

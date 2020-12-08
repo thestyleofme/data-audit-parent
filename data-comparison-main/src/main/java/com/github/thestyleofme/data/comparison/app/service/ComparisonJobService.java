@@ -56,12 +56,11 @@ public interface ComparisonJobService extends IService<ComparisonJob> {
     /**
      * 生成不同来源的datax reader
      *
-     * @param tenantId      租户id
      * @param comparisonJob job任务
      * @param syncType      数据同步类型 0：插入；1：删除；2：更新
      * @return datax reader的内容
      */
-    Reader getDataxReader(Long tenantId, ComparisonJob comparisonJob, Integer syncType);
+    Reader getDataxReader(ComparisonJob comparisonJob, Integer syncType);
 
     /**
      * 下载稽核结果文件

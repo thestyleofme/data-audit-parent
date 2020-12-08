@@ -47,13 +47,11 @@ public class PrestoJobHandler implements BaseTransformHandler {
                        Map<String, Object> env,
                        Map<String, Object> transformMap,
                        HandlerResult handlerResult) {
-
         LocalDateTime startTime = LocalDateTime.now();
         Long tenantId = comparisonJob.getTenantId();
         PrestoInfo prestoInfo = PrestoUtils.getPrestoInfo(tenantId, env, transformMap, clusterService);
         // do 数据稽核流程
         doTransform(tenantId, prestoInfo, handlerResult);
-
         LocalDateTime endTime = LocalDateTime.now();
         log.debug("job time cost :" + Duration.between(endTime, startTime));
     }

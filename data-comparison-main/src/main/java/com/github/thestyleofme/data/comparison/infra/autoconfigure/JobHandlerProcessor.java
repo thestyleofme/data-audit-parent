@@ -2,13 +2,9 @@ package com.github.thestyleofme.data.comparison.infra.autoconfigure;
 
 import java.util.Optional;
 
-import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
-import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
-import com.github.thestyleofme.comparison.common.app.service.transform.TransformHandlerProxy;
-import com.github.thestyleofme.comparison.common.infra.annotation.DataxReaderType;
 import com.github.thestyleofme.comparison.common.infra.annotation.DeployType;
 import com.github.thestyleofme.comparison.common.infra.annotation.SinkType;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
@@ -40,7 +36,6 @@ public class JobHandlerProcessor implements BeanPostProcessor {
         doTransform(bean, clazz);
         doSink(bean, clazz);
         doDeploy(bean, clazz);
-        doDatax(bean, clazz);
         return bean;
     }
 
@@ -50,9 +45,6 @@ public class JobHandlerProcessor implements BeanPostProcessor {
             String key = transformType.value();
             if (bean instanceof BaseTransformHandler) {
                 jobHandlerContext.register(key.toUpperCase(), (BaseTransformHandler) bean);
-            }
-            if (bean instanceof TransformHandlerProxy) {
-                jobHandlerContext.register(key.toUpperCase(), (TransformHandlerProxy) bean);
             }
         }
     }
@@ -64,9 +56,6 @@ public class JobHandlerProcessor implements BeanPostProcessor {
             if (bean instanceof BaseSinkHandler) {
                 jobHandlerContext.register(value.toUpperCase(), (BaseSinkHandler) bean);
             }
-            if (bean instanceof SinkHandlerProxy) {
-                jobHandlerContext.register(value.toUpperCase(), (SinkHandlerProxy) bean);
-            }
         }
     }
 
@@ -76,17 +65,6 @@ public class JobHandlerProcessor implements BeanPostProcessor {
                 value -> {
                     if (bean instanceof BaseDeployHandler) {
                         jobHandlerContext.register(value.toUpperCase(), (BaseDeployHandler) bean);
-                    }
-                }
-        );
-    }
-
-    private void doDatax(Object bean, Class<?> clazz) {
-        DataxReaderType dataxReaderType = clazz.getAnnotation(DataxReaderType.class);
-        Optional.ofNullable(dataxReaderType).map(DataxReaderType::value).ifPresent(
-                value -> {
-                    if (bean instanceof BaseDataxReaderGenerator) {
-                        jobHandlerContext.register(value.toUpperCase(), (BaseDataxReaderGenerator) bean);
                     }
                 }
         );

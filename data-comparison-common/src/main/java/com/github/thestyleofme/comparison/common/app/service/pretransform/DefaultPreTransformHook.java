@@ -37,17 +37,18 @@ public class DefaultPreTransformHook extends BasePreTransformHook {
     }
 
     @Override
-    protected boolean execSqlAndComputeSkip(Long tenantId, DataInfo dataInfo, List<String> sqlList,
+    protected List<String> generateSqlByCondition(DataInfo dataInfo, List<SkipCondition> skipConditionList) {
+        return null;
+    }
+
+
+    @Override
+    protected boolean execSqlAndComputeSkip(Long tenantId, DataInfo dataInfo,
+                                            List<String> sqlList,
                                             HandlerResult handlerResult) {
         ComparisonInfo comparisonInfo = (ComparisonInfo) dataInfo;
         // todo 预处理
         return true;
     }
-
-    @Override
-    protected List<String> generateSqlByCondition(DataInfo dataInfo, List<SkipCondition> skipConditionList) {
-        return null;
-    }
-
 
 }

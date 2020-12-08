@@ -46,9 +46,9 @@ xadt_comparison_job_group是定义到数据库级别的配置，与xadt_comparis
 
 #### 数据稽核任务json配置
 
-说明：数据稽核任务的json存储在xadt_comparison_job表的app_conf字段中
+说明：xadt_comparison_job表的app_conf即为数据稽核任务的json配置文件
 
-在执行数据预处理、数据稽核、数据导出时都会使用到
+在执行数据稽核预处理、数据稽核、数据导出时都会使用到
 
 ##### json参数说明
 
@@ -61,54 +61,52 @@ xadt_comparison_job_group是定义到数据库级别的配置，与xadt_comparis
 > sink：数据导出方式配置
 
 - source/target
-  - 描述：源端或目标端信息配置
-  - 参数
-    - catalog：非必选，仅稽核引擎为presto时用到
-    - dataSourceCode：非必选，与catalog二选一，平台数据源的DatasourceCode
-    - schema：数据库名
-    - table：表名
-    - where：表级的where条件限制
-    - globalWhere：库级别的where条件限制，来自xadt_comparison_job_group的target_where/source_where
-  - 必选：是
+    - 描述：源端或目标端信息配置
+    - 参数
+        - catalog：非必选，仅稽核引擎为presto时用到
+        - dataSourceCode：非必选，与catalog二选一，平台数据源的DatasourceCode
+        - schema：数据库名
+        - table：表名
+        - where：表级的where条件限制
+        - globalWhere：库级别的where条件限制，来自xadt_comparison_job_group的target_where/source_where
+    - 必选：是
 - indexMapping
-  - 描述：主键或唯一索引配置（对象数组）
-    - sourceCol：源端字段
-    - targetCol：目标端字段
-  - 必选：否，推荐使用，加快稽核速度
+    - 描述：主键或唯一索引配置（对象数组）
+        - sourceCol：源端字段
+        - targetCol：目标端字段
+    - 必选：否，推荐使用，加快稽核速度
 - colMapping
-  - 描述：源端与目标端所有字段的映射（对象数组）
-    - sourceCol
-    - targetCol
-    - selected：是否是需要对比的字段，true/false
-    - index：字段顺序
-  - 必选：是
+    - 描述：源端与目标端所有字段的映射（对象数组）
+        - sourceCol
+        - targetCol
+        - selected：是否是需要对比的字段，true/false
+        - index：字段顺序
+    - 必选：是
 - preTransformType
-  - 描述：预处理使用哪种方式进行（目前只有presto，仅在稽核引擎为presto时有效）
-  - 必选：是
+    - 描述：预处理使用哪种方式进行（目前只有presto，仅在稽核引擎为presto时有效）
+    - 必选：是
 - skipCondition
-  - 描述：预处理时，跳过稽核流程的条件，当条件都为true时，跳过稽核
-  - 必选：否
+    - 描述：预处理时，跳过稽核流程的条件，当条件都为true时，跳过稽核
+    - 必选：否
 - transform
-  - 描述：配置稽核引擎，目前支持presto/java
-    - presto
-      - dataSourceCode：配置平台上的DataSourceCode
-      - coordinatorUrl：presto的url，与dataSourceCode二选一，同时配置时，优先使用dataSourceCode
-      - username：与coordinatorUrl搭配使用，访问presto的用户名
-      - clusterCode：presto集群code，据此获取xadt_presto_cluster表中的DatasourceCode或url
-    - java
-      - 暂无内容配置
+    - 描述：配置稽核引擎，目前支持presto/java
+        - presto
+            - dataSourceCode：配置平台上的DataSourceCode
+            - coordinatorUrl：presto的url，与dataSourceCode二选一，同时配置时，优先使用dataSourceCode
+            - username：与coordinatorUrl搭配使用，访问presto的用户名
+            - clusterCode：presto集群code，据此获取xadt_presto_cluster表中的DatasourceCode或url
+        - java
+            - 暂无内容配置
 - sink
-  - excel
-    - 描述：excel导出稽核结果，内置的输出方式
-    - outputPath ：配置excel导出路径，默认导出在{project}/excel/tenantId_jobCode.xlsx，推荐默认路径。非必选
-  - csv
-    - 描述：csv导出
-    - path ：配置csv导出路径，默认导出在{project}/excel/tenantId_jobCode_type.xlsx，推荐默认路径。非必选
-  - phoenix
-    - 描述：导出到hbase中
-    - jdbcUrl：phoenix连接url，必选
-
-
+    - excel
+        - 描述：excel导出稽核结果，内置的输出方式
+        - outputPath ：配置excel导出路径，默认导出在{project}/excel/tenantId_jobCode.xlsx，推荐默认路径。非必选
+    - csv
+        - 描述：csv导出
+        - path ：配置csv导出路径，默认导出在{project}/excel/tenantId_jobCode_type.xlsx，推荐默认路径。非必选
+    - phoenix
+        - 描述：导出到hbase中
+        - jdbcUrl：phoenix连接url，必选
 
 ---
 
@@ -124,7 +122,7 @@ plugins（稽核模块插件）
 
 --> presto（数据稽核引擎）
 
---> sink-csv（数据导出）
+--> csv（数据导出）
 
 presto-catalog（二开的presto配置API）
 
@@ -147,13 +145,13 @@ presto-catalog（二开的presto配置API）
 
 ==> 保存统计数据和预处理结果，更新任务状态
 
+![执行流程图解](images/job_executor.png)
+
 ---
 
 #### 预处理模块（preTransform）
 
-> 当满足某些条件时，可以认为源端和目标端的数据时一致的，可以跳过稽核流程，因此先进行预比对处理，看是否需要继续执行后续稽核。
-
-该模块目前只支持基于presto进行稽核的预比对
+> 当满足某些条件时，可以认为源端和目标端的数据是一致的，可以跳过稽核流程，因此先进行预比对处理，看是否需要继续执行后续稽核。
 
 扩展方式：
 
@@ -164,11 +162,12 @@ com.github.thestyleofme.comparison.common.app.service.pretransform.BasePreTransf
 例：
 
 ```java
+
 @Component
 public class PrestoPreTransformHook extends BasePreTransformHook {
+
+}
 ```
-
-
 
 ---
 
@@ -189,10 +188,13 @@ com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHan
 例：
 
 ```java
+
 @Component
 @Slf4j
 @TransformType(value = "PRESTO")
 public class PrestoJobHandler implements BaseTransformHandler {
+
+}
 ```
 
 ---
@@ -212,10 +214,13 @@ com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler
 例：
 
 ```java
+
 @Component
 @SinkType("CSV")
 @Slf4j
 public class CsvSinkHandler implements BaseSinkHandler {
+
+}
 ```
 
 ---
@@ -232,32 +237,23 @@ public class CsvSinkHandler implements BaseSinkHandler {
 
    例：
 
-   ```java
-   @DeployType(CommonConstant.Deploy.EXCEL)
-   @Component
-   @Slf4j
-   public class ExcelDeployHandler implements BaseDeployHandler {
-   ```
+```java
 
-   
+@DeployType(CommonConstant.Deploy.EXCEL)
+@Component
+@Slf4j
+public class ExcelDeployHandler implements BaseDeployHandler {
+
+}
+```
 
 2. 基于datax进行数据补偿（csv、phoenix）
 
-   主模块中有生成datax Reader的接口，该接口会调用BaseDataxReaderGenerator的generate方法，根据入参生成不同的Reader json配置
+   主模块中有生成datax Reader的接口，该接口会调用BaseSinkHandler的dataxReader方法，根据sink配置生成不同的Datax Reader json配置
 
    扩展：
 
-   com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator
-
-   在实现导出的模块中，添加一个实现类继承BaseDataxReaderGenerator，实现generate方法，并添加@Component和@DataxReaderType标签
-
-   例：
-
-   ```java
-   @DataxReaderType("CSV")
-   @Component
-   public class DataxCsvReaderGenerator implements BaseDataxReaderGenerator {
-   ```
+   com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler#dataxReader
 
    
 
