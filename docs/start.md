@@ -145,8 +145,6 @@ presto-catalog（二开的presto配置API）
 
 ==> 保存统计数据和预处理结果，更新任务状态
 
-![执行流程图解](images/job_executor.png)
-
 ---
 
 #### 预处理模块（preTransform）
@@ -179,11 +177,15 @@ public class PrestoPreTransformHook extends BasePreTransformHook {
 
 com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler
 
-扩展稽核引擎：
+稽核引擎：
 
-继承BaseTransformHandler接口，实现该接口中的handle方法，并在实现类上添加@TransformType和@Component标签
+实现BaseTransformHandler接口，实现该接口中的handle方法，并在实现类上添加@TransformType和@Component标签
 
 在任务执行时，根据json中transform模块中的配置信息，匹配TransformType中的值，选择对应的稽核引擎进行稽核流程。
+
+扩展：
+
+实现该接口的proxy方法，可代理本对象，做一些增强，如发生异常后做一些全局处理等
 
 例：
 
@@ -205,11 +207,15 @@ public class PrestoJobHandler implements BaseTransformHandler {
 
 目前支持的导出方式：excel（内置），csv，phoenix
 
-扩展方式：
-
 com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler
 
-继承该接口，实现handle方法，添加@Component和@SinkType标签，执行时根据配置文件中sink模块的配置信息匹配SinkType标签中的值，选择对应的实现类进行处理。
+实现该接口，实现handle方法，添加@Component和@SinkType标签，执行时根据配置文件中sink模块的配置信息匹配SinkType标签中的值，选择对应的实现类进行处理。
+
+扩展：
+
+- 实现该接口的proxy方法，可代理本对象，做一些增强，如导出excel中，若导出发生异常，可删除创建的excel文件。
+
+- 若该导出方式支持datax，可实现接口的dataxReader方法，生成datax reader的信息，可参考csv以及phoenix。
 
 例：
 
@@ -229,11 +235,11 @@ public class CsvSinkHandler implements BaseSinkHandler {
 
 > 将**仅源端有**、**仅目标端有**、**主键或唯一索引一致其他字段不一致**，这三种差异性数据根据补偿策略，通过数据源或者datax补偿到源端
 
-1. 基于数据源进行数据补偿（仅excel）
+1. 导入excel基于数据源进行数据补偿
 
    com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler
 
-   继承该接口，实现handle方法，将导出到第三方的稽核结果根据补偿策略补偿到目标端，数据补偿时，需要依赖数据稽核任务的job信息
+   继承该接口，实现handle方法，将excel稽核结果根据补偿策略补偿到不同目标端，实现方式基于多数据源
 
    例：
 
@@ -247,9 +253,9 @@ public class ExcelDeployHandler implements BaseDeployHandler {
 }
 ```
 
-2. 基于datax进行数据补偿（csv、phoenix）
+2. 基于datax进行数据补偿（如csv、phoenix）
 
-   主模块中有生成datax Reader的接口，该接口会调用BaseSinkHandler的dataxReader方法，根据sink配置生成不同的Datax Reader json配置
+   若实现了BaseSinkHandler的dataxReader方法，可根据sink配置生成不同的Datax Reader json配置，后续可以使用datax写到不同目标端
 
    扩展：
 
