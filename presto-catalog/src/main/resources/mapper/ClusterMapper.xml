@@ -8,6 +8,7 @@
         <result column="datasource_code" property="datasourceCode" jdbcType="VARCHAR"/>
         <result column="cluster_desc" property="clusterDesc" jdbcType="VARCHAR"/>
         <result column="coordinator_url" property="coordinatorUrl" jdbcType="VARCHAR"/>
+        <result column="username" property="username" jdbcType="VARCHAR"/>
         <result column="enabled_flag" property="enabledFlag" jdbcType="DECIMAL"/>
         <result column="tenant_id" property="tenantId" jdbcType="DECIMAL"/>
         <result column="object_version_number" property="objectVersionNumber" jdbcType="DECIMAL"/>

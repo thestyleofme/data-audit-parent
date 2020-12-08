@@ -30,7 +30,6 @@ public class InsertExcelListener<T> extends BaseExcelListener<T> {
     private final List<String> sqlList = new LinkedList<>();
     private final List<CompletableFuture<?>> completableFutureList = new LinkedList<>();
     private final List<List<String>> excelHeader;
-    private final JobEnv jobEnv;
     private final SelectTableInfo target;
     private final DriverSession driverSession;
     private static final int BATCH_COUNT = 2048;
@@ -39,7 +38,7 @@ public class InsertExcelListener<T> extends BaseExcelListener<T> {
                                String targetDataSourceCode,
                                List<List<String>> excelHeader,
                                DriverSessionService driverSessionService) {
-        this.jobEnv = CommonUtil.getJobEnv(comparisonJob);
+        JobEnv jobEnv = CommonUtil.getJobEnv(comparisonJob);
         this.target = jobEnv.getTarget();
         this.excelHeader = excelHeader;
         this.driverSession = driverSessionService.getDriverSession(comparisonJob.getTenantId(), targetDataSourceCode);

@@ -21,12 +21,10 @@ public interface BaseTransformHandler {
      * @param comparisonJob ComparisonJob
      * @param env           Map
      * @param transformMap  Map
-     * @param preTransform  Map
      * @param handlerResult HandlerResult
      */
     void handle(ComparisonJob comparisonJob,
                 Map<String, Object> env,
-                Map<String, Object> preTransform,
                 Map<String, Object> transformMap,
                 HandlerResult handlerResult);
 }

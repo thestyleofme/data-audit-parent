@@ -71,7 +71,7 @@
     ]
   },
   "preTransform": {
-    "preTransformType": "DEFAULT",
+    "preTransformType": "presto",
     "skipCondition": [
       {
         "source": "count(*)",

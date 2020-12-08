@@ -11,9 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.github.thestyleofme.comparison.common.domain.AppConf;
-import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.*;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
@@ -136,7 +134,8 @@ public class CommonUtil {
         JobEnv jobEnv = JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()), JobEnv.class);
         return getColMappingList(jobEnv);
     }
-    public static List<ColMapping> getColMappingList(JobEnv jobEnv){
+
+    public static List<ColMapping> getColMappingList(JobEnv jobEnv) {
         List<Map<String, Object>> colMapping = jobEnv.getColMapping();
         return colMapping.stream()
                 .map(map -> BeanUtils.map2Bean(map, ColMapping.class))
@@ -153,7 +152,7 @@ public class CommonUtil {
 
     public static JobEnv getJobEnv(ComparisonJob comparisonJob) {
         AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
-        return JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()),JobEnv.class);
+        return JsonUtil.toObj(JsonUtil.toJson(appConf.getEnv()), JobEnv.class);
     }
 
     public static void completableFutureAllOf(List<CompletableFuture<?>> completableFutureList) {
@@ -185,5 +184,28 @@ public class CommonUtil {
             }
         }
         return file.getAbsolutePath();
+    }
+
+    public static ComparisonInfo getComparisonInfo(Map<String, Object> env) {
+        String envJson = JsonUtil.toJson(env);
+        ComparisonInfo comparisonInfo = JsonUtil.toObj(envJson, ComparisonInfo.class);
+
+        // 构建表的完整名字
+        comparisonInfo.setSourceTableName(getTableName(comparisonInfo.getSource()));
+        comparisonInfo.setTargetTableName(getTableName(comparisonInfo.getTarget()));
+        return comparisonInfo;
+    }
+
+    public static String getTableName(SelectTableInfo tableInfo) {
+        String tableName;
+        String catalog = tableInfo.getCatalog();
+        String table = tableInfo.getTable();
+        String schema = tableInfo.getSchema();
+        if (StringUtils.isEmpty(catalog)) {
+            tableName = String.format("%s.%s", schema, table);
+        } else {
+            tableName = String.format("%s.%s.%s", catalog, schema, table);
+        }
+        return tableName;
     }
 }

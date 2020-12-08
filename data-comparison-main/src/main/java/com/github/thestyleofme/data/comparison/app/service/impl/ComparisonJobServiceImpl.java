@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.thestyleofme.comparison.common.app.service.datax.BaseDataxReaderGenerator;
 import com.github.thestyleofme.comparison.common.app.service.deploy.BaseDeployHandler;
+import com.github.thestyleofme.comparison.common.app.service.pretransform.BasePreTransformHook;
 import com.github.thestyleofme.comparison.common.app.service.sink.BaseSinkHandler;
 import com.github.thestyleofme.comparison.common.app.service.sink.SinkHandlerProxy;
 import com.github.thestyleofme.comparison.common.app.service.transform.BaseTransformHandler;
@@ -27,6 +28,7 @@ import com.github.thestyleofme.comparison.common.domain.JobEnv;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJobGroup;
 import com.github.thestyleofme.comparison.common.domain.entity.Reader;
+import com.github.thestyleofme.comparison.common.domain.entity.SkipCondition;
 import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.constants.JobStatusEnum;
@@ -62,12 +64,14 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
 
     private final JobHandlerContext jobHandlerContext;
     private final ComparisonJobGroupService comparisonJobGroupService;
+    private final List<BasePreTransformHook> basePreTransformHookList;
     private final ReentrantLock lock = new ReentrantLock();
 
     public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
-                                    ComparisonJobGroupService comparisonJobGroupService) {
+                                    ComparisonJobGroupService comparisonJobGroupService, List<BasePreTransformHook> basePreTransformHookList) {
         this.jobHandlerContext = jobHandlerContext;
         this.comparisonJobGroupService = comparisonJobGroupService;
+        this.basePreTransformHookList = basePreTransformHookList;
     }
 
     @Override
@@ -130,6 +134,8 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             AppConf appConf = JsonUtil.toObj(comparisonJob.getAppConf(), AppConf.class);
             // env
             Map<String, Object> env = appConf.getEnv();
+            // preTransform
+            doPreTransform(comparisonJob.getTenantId(), appConf, handlerResult);
             // transform
             doTransform(appConf, env, comparisonJob, handlerResult);
             // sink
@@ -206,7 +212,6 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private void doTransform(AppConf appConf,
                              Map<String, Object> env,
                              ComparisonJob comparisonJob, HandlerResult handlerResult) {
-        Map<String, Object> preTransform = appConf.getPreTransform();
         for (Map.Entry<String, Map<String, Object>> entry : appConf.getTransform().entrySet()) {
             String key = entry.getKey().toUpperCase();
             BaseTransformHandler transformHandler = jobHandlerContext.getTransformHandler(key);
@@ -215,7 +220,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
             if (transformHandlerProxy != null) {
                 transformHandler = transformHandlerProxy.proxy(transformHandler);
             }
-            transformHandler.handle(comparisonJob, env, preTransform, entry.getValue(), handlerResult);
+            transformHandler.handle(comparisonJob, env, entry.getValue(), handlerResult);
         }
     }
 
@@ -324,5 +329,27 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         Map.Entry<String, Map<String, Object>> entry = first.get();
         BaseDataxReaderGenerator dataxReaderGenerator = jobHandlerContext.getDataxReaderGenerator(entry.getKey());
         return dataxReaderGenerator.generate(tenantId, comparisonJob, entry.getValue(), syncType);
+    }
+
+    private void doPreTransform(Long tenantId, AppConf appConf, HandlerResult handlerResult) {
+        Map<String, Object> preTransform = appConf.getPreTransform();
+        BasePreTransformHook preTransformHook;
+        // 判断preTransformType是否为空 空即是不走预处理 反之取preTransformType
+        Object preTransformType = preTransform.get("preTransformType");
+        if (Objects.isNull(preTransformType)) {
+            log.info("not found preTransformType skip preTransformType");
+            return;
+        }
+        String type = String.valueOf(preTransformType);
+        preTransformHook = basePreTransformHookList.stream()
+                .filter(hook -> hook.getName().equalsIgnoreCase(type))
+                .findFirst()
+                .orElseThrow(() -> new HandlerException(ErrorCode.PRE_TRANSFORM_CLASS_NOT_FOUND));
+        List<SkipCondition> skipConditionList = JsonUtil.toArray(JsonUtil.toJson(preTransform.get("skipCondition")), SkipCondition.class);
+        //拼sql执行 skipCondition是否都满足 满足则跳过即抛一个指定异常，交由上游处理
+        if (preTransformHook.skip(tenantId, appConf, skipConditionList, handlerResult)) {
+            log.info("skip transform");
+            throw new SkipAuditException(ErrorCode.PRE_TRANSFORM_SKIP_INFO);
+        }
     }
 }

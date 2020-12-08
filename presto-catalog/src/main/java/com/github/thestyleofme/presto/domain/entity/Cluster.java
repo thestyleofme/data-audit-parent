@@ -39,7 +39,8 @@ public class Cluster {
     private String clusterDesc;
     @NotBlank
     private String coordinatorUrl;
-
+    @NotBlank
+    private String username;
     @ApiModelProperty(value = "禁用启用")
     private Integer enabledFlag;
     @ApiModelProperty(value = "租户ID")

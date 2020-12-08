@@ -37,6 +37,7 @@ public class ExcelSinkHandlerProxy implements SinkHandlerProxy {
                         // 抛异常需要将文件删除
                         Map<String, Object> sinkMap = (Map<String, Object>) args[2];
                         ExcelInfo excelInfo = BeanUtils.map2Bean(sinkMap, ExcelInfo.class);
+                        //todo sinkMap中没有配置时，动态获取程序路径
                         ComparisonJob comparisonJob = (ComparisonJob) args[0];
                         CommonUtil.deleteFile(comparisonJob, excelInfo.getOutputPath());
                         throw e;

@@ -42,7 +42,6 @@ public class JavaTransformHandler implements BaseTransformHandler {
     @Override
     public void handle(ComparisonJob comparisonJob,
                        Map<String, Object> env,
-                       Map<String, Object> preTransform,
                        Map<String, Object> transformMap,
                        HandlerResult handlerResult) {
         // todo preTransform

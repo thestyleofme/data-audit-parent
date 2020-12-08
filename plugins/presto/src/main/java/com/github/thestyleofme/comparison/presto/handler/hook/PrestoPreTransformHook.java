@@ -5,13 +5,18 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.github.thestyleofme.comparison.common.app.service.pretransform.BasePreTransformHook;
 import com.github.thestyleofme.comparison.common.app.service.transform.HandlerResult;
+import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
+import com.github.thestyleofme.comparison.common.domain.entity.DataInfo;
+import com.github.thestyleofme.comparison.common.domain.entity.SkipCondition;
 import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
-import com.github.thestyleofme.comparison.presto.handler.pojo.SkipCondition;
 import com.github.thestyleofme.comparison.presto.handler.service.PrestoExecutor;
+import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
+import com.github.thestyleofme.presto.app.service.ClusterService;
 import com.github.thestyleofme.presto.infra.utils.JsonUtil;
 import org.springframework.stereotype.Component;
 
@@ -24,22 +29,31 @@ import org.springframework.stereotype.Component;
  * @since 1.0.0
  */
 @Component
-public class DefaultPreTransformHook extends BasePreTransformHook {
+public class PrestoPreTransformHook extends BasePreTransformHook {
 
     private final PrestoExecutor prestoExecutor;
+    private final ClusterService clusterService;
 
-    public DefaultPreTransformHook(PrestoExecutor prestoExecutor) {
+    public PrestoPreTransformHook(PrestoExecutor prestoExecutor, ClusterService clusterService) {
         this.prestoExecutor = prestoExecutor;
+        this.clusterService = clusterService;
     }
 
     @Override
     public String getName() {
-        return "DEFAULT";
+        return "presto";
     }
 
     @Override
-    protected boolean execSqlAndComputeSkip(Long tenantId, PrestoInfo prestoInfo, List<String> sqlList,
+    protected DataInfo prepareDataInfo(Long tenantId, AppConf appConf) {
+        Map<String, Object> transformMap = appConf.getTransform().get("presto");
+        return PrestoUtils.getPrestoInfo(tenantId, appConf.getEnv(), transformMap, clusterService);
+    }
+
+    @Override
+    protected boolean execSqlAndComputeSkip(Long tenantId, DataInfo dataInfo, List<String> sqlList,
                                             HandlerResult handlerResult) {
+        PrestoInfo prestoInfo = (PrestoInfo) dataInfo;
         String sql = String.join("\n", sqlList);
         List<List<Map<String, Object>>> result = prestoExecutor.executeSql(tenantId, prestoInfo, sql);
         List<Boolean> values = result.stream().map(list ->
@@ -55,7 +69,9 @@ public class DefaultPreTransformHook extends BasePreTransformHook {
 
 
     @Override
-    protected List<String> generateSqlByCondition(PrestoInfo prestoInfo, List<SkipCondition> skipConditionList) {
+    protected List<String> generateSqlByCondition(DataInfo dataInfo,
+                                                  List<SkipCondition> skipConditionList) {
+        PrestoInfo prestoInfo = (PrestoInfo) dataInfo;
         String sourceTableName = prestoInfo.getSourceTableName();
         String targetTableName = prestoInfo.getTargetTableName();
         /*

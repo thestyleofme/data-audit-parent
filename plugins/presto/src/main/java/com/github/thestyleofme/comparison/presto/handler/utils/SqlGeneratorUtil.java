@@ -1,5 +1,7 @@
 package com.github.thestyleofme.comparison.presto.handler.utils;
 
+import static com.github.thestyleofme.comparison.common.infra.utils.SqlUtils.getBothWhereCondition;
+import static com.github.thestyleofme.comparison.common.infra.utils.SqlUtils.getOneWhereCondition;
 import static com.github.thestyleofme.comparison.presto.handler.constants.PrestoConstant.SqlConstant.*;
 
 import java.util.List;
@@ -12,7 +14,6 @@ import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerExcepti
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * <p>
@@ -29,15 +30,10 @@ public class SqlGeneratorUtil {
 
     }
 
-    private static final String SOURCE = "$1";
-    private static final String TARGET = "$2";
-    private static final String SOURCE_NAME = "_a";
-    private static final String TARGET_NAME = "_b";
-    private static final String AND_LEFT = " and (";
 
     public static String generateAuditSql(PrestoInfo prestoInfo) {
         String sql;
-        List<ColMapping> joinMappingList = prestoInfo.getJoinMapping();
+        List<ColMapping> joinMappingList = prestoInfo.getIndexMapping();
         // 如果有指定主键或唯一索引
         if (!CollectionUtils.isEmpty(joinMappingList)) {
             sql = createSqlByPkOrIndex(prestoInfo);
@@ -51,48 +47,6 @@ public class SqlGeneratorUtil {
         return String.format("select %s as _cdt from %s as _a;", condition, table);
     }
 
-    public static String getTableName(SelectTableInfo tableInfo) {
-        return String.format(TABLE_FT, tableInfo.getCatalog(),
-                tableInfo.getSchema(), tableInfo.getTable());
-    }
-
-    private static String getBothWhereCondition(StringBuilder builder, String sourceGlobalWhere, String sourceWhere,
-                                                String targetGlobalWhere, String targetWhere) {
-        builder.setLength(0);
-        builder.append("where 1=1 ");
-        if (!StringUtils.isEmpty(sourceGlobalWhere)) {
-            builder.append(AND_LEFT).append(sourceGlobalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(targetGlobalWhere)) {
-            builder.append(AND_LEFT).append(targetGlobalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(sourceWhere)) {
-            builder.append(AND_LEFT).append(sourceWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(targetWhere)) {
-            builder.append(AND_LEFT).append(targetWhere).append(")");
-        }
-        // 将 $1 $2 替换为_a _b
-        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
-        builder.setLength(0);
-        return result;
-    }
-
-    private static String getOneWhereCondition(StringBuilder builder, String globalWhere, String where) {
-        builder.setLength(0);
-        builder.append("where 1=1 ");
-        if (!StringUtils.isEmpty(globalWhere)) {
-            builder.append(AND_LEFT).append(globalWhere).append(")");
-        }
-        if (!StringUtils.isEmpty(where)) {
-            builder.append(AND_LEFT).append(where).append(")");
-        }
-        // 将 $1 $2 替换为_a _b
-        String result = builder.toString().replace(SOURCE, SOURCE_NAME).replace(TARGET, TARGET_NAME);
-        builder.setLength(0);
-        return result;
-    }
-
     private static String createSqlByPkOrIndex(PrestoInfo prestoInfo) {
         SelectTableInfo target = prestoInfo.getTarget();
         SelectTableInfo source = prestoInfo.getSource();
@@ -100,7 +54,7 @@ public class SqlGeneratorUtil {
         String targetTable = prestoInfo.getTargetTableName();
 
         // 索引的列
-        List<ColMapping> joinMappingList = prestoInfo.getJoinMapping();
+        List<ColMapping> joinMappingList = prestoInfo.getIndexMapping();
         // 所有的列映射信息
         List<ColMapping> colMappingList = prestoInfo.getColMapping();
         // 需要对比的列

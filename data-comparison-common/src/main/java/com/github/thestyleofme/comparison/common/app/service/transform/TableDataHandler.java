@@ -2,14 +2,18 @@ package com.github.thestyleofme.comparison.common.app.service.transform;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import com.github.thestyleofme.comparison.common.domain.JobEnv;
+import com.github.thestyleofme.comparison.common.domain.ColMapping;
+import com.github.thestyleofme.comparison.common.domain.ComparisonInfo;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.SourceDataMapping;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
+import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
+import com.github.thestyleofme.comparison.common.infra.utils.SqlUtils;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
-import com.github.thestyleofme.plugin.core.infra.utils.JsonUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,6 +25,7 @@ import org.springframework.stereotype.Component;
  * @since 1.0.0
  */
 @Component
+@Slf4j
 public class TableDataHandler {
 
     private final DriverSessionService driverSessionService;
@@ -32,40 +37,60 @@ public class TableDataHandler {
     public SourceDataMapping handle(ComparisonJob comparisonJob,
                                     Map<String, Object> env) {
         Long tenantId = comparisonJob.getTenantId();
-        JobEnv jobEnv = JsonUtil.toObj(JsonUtil.toJson(env), JobEnv.class);
-        SelectTableInfo source = jobEnv.getSource();
-        SelectTableInfo target = jobEnv.getTarget();
+        ComparisonInfo comparisonInfo = CommonUtil.getComparisonInfo(env);
+        List<ColMapping> colMapping = comparisonInfo.getColMapping();
+        StringBuilder builder = new StringBuilder();
+        // source
+        SelectTableInfo source = comparisonInfo.getSource();
+        String sourceTableName = comparisonInfo.getSourceTableName();
         String sourceDatasourceCode = source.getDataSourceCode();
         String sourceSchema = source.getSchema();
-        String sourceTable = source.getTable();
+        String sourceWhere = SqlUtils.getOneWhereCondition(builder, source.getGlobalWhere(), source.getWhere());
+        String sourceCol = colMapping.stream()
+                .map(mapping -> String.format("_a.%s", mapping.getSourceCol()))
+                .collect(Collectors.joining(","));
+        // target
+        SelectTableInfo target = comparisonInfo.getTarget();
+        String targetTableName = comparisonInfo.getTargetTableName();
         String targetDatasourceCode = target.getDataSourceCode();
         String targetSchema = target.getSchema();
-        String targetTable = target.getTable();
+        String targetWhere = SqlUtils.getOneWhereCondition(builder, target.getGlobalWhere(), target.getWhere());
+        String targetCol = colMapping.stream()
+                .map(mapping -> String.format("_b.%s", mapping.getTargetCol()))
+                .collect(Collectors.joining(","));
+
         // 封装SourceDataMapping
         SourceDataMapping sourceDataMapping = new SourceDataMapping();
-        // todo 考虑where
-        handleSource(sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTable);
-        handleTarget(sourceDataMapping, tenantId, targetDatasourceCode, targetSchema, targetTable);
+        handleSource(sourceDataMapping, tenantId, sourceDatasourceCode, sourceSchema, sourceTableName, sourceWhere, sourceCol);
+        handleTarget(sourceDataMapping, tenantId, targetDatasourceCode, targetSchema, targetTableName, targetWhere, targetCol);
         return sourceDataMapping;
     }
 
     private void handleSource(SourceDataMapping sourceDataMapping,
                               Long tenantId,
-                              String sourceDatasourceCode,
-                              String sourceSchema,
-                              String sourceTable) {
-        DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, sourceDatasourceCode);
-        List<Map<String, Object>> sourceList = sourceDriverSession.tableQuery(sourceSchema, sourceTable);
+                              String datasourceCode,
+                              String schema,
+                              String tableName,
+                              String whereCondition,
+                              String col) {
+        String sql = String.format("select %s from %s as _a %s", col, tableName, whereCondition);
+        log.info("java transform handlerSource sql:{}", sql);
+        DriverSession sourceDriverSession = driverSessionService.getDriverSession(tenantId, datasourceCode);
+        List<Map<String, Object>> sourceList = sourceDriverSession.executeOneQuery(schema, sql);
         sourceDataMapping.setSourceDataList(sourceList);
     }
 
     private void handleTarget(SourceDataMapping sourceDataMapping,
                               Long tenantId,
-                              String targetDatasourceCode,
-                              String targetSchema,
-                              String targetTable) {
-        DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, targetDatasourceCode);
-        List<Map<String, Object>> targetList = targetDriverSession.tableQuery(targetSchema, targetTable);
+                              String datasourceCode,
+                              String schema,
+                              String tableName,
+                              String whereCondition,
+                              String col) {
+        String sql = String.format("select %s from %s as _b %s", col, tableName, whereCondition);
+        log.info("java transform handlerTarget sql:{}", sql);
+        DriverSession targetDriverSession = driverSessionService.getDriverSession(tenantId, datasourceCode);
+        List<Map<String, Object>> targetList = targetDriverSession.executeOneQuery(schema, sql);
         sourceDataMapping.setTargetDataList(targetList);
     }
 }

@@ -1,16 +1,16 @@
-package com.github.thestyleofme.comparison.presto.handler.pojo;
+package com.github.thestyleofme.comparison.common.domain;
 
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.github.thestyleofme.comparison.common.domain.ColMapping;
-import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.DataInfo;
 import lombok.*;
 
 /**
- * @author hsq
- * @date 2020-11-17 9:38
+ * <p>比较信息Bean</p>
+ *
+ * @author hsq 2020/12/04 11:04
+ * @since 1.0.0
  */
 @Data
 @NoArgsConstructor
@@ -18,21 +18,14 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = false)
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class PrestoInfo implements DataInfo {
-
-    private String dataSourceCode;
-    private String clusterCode;
-    private String coordinatorUrl;
-    private String username;
-
+public class ComparisonInfo implements DataInfo {
     private SelectTableInfo source;
     private SelectTableInfo target;
     private List<ColMapping> indexMapping;
     private List<ColMapping> colMapping;
 
-    // presto database.catalog.tableName 表名
+    // 完整表名，如presto： database.catalog.tableName ，mysql：database.tableName
 
     private String sourceTableName;
     private String targetTableName;
-
 }
