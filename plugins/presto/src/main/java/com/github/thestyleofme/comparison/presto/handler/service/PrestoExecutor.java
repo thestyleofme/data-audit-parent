@@ -9,6 +9,7 @@ import com.github.thestyleofme.comparison.presto.handler.context.JdbcHandler;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
 import com.github.thestyleofme.driver.core.app.service.session.DriverSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,7 @@ import org.springframework.util.StringUtils;
  * @since 1.0.0
  */
 @Service
+@Slf4j
 public class PrestoExecutor {
 
     private final JdbcHandler jdbcHandler;
@@ -38,6 +40,7 @@ public class PrestoExecutor {
             // 走jdbc
             return handleByJdbc(prestoInfo, sql);
         }
+
     }
 
     private List<List<Map<String, Object>>> handleByJdbc(PrestoInfo prestoInfo, String sql) {

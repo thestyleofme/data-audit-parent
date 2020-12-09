@@ -11,6 +11,7 @@ import com.github.thestyleofme.comparison.common.app.service.transform.HandlerRe
 import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
 import com.github.thestyleofme.comparison.common.domain.entity.ComparisonJob;
 import com.github.thestyleofme.comparison.common.infra.annotation.TransformType;
+import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import com.github.thestyleofme.comparison.presto.handler.service.PrestoExecutor;
 import com.github.thestyleofme.comparison.presto.handler.utils.PrestoUtils;
@@ -53,12 +54,16 @@ public class PrestoJobHandler implements BaseTransformHandler {
         // do 数据稽核流程
         doTransform(tenantId, prestoInfo, handlerResult);
         LocalDateTime endTime = LocalDateTime.now();
-        log.debug("job time cost :" + Duration.between(endTime, startTime));
+        log.debug("job time cost :" + HandlerUtil.timestamp2String(Duration.between(startTime, endTime).toMillis()));
     }
 
     private void doTransform(Long tenantId, PrestoInfo prestoInfo, HandlerResult handlerResult) {
         String auditSql = SqlGeneratorUtil.generateAuditSql(prestoInfo);
+        LocalDateTime startTime = LocalDateTime.now();
         List<List<Map<String, Object>>> result = prestoExecutor.executeSql(tenantId, prestoInfo, auditSql);
+        LocalDateTime endTime = LocalDateTime.now();
+        log.info("transform time:{}", HandlerUtil.timestamp2String(Duration.between(startTime, endTime).toMillis()));
+
         // 装载数据到handlerResult
         this.fillHandlerResult(handlerResult, result, auditSql);
 

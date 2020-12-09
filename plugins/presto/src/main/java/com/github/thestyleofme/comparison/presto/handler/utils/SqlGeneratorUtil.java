@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
-import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
-import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.presto.handler.pojo.PrestoInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
@@ -32,15 +30,12 @@ public class SqlGeneratorUtil {
 
 
     public static String generateAuditSql(PrestoInfo prestoInfo) {
-        String sql;
         List<ColMapping> joinMappingList = prestoInfo.getIndexMapping();
         // 如果有指定主键或唯一索引
-        if (!CollectionUtils.isEmpty(joinMappingList)) {
-            sql = createSqlByPkOrIndex(prestoInfo);
-        } else {
-            throw new HandlerException(ErrorCode.PRESTO_NOT_SUPPORT);
+        if (CollectionUtils.isEmpty(joinMappingList)) {
+            prestoInfo.setIndexMapping(prestoInfo.getColMapping());
         }
-        return sql;
+        return createSqlByPkOrIndex(prestoInfo);
     }
 
     public static String generatePreAuditSql(String table, String condition) {
@@ -101,7 +96,7 @@ public class SqlGeneratorUtil {
                 .collect(Collectors.joining(","));
         String where2 = joinMappingList.stream()
                 .map(col -> String.format(" _b.%s is null ", col.getTargetCol()))
-                .collect(Collectors.joining("and", "and (", ")"));
+                .collect(Collectors.joining(" and ", " and (", ")"));
         String sql2 = String.format(BASE_SQL, sourceCol, sourceTable, LEFT_JOIN, targetTable, onCondition);
         builder.append(sql2).append(sourceWhere).append(where2).append(";").append(LINE_END);
         /*

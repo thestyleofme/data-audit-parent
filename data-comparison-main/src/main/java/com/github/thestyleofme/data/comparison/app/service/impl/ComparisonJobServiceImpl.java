@@ -337,7 +337,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
         // 判断preTransformType是否为空 空即是不走预处理 反之取preTransformType
         Object preTransformType = preTransform.get("preTransformType");
         if (Objects.isNull(preTransformType)) {
-            log.info("not found preTransformType skip preTransformType");
+            log.info("not found preTransformType skip preTransform");
             return;
         }
         String type = String.valueOf(preTransformType);

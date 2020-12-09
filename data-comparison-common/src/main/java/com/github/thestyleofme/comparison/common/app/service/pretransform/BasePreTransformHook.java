@@ -6,6 +6,7 @@ import com.github.thestyleofme.comparison.common.app.service.transform.HandlerRe
 import com.github.thestyleofme.comparison.common.domain.AppConf;
 import com.github.thestyleofme.comparison.common.domain.entity.DataInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.SkipCondition;
+import org.springframework.util.CollectionUtils;
 
 /**
  * <p>
@@ -22,6 +23,9 @@ public abstract class BasePreTransformHook implements PreTransformHook {
                         AppConf appConf,
                         List<SkipCondition> skipConditionList,
                         HandlerResult handlerResult) {
+        if (CollectionUtils.isEmpty(skipConditionList)) {
+            return false;
+        }
         DataInfo dataInfo = prepareDataInfo(tenantId, appConf);
         List<String> sqlList = generateSqlByCondition(dataInfo, skipConditionList);
         return execSqlAndComputeSkip(tenantId, dataInfo, sqlList, handlerResult);
