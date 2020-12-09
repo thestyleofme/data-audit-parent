@@ -1,17 +1,18 @@
-#### 性能报告
+#### 简单性能报告
 
 机器参数
 
 - 执行稽核程序的机器参数为：
-  1. cpu: 8核 Intel(R) Core(TM) i5-8265U CPU @ 1.60GHz 1.80GHz
+  1. cpu: 8核
   2. men: 16GB
   3. net：内网，不统计
-  4. disc： 不统计
+  
 - presto服务器参数：
   - cpu：4核
   - mem：15G
-  - net：不统计
-  - disc：不统计
+  - net：内网，不统计
+  - 1个worker节点
+
 
 ---
 
