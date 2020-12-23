@@ -7,6 +7,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 
+import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -83,8 +84,12 @@ public class SelectCollectorImpl implements Collector<Map<String, Object>, Selec
             for (String key : keys) {
                 String col = SelectorUtil.getKey(key, flag);
                 Object value = map.get(col);
-                if (indexList.contains(col)) {
-                    indexMap.put(col, value);
+                if (indexList.stream().allMatch(s -> s.contains(col))) {
+                    Optional<String> optional = indexList.stream()
+                            .filter(s -> flag ? s.split(CommonConstant.ARROW_CONCAT)[0].equals(col) :
+                                    s.split(CommonConstant.ARROW_CONCAT)[1].equals(col))
+                            .findFirst();
+                    optional.ifPresent(s -> indexMap.put(s, value));
                 }
                 valueList.add(String.valueOf(value));
                 Set<Object> objectSet = result.getValueMap().get(key);

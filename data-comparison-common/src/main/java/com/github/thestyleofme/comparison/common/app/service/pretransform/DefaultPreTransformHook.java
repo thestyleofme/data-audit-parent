@@ -13,6 +13,7 @@ import com.github.thestyleofme.comparison.common.domain.ResultStatistics;
 import com.github.thestyleofme.comparison.common.domain.SelectTableInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.DataInfo;
 import com.github.thestyleofme.comparison.common.domain.entity.SkipCondition;
+import com.github.thestyleofme.comparison.common.infra.constants.ErrorCode;
 import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerException;
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.driver.core.app.service.DriverSessionService;
@@ -95,17 +96,14 @@ public class DefaultPreTransformHook extends BasePreTransformHook {
         return result.stream().allMatch(oneCondition -> oneCondition);
     }
 
-    @SuppressWarnings("unchecked")
     private boolean meetCondition(Object result1, Object result2, String operation) {
         int opt;
-        if (result1 instanceof Number && result1 instanceof Comparable
-                && result2 instanceof Number && result2 instanceof Comparable) {
-            opt = ((Comparable<Number>) result1).compareTo((Number) result2);
+        if (!Objects.isNull(result1) && !Objects.isNull(result2)) {
+            opt = String.valueOf(result1).compareTo(String.valueOf(result2));
         } else {
-            throw new HandlerException("hdsp.xadt.err.condition.not_support");
+            throw new HandlerException(ErrorCode.CONDITION_NOT_SUPPORT);
         }
         return compare(operation, opt);
-
     }
 
     private boolean compare(String operation, int opt) {

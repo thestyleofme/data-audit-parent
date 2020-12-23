@@ -65,7 +65,6 @@ public class JavaTransformHandler implements BaseTransformHandler {
                                 String.format("%s -> %s", colMapping.getSourceCol(), colMapping.getTargetCol()))
                 .collect(Collectors.toList());
         LocalDateTime preSelectTime = LocalDateTime.now();
-
         SourceDataMapping sourceDataMapping = tableDataHandler.handle(comparisonJob, env);
         LocalDateTime endSelectTime = LocalDateTime.now();
         DataSelector.Result result = DataSelector.init(paramNameList)

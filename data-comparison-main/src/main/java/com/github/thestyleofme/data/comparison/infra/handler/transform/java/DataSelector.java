@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.github.thestyleofme.comparison.common.domain.ColMapping;
+import com.github.thestyleofme.comparison.common.infra.constants.CommonConstant;
 import com.github.thestyleofme.comparison.common.infra.constants.RowTypeEnum;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.*;
@@ -58,7 +59,7 @@ public class DataSelector {
                         List<Map<String, Object>> list2,
                         List<Map<String, Object>> indexMapping,
                         boolean flag) {
-        List<String> indexList = getIndexList(indexMapping, flag);
+        List<String> indexList = getIndexList(indexMapping);
         SelectCollectorImpl.Result mainResult = list1.stream().collect(new SelectCollectorImpl(this.paramNames, indexList, !flag));
         Set<String> valueSet = mainResult.getValueSet();
         for (Map<String, Object> map : list2) {
@@ -76,24 +77,13 @@ public class DataSelector {
         }
     }
 
-    private List<String> getIndexList(List<Map<String, Object>> indexMapping, boolean flag) {
-        List<String> indexList;
-        if (flag) {
-            indexList = indexMapping.stream()
-                    .map(map -> {
-                        ColMapping colMapping = BeanUtils.map2Bean(map, ColMapping.class);
-                        return colMapping.getSourceCol();
-                    })
-                    .collect(Collectors.toList());
-        } else {
-            indexList = indexMapping.stream()
-                    .map(map -> {
-                        ColMapping colMapping = BeanUtils.map2Bean(map, ColMapping.class);
-                        return colMapping.getTargetCol();
-                    })
-                    .collect(Collectors.toList());
-        }
-        return indexList;
+    private List<String> getIndexList(List<Map<String, Object>> indexMapping) {
+        return indexMapping.stream()
+                .map(map -> {
+                    ColMapping colMapping = BeanUtils.map2Bean(map, ColMapping.class);
+                    return colMapping.getSourceCol() + CommonConstant.ARROW_CONCAT + colMapping.getTargetCol();
+                })
+                .collect(Collectors.toList());
     }
 
     private List<String> genParamNameList(boolean flag, Map<String, Object> map, Map<String, Set<Object>> valueMap) {

@@ -25,6 +25,10 @@ public final class ErrorCode {
      */
     public static final String EXCEL_DELETE_ERROR = "hdsp.xadt.err.excel.delete";
     /**
+     * 未支持该类型条件
+     */
+    public static final String CONDITION_NOT_SUPPORT = "hdsp.xadt.err.condition.not_support";
+    /**
      * 数据稽核任务状态[{0}]不允许执行
      */
     public static final String DEPLOY_STATUS_NOT_SUCCESS = "hdsp.xadt.err.deploy.status_not_success";

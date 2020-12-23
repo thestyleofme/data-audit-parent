@@ -23,6 +23,7 @@ import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.plugin.core.infra.utils.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -112,7 +113,11 @@ public class ExcelSinkTypeHandler implements BaseSinkHandler {
 
     private void doDifferent(ExcelWriter excelWriter, List<List<String>> sourceToTargetHeader, HandlerResult handlerResult) {
         // 生成excel数据 List<List<Object>>
-        List<List<Object>> pkOrIndexList = handlerResult.getDifferentDataList().stream()
+        List<Map<String, Object>> differentDataList = handlerResult.getDifferentDataList();
+        if (CollectionUtils.isEmpty(differentDataList)) {
+            return;
+        }
+        List<List<Object>> pkOrIndexList = differentDataList.stream()
                 .filter(Objects::nonNull)
                 .map(linkedHashMap -> new ArrayList<>(linkedHashMap.values()))
                 .collect(Collectors.toList());
