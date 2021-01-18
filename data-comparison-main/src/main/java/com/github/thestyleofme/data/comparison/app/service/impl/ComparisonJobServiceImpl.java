@@ -7,6 +7,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -39,6 +40,7 @@ import com.github.thestyleofme.comparison.common.infra.exceptions.HandlerExcepti
 import com.github.thestyleofme.comparison.common.infra.utils.CommonUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.ExcelUtil;
 import com.github.thestyleofme.comparison.common.infra.utils.HandlerUtil;
+import com.github.thestyleofme.comparison.common.infra.utils.ThreadPoolUtil;
 import com.github.thestyleofme.comparison.csv.pojo.CsvInfo;
 import com.github.thestyleofme.comparison.csv.utils.CsvUtil;
 import com.github.thestyleofme.comparison.presto.handler.exceptions.SkipAuditException;
@@ -72,6 +74,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
     private final ComparisonJobGroupService comparisonJobGroupService;
     private final List<BasePreTransformHook> basePreTransformHookList;
     private final ReentrantLock lock = new ReentrantLock();
+    private final ExecutorService executorService = ThreadPoolUtil.getExecutorService();
 
     public ComparisonJobServiceImpl(JobHandlerContext jobHandlerContext,
                                     ComparisonJobGroupService comparisonJobGroupService, List<BasePreTransformHook> basePreTransformHookList) {
@@ -124,7 +127,7 @@ public class ComparisonJobServiceImpl extends ServiceImpl<ComparisonJobMapper, C
                 .tenantId(tenantId).groupCode(groupCode).build()));
         for (ComparisonJob comparisonJob : jobList) {
             copyGroupInfoToJob(comparisonJob, jobGroup);
-            doJob(comparisonJob);
+            executorService.execute(() -> doJob(comparisonJob));
         }
     }
 
